@@ -11,7 +11,7 @@ namespace Nexus.Core.Models
     /// Location 객체의 영구적인 상태를 나타내는 데이터 전송 객체(DTO)입니다.
     /// Redis에 저장될 Location 정보는 이 클래스를 통해 관리됩니다.
     /// </summary>
-    public class LocationState
+    public class LocationInfo
     {
         /// <summary>
         /// 위치의 고유 식별자입니다. (예: "ST01.CP01", "A01.SET01.MP01")
@@ -33,8 +33,9 @@ namespace Nexus.Core.Models
         /// </summary>
         public string? CurrentItemId { get; set; }
 
-        // TODO: LocationStatus (Available, Occupied 등)를 나타내는 속성을 여기에 추가하고,
-        // LocationService에서 이 속성을 업데이트하는 로직을 반영해야 합니다.
-        // public LocationStatus Status { get; set; }
+        /// <summary>
+        /// 현재 위치의 상태를 나타냅니다. 
+        /// </summary>
+        public ELocationStatus Status { get; set; }
     }
 }

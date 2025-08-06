@@ -26,9 +26,9 @@ namespace Nexus.Core.Services
         /// </summary>
         /// <param name="locationId">위치 ID</param>
         /// <returns>LocationState 객체 또는 null</returns>
-        public async Task<LocationState?> GetLocationStateAsync(string locationId)
+        public async Task<LocationInfo?> GetLocationStateAsync(string locationId)
         {
-            return await _redisDataService.GetAsync<LocationState>($"{LOCATION_KEY_PREFIX}{locationId}");
+            return await _redisDataService.GetAsync<LocationInfo>($"{LOCATION_KEY_PREFIX}{locationId}");
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace Nexus.Core.Services
         /// </summary>
         /// <param name="locationState">저장할 LocationState 객체</param>
         /// <exception cref="InvalidOperationException">동일 ID의 위치가 이미 존재할 경우 발생합니다.</exception>
-        public async Task CreateLocationAsync(LocationState locationState)
+        public async Task CreateLocationAsync(LocationInfo locationState)
         {
             // 이미 존재하는지 확인하여 중복 생성을 방지합니다.
             var existingLocation = await GetLocationStateAsync(locationState.Id);

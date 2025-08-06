@@ -8,14 +8,15 @@ namespace Nexus.Core.Models
     {
         public string Id { get; }
         public string Name { get; }
-        public ELocationType PortType { get; }
+        public ELocationType LocationType { get; }
+        public ELocationStatus Status { get; set; }
         public T? CurrentItem { get; private set; }
 
-        public Location(string id, string name, ELocationType portType)
+        public Location(string id, string name, ELocationType locationType)
         {
             Id = id;
             Name = name;
-            PortType = portType;
+            LocationType = locationType;
         }
 
         public void Load(T item)
