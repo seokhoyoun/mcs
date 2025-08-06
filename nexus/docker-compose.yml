@@ -1,0 +1,37 @@
+﻿services:
+
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  supabase:
+    # 로컬 Supabase CLI가 관리하는 PostgreSQL 컨테이너를 사용합니다.
+    image: postgres:15-alpine
+    container_name: supabase_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "1234"
+      POSTGRES_DB: "postgres"
+
+  nexus.scheduler:
+    image: ${DOCKER_REGISTRY-}nexusscheduler
+    build:
+      context: .
+      dockerfile: Nexus.Scheduler/Dockerfile
+    container_name: nexus_scheduler
+    depends_on:
+      - redis
+
+  nexus.integrator:
+    image: ${DOCKER_REGISTRY-}nexusintegrator
+    build:
+      context: .
+      dockerfile: Nexus.Integrator/Dockerfile
+    container_name: nexus_integrator
+    depends_on:
+      - redis
