@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36327.8
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Scheduler", "Nexus.Scheduler\Nexus.Scheduler.csproj", "{23973864-0407-463D-AF23-68210640DA5A}"
+EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{81DDED9D-158B-E303-5F62-77A2896D2A5A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2A3A057F-5D22-31FD-628C-DF5EF75AEF1E}"
+	ProjectSection(SolutionItems) = preProject
+		project.md = project.md
+		..\..\Users\axlov\Downloads\온양 삼성반도체 MCS-ACS  통신 사양서 v1.3.0.md = ..\..\Users\axlov\Downloads\온양 삼성반도체 MCS-ACS  통신 사양서 v1.3.0.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Integrator", "Nexus.Integrator\Nexus.Integrator.csproj", "{67F6BE8E-31A6-4E92-AA96-3360E74A71B6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Core", "Nexus.Core\Nexus.Core.csproj", "{2FF71565-47B3-49B5-BBF2-D393B7A8B742}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{23973864-0407-463D-AF23-68210640DA5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23973864-0407-463D-AF23-68210640DA5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23973864-0407-463D-AF23-68210640DA5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23973864-0407-463D-AF23-68210640DA5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67F6BE8E-31A6-4E92-AA96-3360E74A71B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67F6BE8E-31A6-4E92-AA96-3360E74A71B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67F6BE8E-31A6-4E92-AA96-3360E74A71B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67F6BE8E-31A6-4E92-AA96-3360E74A71B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FF71565-47B3-49B5-BBF2-D393B7A8B742}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FF71565-47B3-49B5-BBF2-D393B7A8B742}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FF71565-47B3-49B5-BBF2-D393B7A8B742}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FF71565-47B3-49B5-BBF2-D393B7A8B742}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F6B2E749-593D-4DD2-8B10-4DBB0F117B3E}
+	EndGlobalSection
+EndGlobal
