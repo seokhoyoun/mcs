@@ -1,0 +1,1275 @@
+﻿================================================
+FILE: README.md
+================================================
+# mcs 
+
+
+
+================================================
+FILE: nexus/docker-compose.dcproj
+================================================
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" Sdk="Microsoft.Docker.Sdk">
+  <PropertyGroup Label="Globals">
+    <ProjectVersion>2.1</ProjectVersion>
+    <DockerTargetOS>Linux</DockerTargetOS>
+    <DockerPublishLocally>False</DockerPublishLocally>
+    <ProjectGuid>81dded9d-158b-e303-5f62-77a2896d2a5a</ProjectGuid>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="docker-compose.override.yml">
+      <DependentUpon>docker-compose.yml</DependentUpon>
+    </None>
+    <None Include="docker-compose.yml" />
+    <None Include=".dockerignore" />
+  </ItemGroup>
+</Project>
+
+
+================================================
+FILE: nexus/docker-compose.override.yml
+================================================
+services:
+  nexus.scheduler:
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+
+
+================================================
+FILE: nexus/docker-compose.yml
+================================================
+﻿services:
+
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  supabase:
+    # 로컬 Supabase CLI가 관리하는 PostgreSQL 컨테이너를 사용합니다.
+    image: postgres:15-alpine
+    container_name: supabase_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "1234"
+      POSTGRES_DB: "postgres"
+
+  nexus.scheduler:
+    image: ${DOCKER_REGISTRY-}nexusscheduler
+    build:
+      context: .
+      dockerfile: Nexus.Scheduler/Dockerfile
+    container_name: nexus_scheduler
+    depends_on:
+      - redis
+
+  nexus.integrator:
+    image: ${DOCKER_REGISTRY-}nexusintegrator
+    build:
+      context: .
+      dockerfile: Nexus.Integrator/Dockerfile
+    container_name: nexus_integrator
+    depends_on:
+      - redis
+
+
+================================================
+FILE: nexus/launchSettings.json
+================================================
+{
+  "profiles": {
+    "Docker Compose": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "serviceActions": {
+        "nexus.scheduler": "StartDebugging"
+      }
+    }
+  }
+}
+
+
+================================================
+FILE: nexus/LICENSE
+================================================
+This is free and unencumbered software released into the public domain.
+
+Anyone is free to copy, modify, publish, use, compile, sell, or
+distribute this software, either in source code form or as a compiled
+binary, for any purpose, commercial or non-commercial, and by any
+means.
+
+In jurisdictions that recognize copyright laws, the author or authors
+of this software dedicate any and all copyright interest in the
+software to the public domain. We make this dedication for the benefit
+of the public at large and to the detriment of our heirs and
+successors. We intend this dedication to be an overt act of
+relinquishment in perpetuity of all present and future rights to this
+software under copyright law.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+For more information, please refer to <https://unlicense.org>
+
+
+
+================================================
+FILE: nexus/Nexus.sln
+================================================
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36327.8
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Scheduler", "src\Nexus.Scheduler\Nexus.Scheduler.csproj", "{23973864-0407-463D-AF23-68210640DA5A}"
+EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{81DDED9D-158B-E303-5F62-77A2896D2A5A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2A3A057F-5D22-31FD-628C-DF5EF75AEF1E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Integrator", "src\Nexus.Integrator\Nexus.Integrator.csproj", "{67F6BE8E-31A6-4E92-AA96-3360E74A71B6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Core", "src\Nexus.Core\Nexus.Core.csproj", "{2FF71565-47B3-49B5-BBF2-D393B7A8B742}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{23973864-0407-463D-AF23-68210640DA5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23973864-0407-463D-AF23-68210640DA5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23973864-0407-463D-AF23-68210640DA5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23973864-0407-463D-AF23-68210640DA5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67F6BE8E-31A6-4E92-AA96-3360E74A71B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67F6BE8E-31A6-4E92-AA96-3360E74A71B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67F6BE8E-31A6-4E92-AA96-3360E74A71B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67F6BE8E-31A6-4E92-AA96-3360E74A71B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FF71565-47B3-49B5-BBF2-D393B7A8B742}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FF71565-47B3-49B5-BBF2-D393B7A8B742}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FF71565-47B3-49B5-BBF2-D393B7A8B742}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FF71565-47B3-49B5-BBF2-D393B7A8B742}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F6B2E749-593D-4DD2-8B10-4DBB0F117B3E}
+	EndGlobalSection
+EndGlobal
+
+
+
+================================================
+FILE: nexus/.dockerignore
+================================================
+**/.classpath
+**/.dockerignore
+**/.env
+**/.git
+**/.gitignore
+**/.project
+**/.settings
+**/.toolstarget
+**/.vs
+**/.vscode
+**/*.*proj.user
+**/*.dbmdl
+**/*.jfm
+**/azds.yaml
+**/bin
+**/charts
+**/docker-compose*
+**/Dockerfile*
+**/node_modules
+**/npm-debug.log
+**/obj
+**/secrets.dev.yaml
+**/values.dev.yaml
+LICENSE
+README.md
+!**/.gitignore
+!.git/HEAD
+!.git/config
+!.git/packed-refs
+!.git/refs/heads/**
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Nexus.Core.csproj
+================================================
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Shared\**" />
+    <EmbeddedResource Remove="Shared\**" />
+    <None Remove="Shared\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StackExchange.Redis" Version="2.8.58" />
+  </ItemGroup>
+
+</Project>
+
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Domain/LocationInfo.cs
+================================================
+﻿using Nexus.Core.Domain.Shared;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Nexus.Core.Models
+{
+    /// <summary>
+    /// Location 객체의 영구적인 상태를 나타내는 데이터 전송 객체(DTO)입니다.
+    /// Redis에 저장될 Location 정보는 이 클래스를 통해 관리됩니다.
+    /// </summary>
+    public class LocationInfo
+    {
+        /// <summary>
+        /// 위치의 고유 식별자입니다. (예: "ST01.CP01", "A01.SET01.MP01")
+        /// </summary>
+        public required string Id { get; set; }
+
+        /// <summary>
+        /// 위치의 이름입니다.
+        /// </summary>
+        public required string Name { get; set; }
+
+        /// <summary>
+        /// 해당 위치가 어떤 종류의 아이템인지 나타냅니다. (예: Cassette, Tray, Memory)
+        /// </summary>
+        public ELocationType LocationType { get; set; }
+
+        /// <summary>
+        /// 현재 이 포트에 적재된 아이템의 고유 식별자입니다. 아이템이 없으면 null입니다.
+        /// </summary>
+        public string? CurrentItemId { get; set; }
+
+        /// <summary>
+        /// 현재 위치의 상태를 나타냅니다. 
+        /// </summary>
+        public ELocationStatus Status { get; set; }
+    }
+}
+
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Domain/Areas/Area.cs
+================================================
+﻿using Nexus.Core.Domain.Cassettes;
+using Nexus.Core.Domain.Shared;
+using Nexus.Core.Domain.Shared.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Nexus.Core.Domain.Areas
+{
+    public class Area : IEntity
+    {
+        public required string Id { get; set; }
+        public required string Name { get; set; }
+
+        public IReadOnlyList<Location<Cassette>> CassettePorts => _casssettePorts.AsReadOnly();
+
+        private List<Location<Cassette>> _casssettePorts = new List<Location<Cassette>>();
+    }
+}
+
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Domain/Lots/Lot.cs
+================================================
+﻿using Nexus.Core.Domain.Cassettes;
+using Nexus.Core.Domain.Shared.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Nexus.Core.Domain.Lots
+{
+    internal class Lot : IEntity
+    {
+        public required string Id { get; set; }
+        public required string Name { get; set; }
+        public IReadOnlyList<Cassette> Cassettes => _cassettes.AsReadOnly();
+
+        private List<Cassette> _cassettes = new List<Cassette>();
+    }
+}
+
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Domain/Lots/LotStep.cs
+================================================
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Nexus.Core.Domain.Lots
+{
+    internal class LotStep
+    {
+    }
+}
+
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Domain/Shared/ELocationStatus.cs
+================================================
+﻿namespace Nexus.Core.Domain.Shared
+{
+    /// <summary>
+    /// 창고 내 위치의 현재 상태를 정의하는 열거형입니다.
+    /// </summary>
+    public enum ELocationStatus
+    {
+        /// <summary>
+        /// 정의되지 않은 상태입니다.
+        /// </summary>
+        Undefined,
+
+        /// <summary>
+        /// 위치를 사용할 수 있으며, 아이템을 적재하거나 진입할 수 있습니다.
+        /// </summary>
+        Available,
+
+        /// <summary>
+        /// 위치가 현재 아이템으로 점유되어 있거나, 로봇이 진입하여 작업을 수행 중입니다.
+        /// </summary>
+        Occupied,
+
+        /// <summary>
+        /// 유지보수, 고장 등의 이유로 위치를 사용할 수 없는 상태입니다.
+        /// </summary>
+        OutOfService,
+
+        /// <summary>
+        /// 예약된 상태로, 곧 사용될 예정이지만 아직 점유되지는 않았습니다.
+        /// </summary>
+        Reserved
+    }
+}
+
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Domain/Shared/ELocationType.cs
+================================================
+[Binary file]
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Domain/Shared/Location.cs
+================================================
+Error reading file with 'utf-8': 'utf-8' codec can't decode byte 0xc0 in position 1026: invalid start byte
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Domain/Shared/LocationService.cs
+================================================
+﻿using Nexus.Core.Infrastructure.Redis;
+using Nexus.Core.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Nexus.Core.Domain.Shared
+{
+    public class LocationService 
+    {
+        private readonly RedisDataService _redisDataService;
+        private const string LOCATION_KEY_PREFIX = "location:state:"; // Redis 키 접두사
+
+        /// <summary>
+        /// LocationService의 새 인스턴스를 초기화합니다.
+        /// </summary>
+        /// <param name="redisDataService">Redis 데이터 상호작용을 위한 서비스입니다.</param>
+        public LocationService(RedisDataService redisDataService)
+        {
+            _redisDataService = redisDataService;
+        }
+
+        /// <summary>
+        /// 특정 위치의 현재 상태를 Redis에서 가져옵니다.
+        /// </summary>
+        /// <param name="locationId">위치 ID</param>
+        /// <returns>LocationState 객체 또는 null</returns>
+        public async Task<LocationInfo?> GetLocationStateAsync(string locationId)
+        {
+            return await _redisDataService.GetAsync<LocationInfo>($"{LOCATION_KEY_PREFIX}{locationId}");
+        }
+
+        /// <summary>
+        /// 새로운 위치를 Redis에 저장합니다.
+        /// </summary>
+        /// <param name="locationState">저장할 LocationState 객체</param>
+        /// <exception cref="InvalidOperationException">동일 ID의 위치가 이미 존재할 경우 발생합니다.</exception>
+        public async Task CreateLocationAsync(LocationInfo locationState)
+        {
+            // 이미 존재하는지 확인하여 중복 생성을 방지합니다.
+            var existingLocation = await GetLocationStateAsync(locationState.Id);
+            if (existingLocation != null)
+            {
+                throw new InvalidOperationException($"Location with ID '{locationState.Id}' already exists.");
+            }
+            await _redisDataService.SetAsync($"{LOCATION_KEY_PREFIX}{locationState.Id}", locationState);
+        }
+
+        /// <summary>
+        /// 특정 위치에 아이템을 적재하고 Redis에 상태를 업데이트합니다.
+        /// </summary>
+        /// <param name="locationId">위치 ID</param>
+        /// <param name="itemId">적재할 아이템의 ID</param>
+        /// <exception cref="InvalidOperationException">위치를 찾을 수 없거나 이미 점유 중일 때 발생합니다.</exception>
+        public async Task LoadItemIntoLocationAsync(string locationId, string itemId)
+        {
+            var locationState = await GetLocationStateAsync(locationId);
+            if (locationState == null)
+            {
+                throw new InvalidOperationException($"Location with ID '{locationId}' not found.");
+            }
+            if (locationState.CurrentItemId != null)
+            {
+                throw new InvalidOperationException($"Location with ID '{locationId}' is already occupied by item '{locationState.CurrentItemId}'.");
+            }
+
+            locationState.CurrentItemId = itemId;
+            // TODO: LocationStatus (예: Occupied)를 LocationState에 추가하고 업데이트하는 로직을 여기에 반영해야 합니다.
+            await _redisDataService.SetAsync($"{LOCATION_KEY_PREFIX}{locationId}", locationState);
+        }
+
+        /// <summary>
+        /// 특정 위치에서 아이템을 언로드하고 Redis에 상태를 업데이트합니다.
+        /// </summary>
+        /// <param name="locationId">위치 ID</param>
+        /// <returns>언로드된 아이템의 ID (없으면 null)</returns>
+        /// <exception cref="InvalidOperationException">위치를 찾을 수 없을 때 발생합니다.</exception>
+        public async Task<string?> UnloadItemFromLocationAsync(string locationId)
+        {
+            var locationState = await GetLocationStateAsync(locationId);
+            if (locationState == null)
+            {
+                throw new InvalidOperationException($"Location with ID '{locationId}' not found.");
+            }
+
+            var unloadedItemId = locationState.CurrentItemId;
+            locationState.CurrentItemId = null;
+            // TODO: LocationStatus (예: Available)를 LocationState에 추가하고 업데이트하는 로직을 여기에 반영해야 합니다.
+            await _redisDataService.SetAsync($"{LOCATION_KEY_PREFIX}{locationId}", locationState);
+
+            return unloadedItemId;
+        }
+    }
+}
+
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Domain/Shared/Events/IDomainEvent.cs
+================================================
+[Binary file]
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Domain/Shared/Events/LocationStatusChangedEvent.cs
+================================================
+namespace Nexus.Core.Domain.Shared.Events
+{
+    public class LocationStatusChangedEvent : IDomainEvent
+    {
+        public string LocationId { get; }
+        public ELocationStatus OldStatus { get; }
+        public ELocationStatus NewStatus { get; }
+        public DateTime OccurredOn { get; } = DateTime.UtcNow;
+
+        public LocationStatusChangedEvent(string locationId, ELocationStatus oldStatus, ELocationStatus newStatus)
+        {
+            LocationId = locationId;
+            OldStatus = oldStatus;
+            NewStatus = newStatus;
+        }
+    }
+}
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Domain/Shared/Interfaces/IEntity.cs
+================================================
+[Binary file]
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Domain/Shared/Interfaces/IItem.cs
+================================================
+[Binary file]
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Domain/Stockers/Stocker.cs
+================================================
+﻿using Nexus.Core.Domain.Cassettes;
+using Nexus.Core.Domain.Shared;
+using Nexus.Core.Domain.Shared.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Nexus.Core.Domain.Stockers
+{
+    public class Stocker : IEntity
+    {
+        public required string Id { get; set; }
+        public required string Name { get; set; }
+
+        public IReadOnlyList<Location<Cassette>> Ports => _ports.AsReadOnly();
+
+        private List<Location<Cassette>> _ports = new List<Location<Cassette>>();
+    }
+}
+
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Domain/Transports/Cassette.cs
+================================================
+﻿using Nexus.Core.Domain.Shared.Interfaces;
+using Nexus.Core.Domain.Transports;
+using Nexus.Core.Domain.Transports.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Nexus.Core.Domain.Cassettes
+{
+    public class Cassette : ITransportable
+    {
+        public required string Id { get; set; }
+        public required string Name { get; set; }
+ 
+
+        private readonly List<Tray> _trays = new List<Tray>();
+        public IReadOnlyList<IItem> Items => _trays.AsReadOnly();
+
+        public Cassette()
+        {
+        }
+
+        public Cassette(string id, string name, IEnumerable<Tray> trays)
+        {
+            Id = id;
+            Name = name;
+
+            if (trays != null)
+                _trays.AddRange(trays);
+        }
+    }
+}
+
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Domain/Transports/Memory.cs
+================================================
+﻿using Nexus.Core.Domain.Shared.Interfaces;
+using Nexus.Core.Domain.Transports.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Nexus.Core.Domain.Transports
+{
+    public class Memory : ITransportable
+    {
+        public required string Id { get; set; }
+        public required string Name { get; set; }
+
+
+        public IReadOnlyList<IItem>? Items { get; } = null;
+
+        public Memory()
+        {
+        }
+
+        public Memory(string id, string name)
+        {
+            Id = id;
+            Name = name;
+        }
+    }
+   
+}
+
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Domain/Transports/Tray.cs
+================================================
+﻿using Nexus.Core.Domain.Shared.Interfaces;
+using Nexus.Core.Domain.Transports.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Nexus.Core.Domain.Transports
+{
+    public class Tray : ITransportable
+    {
+        public required string Id { get; set; }
+        public required string Name { get; set; }
+
+
+        private readonly List<Memory> _memories = new List<Memory>();
+        public IReadOnlyList<IItem> Items => _memories.AsReadOnly();
+
+        public Tray()
+        {
+        }
+        public Tray(string id, string name, List<Memory> memories)
+        {
+            Id = id;
+            Name = name;
+
+            if (memories != null)
+                _memories.AddRange(memories);
+        }
+
+    }
+}
+
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Domain/Transports/Interfaces/ITransportable.cs
+================================================
+[Binary file]
+
+
+================================================
+FILE: nexus/src/Nexus.Core/Infrastructure/Redis/RedisDataService.cs
+================================================
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
+using StackExchange.Redis;
+
+namespace Nexus.Core.Infrastructure.Redis 
+{
+    /// <summary>
+    /// Redis 데이터베이스와의 상호작용을 처리하는 서비스입니다.
+    /// 키-값 저장, 메시지 발행/구독, 리스트 및 해시 관리를 포함합니다.
+    /// </summary>
+    public class RedisDataService
+    {
+        private readonly IConnectionMultiplexer _redis;
+        private readonly IDatabase _database;
+        private readonly ISubscriber _subscriber;
+
+        /// <summary>
+        /// RedisDataService의 새 인스턴스를 초기화합니다.
+        /// </summary>
+        /// <param name="redis">Redis 연결 멀티플렉서 인스턴스입니다.</param>
+        public RedisDataService(IConnectionMultiplexer redis)
+        {
+            _redis = redis;
+            _database = _redis.GetDatabase();
+            _subscriber = _redis.GetSubscriber();
+        }
+
+        /// <summary>
+        /// Redis에 키-값 쌍을 저장합니다. 객체는 JSON으로 직렬화됩니다.
+        /// </summary>
+        /// <typeparam name="T">저장할 값의 타입입니다.</typeparam>
+        /// <param name="key">Redis 키입니다.</param>
+        /// <param name="value">저장할 값입니다.</param>
+        /// <param name="expiry">키의 만료 시간입니다 (선택 사항).</param>
+        public async Task SetAsync<T>(string key, T value, TimeSpan? expiry = null)
+        {
+            var json = JsonSerializer.Serialize(value);
+            await _database.StringSetAsync(key, json, expiry);
+        }
+
+        /// <summary>
+        /// Redis에서 키에 해당하는 값을 가져와 역직렬화합니다.
+        /// </summary>
+        /// <typeparam name="T">가져올 값의 타입입니다.</typeparam>
+        /// <param name="key">Redis 키입니다.</param>
+        /// <returns>역직렬화된 값 또는 키가 존재하지 않으면 기본값입니다.</returns>
+        public async Task<T?> GetAsync<T>(string key)
+        {
+            var value = await _database.StringGetAsync(key);
+            if (value.IsNullOrEmpty)
+            {
+                return default;
+            }
+            return JsonSerializer.Deserialize<T>(value!);
+        }
+
+        /// <summary>
+        /// 지정된 채널에 메시지를 발행합니다.
+        /// </summary>
+        /// <param name="channel">메시지를 발행할 채널입니다.</param>
+        /// <param name="message">발행할 메시지입니다.</param>
+        public async Task PublishAsync(string channel, string message)
+        {
+            await _subscriber.PublishAsync(new RedisChannel(channel, RedisChannel.PatternMode.Literal), message);
+        }
+
+        /// <summary>
+        /// Redis 구독자 인스턴스를 반환하여 외부에서 채널을 구독할 수 있도록 합니다.
+        /// </summary>
+        /// <returns>ISubscriber 인스턴스입니다.</returns>
+        public ISubscriber GetSubscriber()
+        {
+            return _subscriber;
+        }
+
+        /// <summary>
+        /// Redis 리스트의 오른쪽에 값을 추가합니다. 객체는 JSON으로 직렬화됩니다.
+        /// </summary>
+        /// <typeparam name="T">추가할 값의 타입입니다.</typeparam>
+        /// <param name="key">리스트의 키입니다.</param>
+        /// <param name="value">추가할 값입니다.</param>
+        /// <returns>리스트의 새 길이입니다.</returns>
+        public async Task<long> ListRightPushAsync<T>(string key, T value)
+        {
+            var json = JsonSerializer.Serialize(value);
+            return await _database.ListRightPushAsync(key, json);
+        }
+
+        /// <summary>
+        /// Redis 리스트의 왼쪽에서 값을 제거하고 반환합니다. 값을 역직렬화합니다.
+        /// </summary>
+        /// <typeparam name="T">가져올 값의 타입입니다.</typeparam>
+        /// <param name="key">리스트의 키입니다.</param>
+        /// <returns>제거된 값 또는 리스트가 비어있으면 기본값입니다.</returns>
+        public async Task<T?> ListLeftPopAsync<T>(string key)
+        {
+            var value = await _database.ListLeftPopAsync(key);
+            if (value.IsNullOrEmpty)
+            {
+                return default;
+            }
+            return JsonSerializer.Deserialize<T>(value!);
+        }
+
+        /// <summary>
+        /// Redis 해시에서 모든 필드와 값을 가져와 역직렬화합니다.
+        /// </summary>
+        /// <typeparam name="T">해시 값의 타입입니다.</typeparam>
+        /// <param name="key">해시의 키입니다.</param>
+        /// <returns>필드-값 쌍의 딕셔너리입니다.</returns>
+        public async Task<Dictionary<string, T>> HashGetAllAsync<T>(string key)
+        {
+            var hashEntries = await _database.HashGetAllAsync(key);
+            return hashEntries.ToDictionary(
+                entry => entry.Name.ToString(),
+                entry => JsonSerializer.Deserialize<T>(entry.Value!)!
+            );
+        }
+
+        /// <summary>
+        /// Redis 해시에 필드-값 쌍을 저장합니다. 객체는 JSON으로 직렬화됩니다.
+        /// </summary>
+        /// <typeparam name="T">저장할 값의 타입입니다.</typeparam>
+        /// <param name="key">해시의 키입니다.</param>
+        /// <param name="field">해시 필드입니다.</param>
+        /// <param name="value">저장할 값입니다.</param>
+        public async Task HashSetAsync<T>(string key, string field, T value)
+        {
+            var json = JsonSerializer.Serialize(value);
+            await _database.HashSetAsync(key, field, json);
+        }
+
+        /// <summary>
+        /// Redis에 해당 키가 존재하는지 확인합니다.
+        /// </summary>
+        /// <param name="key">확인할 Redis 키입니다.</param>
+        /// <returns>키가 존재하면 true, 아니면 false입니다.</returns>
+        public async Task<bool> KeyExistsAsync(string key)
+        {
+            return await _database.KeyExistsAsync(key);
+        }
+
+        /// <summary>
+        /// Redis에서 해당 키를 삭제합니다.
+        /// </summary>
+        /// <param name="key">삭제할 Redis 키입니다.</param>
+        /// <returns>삭제 성공 여부입니다.</returns>
+        public async Task<bool> KeyDeleteAsync(string key)
+        {
+            return await _database.KeyDeleteAsync(key);
+        }
+
+        /// <summary>
+        /// Redis 키의 만료 시간을 조회합니다.
+        /// </summary>
+        /// <param name="key">만료 시간을 조회할 키입니다.</param>
+        /// <returns>남은 만료 시간(TimeSpan) 또는 null(만료 없음/키 없음)입니다.</returns>
+        public async Task<TimeSpan?> GetExpiryAsync(string key)
+        {
+            return await _database.KeyTimeToLiveAsync(key);
+        }
+
+        /// <summary>
+        /// Redis 키의 만료 시간을 설정합니다.
+        /// </summary>
+        /// <param name="key">만료 시간을 설정할 키입니다.</param>
+        /// <param name="expiry">설정할 만료 시간입니다.</param>
+        /// <returns>설정 성공 여부입니다.</returns>
+        public async Task<bool> SetExpiryAsync(string key, TimeSpan expiry)
+        {
+            return await _database.KeyExpireAsync(key, expiry);
+        }
+
+        /// <summary>
+        /// Redis 리스트의 모든 값을 조회하여 역직렬화합니다.
+        /// </summary>
+        /// <typeparam name="T">리스트 값의 타입입니다.</typeparam>
+        /// <param name="key">리스트의 키입니다.</param>
+        /// <param name="start">조회 시작 인덱스(기본값: 0)</param>
+        /// <param name="stop">조회 종료 인덱스(기본값: -1, 전체)</param>
+        /// <returns>리스트의 모든 값(T) 컬렉션입니다.</returns>
+        public async Task<List<T>> ListRangeAsync<T>(string key, long start = 0, long stop = -1)
+        {
+            var values = await _database.ListRangeAsync(key, start, stop);
+            return values.Select(v => JsonSerializer.Deserialize<T>(v!)!).ToList();
+        }
+
+        /// <summary>
+        /// Redis 해시에서 특정 필드를 삭제합니다.
+        /// </summary>
+        /// <param name="key">해시의 키입니다.</param>
+        /// <param name="field">삭제할 해시 필드입니다.</param>
+        /// <returns>삭제 성공 여부입니다.</returns>
+        public async Task<bool> HashDeleteAsync(string key, string field)
+        {
+            return await _database.HashDeleteAsync(key, field);
+        }
+
+        /// <summary>
+        /// 지정된 채널을 구독하고, 메시지 수신 시 핸들러를 실행합니다.
+        /// </summary>
+        /// <param name="channel">구독할 채널 이름입니다.</param>
+        /// <param name="handler">메시지 수신 시 실행할 핸들러입니다.</param>
+        public async Task SubscribeAsync(string channel, Action<RedisChannel, RedisValue> handler)
+        {
+            await _subscriber.SubscribeAsync(new RedisChannel(channel, RedisChannel.PatternMode.Literal), handler);
+        }
+    }
+}
+
+
+
+================================================
+FILE: nexus/src/Nexus.Integrator/appsettings.Development.json
+================================================
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  }
+}
+
+
+
+================================================
+FILE: nexus/src/Nexus.Integrator/appsettings.json
+================================================
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  }
+}
+
+
+
+================================================
+FILE: nexus/src/Nexus.Integrator/Dockerfile
+================================================
+# 디버그 컨테이너를 사용자 지정하는 방법과 Visual Studio 이 Dockerfile을 사용하여 더 빠른 디버깅을 위해 이미지를 빌드하는 방법을 알아보려면 https://aka.ms/customizecontainer를 참조하세요.
+
+# 이 스테이지는 VS에서 빠른 모드로 실행할 때 사용됩니다(디버그 구성의 기본값).
+FROM mcr.microsoft.com/dotnet/runtime:8.0 AS base
+USER $APP_UID
+WORKDIR /app
+
+
+# 이 스테이지는 서비스 프로젝트를 빌드하는 데 사용됩니다.
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
+COPY ["Nexus.Integrator/Nexus.Integrator.csproj", "Nexus.Integrator/"]
+RUN dotnet restore "./Nexus.Integrator/Nexus.Integrator.csproj"
+COPY . .
+WORKDIR "/src/Nexus.Integrator"
+RUN dotnet build "./Nexus.Integrator.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+# 이 스테이지는 최종 스테이지에 복사할 서비스 프로젝트를 게시하는 데 사용됩니다.
+FROM build AS publish
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish "./Nexus.Integrator.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+
+# 이 스테이지는 프로덕션에서 사용되거나 VS에서 일반 모드로 실행할 때 사용됩니다(디버그 구성을 사용하지 않는 경우 기본값).
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "Nexus.Integrator.dll"]
+
+
+================================================
+FILE: nexus/src/Nexus.Integrator/Nexus.Integrator.csproj
+================================================
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-Nexus.Integrator-b693f461-eb63-4fce-a6a2-ae4b2758b0de</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Nexus.Core\Nexus.Core.csproj" />
+  </ItemGroup>
+</Project>
+
+
+
+================================================
+FILE: nexus/src/Nexus.Integrator/Program.cs
+================================================
+namespace Nexus.Integrator
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var builder = Host.CreateApplicationBuilder(args);
+            builder.Services.AddHostedService<Worker>();
+
+            var host = builder.Build();
+            host.Run();
+        }
+    }
+}
+
+
+================================================
+FILE: nexus/src/Nexus.Integrator/Worker.cs
+================================================
+namespace Nexus.Integrator
+{
+    public class Worker : BackgroundService
+    {
+        private readonly ILogger<Worker> _logger;
+
+        public Worker(ILogger<Worker> logger)
+        {
+            _logger = logger;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+                }
+                await Task.Delay(1000, stoppingToken);
+            }
+        }
+    }
+}
+
+
+
+================================================
+FILE: nexus/src/Nexus.Integrator/Properties/launchSettings.json
+================================================
+{
+  "profiles": {
+    "Nexus.Integrator": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  },
+  "$schema": "http://json.schemastore.org/launchsettings.json"
+}
+
+
+================================================
+FILE: nexus/src/Nexus.Scheduler/appsettings.Development.json
+================================================
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  }
+}
+
+
+
+================================================
+FILE: nexus/src/Nexus.Scheduler/appsettings.json
+================================================
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  }
+}
+
+
+
+================================================
+FILE: nexus/src/Nexus.Scheduler/Dockerfile
+================================================
+# 디버그 컨테이너를 사용자 지정하는 방법과 Visual Studio 이 Dockerfile을 사용하여 더 빠른 디버깅을 위해 이미지를 빌드하는 방법을 알아보려면 https://aka.ms/customizecontainer를 참조하세요.
+
+# 이 스테이지는 VS에서 빠른 모드로 실행할 때 사용됩니다(디버그 구성의 기본값).
+FROM mcr.microsoft.com/dotnet/runtime:8.0 AS base
+USER $APP_UID
+WORKDIR /app
+
+
+# 이 스테이지는 서비스 프로젝트를 빌드하는 데 사용됩니다.
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
+COPY ["Nexus.Scheduler/Nexus.Scheduler.csproj", "Nexus.Scheduler/"]
+RUN dotnet restore "./Nexus.Scheduler/Nexus.Scheduler.csproj"
+COPY . .
+WORKDIR "/src/Nexus.Scheduler"
+RUN dotnet build "./Nexus.Scheduler.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+# 이 스테이지는 최종 스테이지에 복사할 서비스 프로젝트를 게시하는 데 사용됩니다.
+FROM build AS publish
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish "./Nexus.Scheduler.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+
+# 이 스테이지는 프로덕션에서 사용되거나 VS에서 일반 모드로 실행할 때 사용됩니다(디버그 구성을 사용하지 않는 경우 기본값).
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "Nexus.Scheduler.dll"]
+
+
+================================================
+FILE: nexus/src/Nexus.Scheduler/Nexus.Scheduler.csproj
+================================================
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-Nexus.Scheduler-0ce71cb6-dbdb-4f50-bab8-c54bba1098d5</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Interfaces\**" />
+    <Content Remove="Interfaces\**" />
+    <EmbeddedResource Remove="Interfaces\**" />
+    <None Remove="Interfaces\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+    <PackageReference Include="StackExchange.Redis" Version="2.8.58" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Nexus.Core\Nexus.Core.csproj" />
+  </ItemGroup>
+</Project>
+
+
+
+================================================
+FILE: nexus/src/Nexus.Scheduler/Program.cs
+================================================
+using Nexus.Core.Infrastructure.Redis;
+using StackExchange.Redis;
+
+namespace Nexus.Scheduler
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var builder = Host.CreateApplicationBuilder(args);
+
+            builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("localhost:6379"));
+            builder.Services.AddSingleton<RedisDataService>();
+
+            builder.Services.AddHostedService<Worker>();
+
+            var host = builder.Build();
+            host.Run();
+        }
+    }
+}
+
+
+================================================
+FILE: nexus/src/Nexus.Scheduler/Worker.cs
+================================================
+using StackExchange.Redis;
+
+namespace Nexus.Scheduler
+{
+    public class Worker : BackgroundService
+    {
+        private readonly ILogger<Worker> _logger;
+
+        public Worker(ILogger<Worker> logger)
+        {
+            _logger = logger;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                await Task.Delay(1000, stoppingToken);
+            }
+        }
+    }
+}
+
+
+================================================
+FILE: nexus/src/Nexus.Scheduler/Properties/launchSettings.json
+================================================
+{
+  "profiles": {
+    "Nexus.Scheduler": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  },
+  "$schema": "http://json.schemastore.org/launchsettings.json"
+}
+
+
+================================================
+FILE: nexus/src/Nexus.Scheduler/Services/SchedulerService.cs
+================================================
+﻿using Nexus.Core.Domain.Shared;
+using Nexus.Core.Domain.Transports.Interfaces;
+using System.Collections.Generic;
+
+internal class SchedulerService
+{
+    // 모든 Location 인스턴스를 관리하는 컬렉션
+    private readonly Dictionary<string, Location<ITransportable>> _locations = new();
+
+    private readonly LocationService _locationService;
+
+    public SchedulerService(LocationService locationService)
+    {
+        _locationService = locationService;
+    }
+
+    // Location 인스턴스 조회
+    public Location<ITransportable>? GetLocation(string id)
+    {
+        _locations.TryGetValue(id, out var location);
+        return location;
+    }
+
+    // Location 관련 작업 예시
+    public void LoadItem(string locationId, ITransportable item)
+    {
+        var location = GetLocation(locationId);
+        if (location != null)
+        {
+            location.Load(item);
+            // 필요 시 LocationService에 상태 동기화
+        }
+    }
+}
+
