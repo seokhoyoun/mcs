@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="StackExchange.Redis" Version="2.8.58" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Nexus.Core\Nexus.Core.csproj" />
   </ItemGroup>
 

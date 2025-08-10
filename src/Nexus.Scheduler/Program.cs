@@ -1,4 +1,5 @@
-using Nexus.Core.Infrastructure.Redis;
+using Nexus.Core.Domain.Models.Locations.Interfaces;
+using Nexus.Infrastructure.Persistence.Redis;
 using StackExchange.Redis;
 
 namespace Nexus.Scheduler
@@ -10,7 +11,7 @@ namespace Nexus.Scheduler
             var builder = Host.CreateApplicationBuilder(args);
 
             builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("localhost:6379"));
-            builder.Services.AddSingleton<RedisDataService>();
+            builder.Services.AddSingleton<ILocationRepository, RedisLocationRepository>();
 
             builder.Services.AddHostedService<Worker>();
 
