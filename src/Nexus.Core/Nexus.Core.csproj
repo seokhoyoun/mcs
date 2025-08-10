@@ -12,8 +12,4 @@
     <None Remove="Shared\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="StackExchange.Redis" Version="2.8.58" />
-  </ItemGroup>
-
 </Project>
