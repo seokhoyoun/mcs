@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Nexus.Core.Domain.Models.Plans
 {
-    internal class Plan : IEntity
+    public class Plan : IEntity
     {
         public string Id => throw new NotImplementedException();
 
