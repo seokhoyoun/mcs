@@ -4,9 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Nexus.Core.Domain.Models.Plans
+namespace Nexus.Core.Domain.Models.Plans.Enums
 {
-    public class PlanStep
+    public enum EPlanGroupStatus
     {
+        Waiting,
+        Processing,
+        Completed
     }
 }

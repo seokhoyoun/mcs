@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Nexus.Core.Domain.Models.Plans
 {
-    internal class Job
+    public class Job
     {
     }
 }
