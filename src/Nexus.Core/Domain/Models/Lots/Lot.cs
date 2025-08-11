@@ -4,7 +4,7 @@ using Nexus.Core.Domain.Shared.Interfaces;
 
 namespace Nexus.Core.Domain.Models.Lots
 {
-    internal class Lot : IEntity
+    public class Lot : IEntity
     {
         public required string Id { get; set; }
         public required string Name { get; set; }
