@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Nexus.Core\Nexus.Core.csproj" />
+    <ProjectReference Include="..\Nexus.Shared\Nexus.Shared.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,40 +1,48 @@
 ﻿using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Lots;
 using Nexus.Core.Domain.Models.Lots.Events;
+using Nexus.Core.Domain.Models.Plans;
+using Nexus.Core.Domain.Models.Plans.Interfaces;
+using Nexus.Core.Domain.Models.Plans.Strategies;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using Nexus.Shared.Application.Interfaces;
 using System.Collections.Generic;
 
-internal class SchedulerService : IEventHandler<LotCreatedEvent>
+namespace Nexus.Scheduler.Application.Services
 {
-    private readonly LocationService _locationService;
-    private readonly IEventPublisher _eventPublisher;
-
-    public SchedulerService(LocationService locationService, IEventPublisher eventPublisher)
+    internal class SchedulerService
     {
-        _locationService = locationService;
-        _eventPublisher = eventPublisher;
+        private readonly LocationService _locationService;
+
+        public SchedulerService(LocationService locationService)
+        {
+            _locationService = locationService;
+        }
+
+        public void CreatePlanGroupForLot(Lot lot)
+        {
+            // 실제 로직: lot의 정보(Chipset, Qty, Line 등)를 분석하여
+            // 필요한 운반 Plan 목록을 생성하는 복잡한 알고리즘이 들어갈 위치입니다.
+            // 여기서는 예시로 간단한 Plan을 생성합니다.
+            var plans = new List<Plan>
+            {
+                new Plan { Id = $"Plan-{lot.Id}-1", Name = "Loading" },
+                new Plan { Id = $"Plan-{lot.Id}-2", Name = "Transport" },
+                new Plan { Id = $"Plan-{lot.Id}-3", Name = "Unloading" }
+            };
+
+            // Lot의 특성에 따라 다른 전략(Parallel, Sequential 등)을 선택할 수 있습니다.
+            IPlanExecutionStrategy executionStrategy = new ParallelPlanStrategy();
+
+            var planGroup = new PlanGroup(id: $"PlanGroup-{lot.Id}", name: $"PlanGroup for Lot {lot.Id}", executionStrategy: executionStrategy, plans: plans);
+
+        }
+
+        // Location 관련 작업 예시
+        public void LoadItem(string locationId, ITransportable item)
+        {
+
+        }
+
     }
-
-    // Lot 도착 처리 및 이벤트 발행
-    public async Task HandleAsync(LotCreatedEvent @event, CancellationToken cancellationToken = default)
-    {
-        // 1. Lot 생성에 따른 스케줄링/할당 로직 작성
-        // 예시: Lot을 적절한 Location에 할당
-        // await _locationService.AssignLotAsync(@event.LotId, cancellationToken);
-
-        // 2. 필요시 추가 비즈니스 로직 수행
-        // 예: 상태 변경, 알림 발행 등
-
-        // 실제 구현은 비즈니스 요구사항에 맞게 작성하세요.
-    }
-
- 
-
-    // Location 관련 작업 예시
-    public void LoadItem(string locationId, ITransportable item)
-    {
-       
-    }
-
- 
 }

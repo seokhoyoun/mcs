@@ -9,8 +9,11 @@ namespace Nexus.Core.Domain.Models.Plans
 {
     public class Plan : IEntity
     {
-        public string Id => throw new NotImplementedException();
+        public required string Id { get; set; }
 
-        public string Name => throw new NotImplementedException();
+        public required string Name { get; set; }
+
+        public IReadOnlyList<PlanStep> PlanSteps => _planSteps.AsReadOnly();
+        private readonly List<PlanStep> _planSteps = new List<PlanStep>();
     }
 }
