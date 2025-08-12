@@ -1,6 +1,4 @@
 ﻿services:
-
-
   redis:
     image: redis:7-alpine
     container_name: redis
@@ -8,7 +6,6 @@
       - "6379:6379"
 
   supabase:
-    # 로컬 Supabase CLI가 관리하는 PostgreSQL 컨테이너를 사용합니다.
     image: postgres:15-alpine
     container_name: supabase_db
     ports:
@@ -26,6 +23,8 @@
     container_name: nexus_scheduler
     depends_on:
       - redis
+    ports:
+      - "9091:9091"
     volumes:
       - ./data:/app/data
 
@@ -37,3 +36,51 @@
     container_name: nexus_integrator
     depends_on:
       - redis
+    ports:
+      - "9092:9092"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus:/etc/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090"
+    depends_on:
+      - nexus.scheduler
+      - nexus.integrator
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/config.yml
+    volumes:
+      - ./loki/config.yml:/etc/loki/config.yml
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./promtail/config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+
+volumes:
+  grafana_data:
