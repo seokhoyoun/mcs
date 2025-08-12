@@ -1,5 +1,7 @@
-﻿using Nexus.Core.Domain.Models.Locations;
+﻿using Nexus.Core.Domain.Models.Areas.Interfaces;
+using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Enums;
+using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -9,17 +11,23 @@ using System.Threading.Tasks;
 
 namespace Nexus.Core.Domain.Models.Areas
 {
-    internal class AreaService
+    public class AreaService
     {
-        private readonly LocationService _locationService;
-        private readonly List<Area> _areas = new();
+        private readonly IAreaRepository _areaRepository;
+        private readonly List<Area> _areas;
 
-        public IReadOnlyList<Area> Areas => _areas;
+        public IReadOnlyList<Area> Areas => _areas.AsReadOnly();
 
-        public AreaService(LocationService locationService)
+        public AreaService(IAreaRepository areaRepository)
         {
-            _locationService = locationService;
+            _areaRepository = areaRepository;
+            _areas = new List<Area>();
+        }
 
+        public async Task InitializeAreaService()
+        {
+            var areas = await _areaRepository.GetAllAreasAsync();
+            _areas.AddRange(areas);
         }
     }
 }

@@ -1,3 +1,5 @@
+using Nexus.Core.Domain.Models.Areas;
+using Nexus.Core.Domain.Models.Areas.Interfaces;
 using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Lots.Events;
@@ -19,9 +21,9 @@ namespace Nexus.Scheduler
             var builder = Host.CreateApplicationBuilder(args);
 
             builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("redis:6379,abortConnect=false"));
-            builder.Services.AddSingleton<ILocationRepository, RedisLocationRepository>();
+            builder.Services.AddSingleton<IAreaRepository, RedisAreaRepository>();
 
-            builder.Services.AddSingleton<LocationService>();
+            builder.Services.AddSingleton<AreaService>();
             builder.Services.AddSingleton<SchedulerService>();
 
             builder.Services.AddSingleton<StockerService>();
