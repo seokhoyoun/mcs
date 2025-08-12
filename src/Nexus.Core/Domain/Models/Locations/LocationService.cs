@@ -9,6 +9,8 @@ namespace Nexus.Core.Domain.Models.Locations
 {
     public class LocationService
     {
+        public IReadOnlyDictionary<string, Location<ITransportable>> Locations => _locations;
+
         private readonly Dictionary<string, Location<ITransportable>> _locations = new();
         private readonly ILocationRepository _locationRepository;
 

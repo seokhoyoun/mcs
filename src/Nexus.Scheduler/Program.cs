@@ -1,6 +1,7 @@
 using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Lots.Events;
+using Nexus.Core.Domain.Models.Stockers;
 using Nexus.Core.Messaging;
 using Nexus.Infrastructure.Messaging;
 using Nexus.Infrastructure.Persistence.Redis;
@@ -22,6 +23,8 @@ namespace Nexus.Scheduler
 
             builder.Services.AddSingleton<LocationService>();
             builder.Services.AddSingleton<SchedulerService>();
+
+            builder.Services.AddSingleton<StockerService>();
 
             builder.Services.AddSingleton<IMessagePublisher, RedisPublisher>();
             builder.Services.AddSingleton<IEventPublisher, DomainEventPublisher>();

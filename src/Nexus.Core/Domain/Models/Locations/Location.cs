@@ -39,12 +39,12 @@ namespace Nexus.Core.Domain.Models.Locations
 
         public void ClearDomainEvents() => _domainEvents.Clear();
 
-        public void Load(T item)
+        internal void Load(T item)
         {
             CurrentItem = item;
         }
 
-        public T? Unload()
+        internal T? Unload()
         {
             var item = CurrentItem;
             CurrentItem = default;

@@ -1,0 +1,13 @@
+# File: prometheus/prometheus.yml
+
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'nexus-scheduler'
+    static_configs:
+      - targets: ['nexus.scheduler:9091'] # docker-compose 서비스 이름을 사용
+
+  - job_name: 'nexus-integrator'
+    static_configs:
+      - targets: ['nexus.integrator:9092'] # docker-compose 서비스 이름을 사용
