@@ -19,18 +19,7 @@ namespace Nexus.Core.Domain.Models.Locations
             _locationRepository = locationInfoRepository;
         }
 
-        /// <summary>
-        /// Redis에서 Location 정보를 불러와 내부 컬렉션을 초기화합니다.
-        /// </summary>
-        public async Task InitializeAsync()
-        {
-            var locations = await _locationRepository.GetAllAsync();
 
-            foreach (var location in locations)
-            {
-                _locations[location.Id] = location;
-            }
-        }
 
         public Location<ITransportable>? GetLocation(string id)
         {

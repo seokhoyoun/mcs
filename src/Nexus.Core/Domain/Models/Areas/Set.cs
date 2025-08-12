@@ -7,15 +7,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Nexus.Core.Domain.Models.Stockers
+namespace Nexus.Core.Domain.Models.Areas
 {
-    public class Stocker : IEntity
+    public class Set : IEntity
     {
         public required string Id { get; set; }
         public required string Name { get; set; }
 
-        public IReadOnlyList<Location<Cassette>> CassettePorts => _cassettePorts.AsReadOnly();
+        public IReadOnlyList<Location<Memory>> MemoryPorts => _memoryPorts.AsReadOnly();
 
-        private List<Location<Cassette>> _cassettePorts = new List<Location<Cassette>>();
+        private List<Location<Memory>> _memoryPorts = new List<Location<Memory>>();
     }
 }
