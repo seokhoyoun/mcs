@@ -12,7 +12,7 @@ namespace Nexus.Core.Domain.Models.Locations
         public string Id { get; }
         public string Name { get; }
         public ELocationType LocationType { get; }
-        public ELocationStatus Status { get; set; }
+        public ELocationStatus Status { get; private set; }
         public T? CurrentItem { get; private set; }
 
         private readonly List<IDomainEvent> _domainEvents = new();
