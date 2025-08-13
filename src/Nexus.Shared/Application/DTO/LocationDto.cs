@@ -1,5 +1,4 @@
-﻿using Nexus.Core.Domain.Models.Locations.Enums;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,26 +15,35 @@ namespace Nexus.Shared.Application.DTO
         /// <summary>
         /// 위치의 고유 식별자입니다. (예: "ST01.CP01", "A01.SET01.MP01")
         /// </summary>
-        public required string Id { get; set; }
+        public string Id { get; private set; }
 
         /// <summary>
         /// 위치의 이름입니다.
         /// </summary>
-        public required string Name { get; set; }
+        public string Name { get; private set; }
 
         /// <summary>
         /// 해당 위치가 어떤 종류의 아이템인지 나타냅니다. (예: Cassette, Tray, Memory)
         /// </summary>
-        public ELocationType LocationType { get; set; }
+        public int LocationType { get; private set; }
 
         /// <summary>
         /// 현재 이 포트에 적재된 아이템의 고유 식별자입니다. 아이템이 없으면 null입니다.
         /// </summary>
-        public string? CurrentItemId { get; set; }
+        public string? CurrentItemId { get; private set; }
 
         /// <summary>
         /// 현재 위치의 상태를 나타냅니다. 
         /// </summary>
-        public ELocationStatus Status { get; set; }
+        public int Status { get; private set; }
+
+        public LocationDto(string id, string name, int locationType, string? currentItemId, int status)
+        {
+            Id = id;
+            Name = name;
+            LocationType = locationType;
+            CurrentItemId = currentItemId;
+            Status = status;
+        }
     }
 }

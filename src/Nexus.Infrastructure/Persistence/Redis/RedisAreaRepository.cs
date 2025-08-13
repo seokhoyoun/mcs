@@ -128,13 +128,25 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 _logger.LogInformation($"기본 Area 데이터를 {filePath}에 저장했습니다.");
                 return areas;
             }
-
-            var json = File.ReadAllText(filePath);
-            var fileAreas = JsonSerializer.Deserialize<List<Area>>(json);
-
-            if (fileAreas != null)
+            try
             {
-                areas.AddRange(fileAreas);
+                var json = File.ReadAllText(filePath);
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    IncludeFields = true
+                };
+                var fileAreas = JsonSerializer.Deserialize<List<Area>>(json, options);
+
+                if (fileAreas != null)
+                {
+                    areas.AddRange(fileAreas);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "로컬 파일에서 Area 데이터를 로드하는 중 오류가 발생했습니다.");
+                throw;
             }
             return areas;
         }

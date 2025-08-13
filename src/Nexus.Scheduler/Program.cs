@@ -10,6 +10,7 @@ using Nexus.Infrastructure.Persistence.Redis;
 using Nexus.Scheduler.Application.Services;
 using Nexus.Scheduler.Application.Services.EventHandlers;
 using Nexus.Shared.Application.Interfaces;
+using Prometheus;
 using StackExchange.Redis;
 
 namespace Nexus.Scheduler
@@ -35,6 +36,9 @@ namespace Nexus.Scheduler
             builder.Services.AddScoped<IEventHandler<LotCreatedEvent>, LotCreatedEventHandler>();
 
             builder.Services.AddHostedService<Worker>();
+
+
+            builder.Services.AddMetricServer(options => { });
 
             var host = builder.Build();
             host.Run();

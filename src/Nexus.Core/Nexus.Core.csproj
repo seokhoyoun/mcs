@@ -7,9 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Shared\**" />
-    <EmbeddedResource Remove="Shared\**" />
-    <None Remove="Shared\**" />
+    <ProjectReference Include="..\Nexus.Shared\Nexus.Shared.csproj" />
   </ItemGroup>
 
 </Project>
