@@ -1,6 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using Nexus.Core.Domain.Models.Areas;
 using Nexus.Core.Domain.Models.Areas.Interfaces;
+using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Locations.Enums;
+using Nexus.Core.Domain.Models.Transports;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -68,7 +71,61 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
             if (!File.Exists(filePath))
             {
-                _logger.LogError($"JSON 파일을 찾을 수 없습니다: {filePath}");
+                for (int areaIdx = 1; areaIdx <= 2; areaIdx++)
+                {
+                    var areaId = $"A{areaIdx:00}";
+                    var areaName = $"AREA{areaIdx:00}";
+
+                    var cassetteLocations = new List<Location<Cassette>>();
+                    var trayLocations = new List<Location<Tray>>();
+
+                    for (int cassetteIdx = 1; cassetteIdx <= 6; cassetteIdx++)
+                    {
+                        var cassetteLocationId = $"{areaId}.CP{cassetteIdx:00}";
+                        cassetteLocations.Add(new Location<Cassette>(
+                            id: cassetteLocationId,
+                            name: $"{areaName}_CASSETTEPORT{cassetteIdx:00}",
+                            locationType: ELocationType.Cassette));
+
+                        for (int trayIdx = 1; trayIdx <= 6; trayIdx++)
+                        {
+                            var trayLocationId = $"{areaId}.CP{cassetteIdx:00}.TP{trayIdx:00}";
+                            trayLocations.Add(new Location<Tray>(
+                                id: trayLocationId,
+                                name: $"{areaName}_CASSETTEPORT{cassetteIdx:00}_TRAYPORT{trayIdx:00}",
+                                locationType: ELocationType.Tray));
+                        }
+                    }
+
+                    var sets = new List<Set>();
+                    for (int i = 1; i <= 20; i++)
+                    {
+                        var memoryLocations = new List<Location<Memory>>();
+                        for (int m = 1; m <= 32; m++)
+                        {
+                            memoryLocations.Add(new Location<Memory>(
+                                id: $"{areaId}.SET{i:00}.MP{m:00}",
+                                name: $"{areaName}_SET{i:00}_MEMORYPORT{m:00}",
+                                locationType: ELocationType.Memory));
+                        }
+
+                        sets.Add(new Set(
+                            id: $"{areaId}.SET{i:00}",
+                            name: $"{areaName}_SET{i:00}",
+                            memoryPorts: memoryLocations));
+                    }
+
+                    var area = new Area(areaId, areaName, cassetteLocations, trayLocations, sets);
+                    areas.Add(area);
+                }
+
+                // 파일로 저장
+                Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+                var baseJson = JsonSerializer.Serialize(areas, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(filePath, baseJson);
+
+                _logger.LogWarning($"JSON 파일을 찾을 수 없습니다: {filePath}");
+                _logger.LogInformation($"기본 Area 데이터를 {filePath}에 저장했습니다.");
                 return areas;
             }
 

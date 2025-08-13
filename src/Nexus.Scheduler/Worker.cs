@@ -7,13 +7,12 @@ namespace Nexus.Scheduler
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
-        private readonly LocationService _locationService;
         private readonly AreaService _areaService; // AreaService 의존성 추가
 
-        public Worker(ILogger<Worker> logger, LocationService locationService, AreaService areaService)
+        public Worker(ILogger<Worker> logger,  AreaService areaService)
         {
             _logger = logger;
-            _locationService = locationService;
+
             _areaService = areaService;
         }
 

@@ -12,11 +12,10 @@ namespace Nexus.Scheduler.Application.Services
 {
     internal class SchedulerService
     {
-        private readonly LocationService _locationService;
-
-        public SchedulerService(LocationService locationService)
+      
+        public SchedulerService()
         {
-            _locationService = locationService;
+       
         }
 
         public void CreatePlanGroupForLot(Lot lot)
