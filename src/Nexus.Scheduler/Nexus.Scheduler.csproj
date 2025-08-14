@@ -9,9 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Domain\**" />
     <Compile Remove="Interfaces\**" />
+    <Content Remove="Domain\**" />
     <Content Remove="Interfaces\**" />
+    <EmbeddedResource Remove="Domain\**" />
     <EmbeddedResource Remove="Interfaces\**" />
+    <None Remove="Domain\**" />
     <None Remove="Interfaces\**" />
   </ItemGroup>
 
@@ -29,6 +33,5 @@
 
   <ItemGroup>
     <Folder Include="Application\DTO\" />
-    <Folder Include="Domain\Services\" />
   </ItemGroup>
 </Project>

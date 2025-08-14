@@ -22,6 +22,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Infrastructure", "Nex
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Shared", "Nexus.Shared\Nexus.Shared.csproj", "{8659A291-24AD-4901-9F7C-82BC3B795222}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.UI", "Nexus.UI\Nexus.UI.csproj", "{669B23C7-97A6-4DDA-AF05-79054E806792}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,6 +54,10 @@ Global
 		{8659A291-24AD-4901-9F7C-82BC3B795222}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8659A291-24AD-4901-9F7C-82BC3B795222}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8659A291-24AD-4901-9F7C-82BC3B795222}.Release|Any CPU.Build.0 = Release|Any CPU
+		{669B23C7-97A6-4DDA-AF05-79054E806792}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{669B23C7-97A6-4DDA-AF05-79054E806792}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{669B23C7-97A6-4DDA-AF05-79054E806792}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{669B23C7-97A6-4DDA-AF05-79054E806792}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
