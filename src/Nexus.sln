@@ -10,7 +10,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2A3A057F-5D22-31FD-628C-DF5EF75AEF1E}"
 	ProjectSection(SolutionItems) = preProject
 		mcp.txt = mcp.txt
-		prometheus\prometheus.yml = prometheus\prometheus.yml
 		standard.md = standard.md
 	EndProjectSection
 EndProject

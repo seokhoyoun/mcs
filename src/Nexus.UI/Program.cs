@@ -1,4 +1,8 @@
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Hosting;
+using MudBlazor.Services;
 using Nexus.UI.Components;
+using System.Reflection.PortableExecutable;
 
 namespace Nexus.UI
 {
@@ -12,6 +16,8 @@ namespace Nexus.UI
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
+            builder.Services.AddMudServices();
+            
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -23,12 +29,12 @@ namespace Nexus.UI
             }
 
             app.UseHttpsRedirection();
-
             app.UseStaticFiles();
             app.UseAntiforgery();
 
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();
+
 
             app.Run();
         }
