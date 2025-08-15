@@ -3,7 +3,7 @@ using StackExchange.Redis;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Nexus.Infrastructure.Messaging
+namespace Nexus.Infrastructure.Messaging.Redis
 {
     public class RedisPublisher : IMessagePublisher
     {

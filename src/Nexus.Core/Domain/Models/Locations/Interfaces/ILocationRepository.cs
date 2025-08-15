@@ -1,9 +1,10 @@
 ﻿using Nexus.Core.Domain.Models.Transports.Interfaces;
+using Nexus.Shared.Application.DTO;
 
 namespace Nexus.Core.Domain.Models.Locations.Interfaces
 {
     public interface ILocationRepository
     {
-        Task<IEnumerable<Location<ITransportable>>> GetAllAsync();
+        Task<LocationState> GetStateAsync(string locationId);
     }
 }

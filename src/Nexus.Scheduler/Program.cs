@@ -6,6 +6,7 @@ using Nexus.Core.Domain.Models.Lots.Events;
 using Nexus.Core.Domain.Models.Stockers;
 using Nexus.Core.Messaging;
 using Nexus.Infrastructure.Messaging;
+using Nexus.Infrastructure.Messaging.Redis;
 using Nexus.Infrastructure.Persistence.Redis;
 using Nexus.Scheduler.Application.Services;
 using Nexus.Scheduler.Application.Services.EventHandlers;

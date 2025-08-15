@@ -9,5 +9,8 @@ namespace Nexus.Core.Domain.Models.Plans
 {
     public class PlanStep : IEntity
     {
+        public string Id { get; }
+
+        public string Name { get; }
     }
 }
