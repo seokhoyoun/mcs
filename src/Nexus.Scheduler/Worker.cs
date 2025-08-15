@@ -1,5 +1,7 @@
-using Nexus.Core.Domain.Models.Areas; // AreaService를 사용하기 위해 추가
+using Nexus.Core.Domain.Models.Areas; 
 using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Messaging;
+using Nexus.Scheduler.Application.Services;
 using StackExchange.Redis;
 
 namespace Nexus.Scheduler
@@ -7,23 +9,17 @@ namespace Nexus.Scheduler
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
-        private readonly AreaService _areaService; // AreaService 의존성 추가
+        private readonly SchedulerService _schedulerService;
 
-        public Worker(ILogger<Worker> logger,  AreaService areaService)
+        public Worker(ILogger<Worker> logger, SchedulerService schedulerService)
         {
             _logger = logger;
-
-            _areaService = areaService;
+            _schedulerService = schedulerService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await _areaService.InitializeAreaService(); // AreaService 초기화 로직 추가
-
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                await Task.Delay(1000, stoppingToken);
-            }
+            await _schedulerService.RunAsync(stoppingToken);
         }
     }
 }

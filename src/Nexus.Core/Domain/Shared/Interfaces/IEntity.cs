@@ -1,3 +1,5 @@
+using Nexus.Core.Domain.Shared.Events;
+
 namespace Nexus.Core.Domain.Shared.Interfaces
 {
     /// <summary>
@@ -14,5 +16,6 @@ namespace Nexus.Core.Domain.Shared.Interfaces
         /// ¿Ã∏ß
         /// </summary>
         string Name { get; }
+     
     }
 }

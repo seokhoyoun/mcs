@@ -8,6 +8,7 @@ namespace Nexus.Core.Domain.Models.Areas.Interfaces
 {
     public interface IAreaRepository
     {
-        Task<IEnumerable<Area>> GetAllAreasAsync();
+        Task InitializeAreasAsync(IEnumerable<Area> areas);
+
     }
 }

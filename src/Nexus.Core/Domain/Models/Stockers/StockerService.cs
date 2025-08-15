@@ -28,4 +28,4 @@ namespace Nexus.Core.Domain.Models.Stockers
         }
     }
 }
-}
+
