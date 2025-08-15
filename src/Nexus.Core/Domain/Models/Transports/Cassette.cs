@@ -14,14 +14,12 @@ namespace Nexus.Core.Domain.Models.Transports
         public required string Name { get; set; }
  
 
-        private readonly List<Tray> _trays = new List<Tray>();
         public IReadOnlyList<IItem> Items => _trays.AsReadOnly();
+        private readonly List<Tray> _trays = new List<Tray>();
 
-        public Cassette()
-        {
-        }
+        
 
-        public Cassette(string id, string name, IEnumerable<Tray> trays)
+        public Cassette(string id, string name, IReadOnlyList<Tray> trays)
         {
             Id = id;
             Name = name;

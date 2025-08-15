@@ -11,11 +11,19 @@ namespace Nexus.Core.Domain.Models.Stockers
 {
     public class Stocker : IEntity
     {
-        public required string Id { get; set; }
-        public required string Name { get; set; }
+        public string Id { get; }
+        public string Name { get; }
 
         public IReadOnlyList<Location<Cassette>> CassettePorts => _cassettePorts.AsReadOnly();
 
         private List<Location<Cassette>> _cassettePorts = new List<Location<Cassette>>();
+
+        public Stocker(string id, string name, IReadOnlyList<Location<Cassette>> cassettePorts)
+        {
+            Id = id;
+            Name = name;
+
+            _cassettePorts.AddRange(cassettePorts);
+        }
     }
 }

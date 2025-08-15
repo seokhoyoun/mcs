@@ -8,6 +8,6 @@ namespace Nexus.Core.Domain.Models.Stockers.Interfaces
 {
     public interface IStockerRepository
     {
-
+        Task<IReadOnlyList<Stocker>> GetAllStockersAsync();
     }
 }
