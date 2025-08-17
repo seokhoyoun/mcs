@@ -10,15 +10,10 @@ namespace Nexus.Core.Domain.Models.Transports
 {
     public class Memory : ITransportable
     {
-        public required string Id { get; set; }
-        public required string Name { get; set; }
-
+        public string Id { get; }
+        public string Name { get; }
 
         public IReadOnlyList<IItem>? Items { get; } = null;
-
-        public Memory()
-        {
-        }
 
         public Memory(string id, string name)
         {

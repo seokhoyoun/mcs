@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Nexus.Core.Domain.Models.Areas;
-using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Locations.Service;
 using Nexus.Core.Messaging;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,7 +20,7 @@ public class LocationStatusChangedMessageHandler : IMessageHandler<string>
     public async Task HandleAsync(string id, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation($"Location 상태 변경 메시지 수신: {id}");
-        _locationService.UpdateLocation(id);
+        await _locationService.RefreshLocationStateAsync(id);
         await Task.CompletedTask;
     }
 }

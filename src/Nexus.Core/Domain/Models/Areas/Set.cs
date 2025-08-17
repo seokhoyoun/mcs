@@ -14,11 +14,11 @@ namespace Nexus.Core.Domain.Models.Areas
     {
         public string Id { get; }
         public string Name { get; }
-        public IReadOnlyList<Location<Memory>> MemoryPorts => _memoryPorts.AsReadOnly();
+        public IReadOnlyList<MemoryLocation> MemoryPorts => _memoryPorts.AsReadOnly();
 
-        private readonly List<Location<Memory>> _memoryPorts = new List<Location<Memory>>();
+        private readonly List<MemoryLocation> _memoryPorts = new List<MemoryLocation>();
 
-        public Set(string id, string name, IReadOnlyList<Location<Memory>> memoryPorts)
+        public Set(string id, string name, IReadOnlyList<MemoryLocation> memoryPorts)
         {
             Id = id;
             Name = name;

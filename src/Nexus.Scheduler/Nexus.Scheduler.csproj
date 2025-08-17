@@ -30,8 +30,4 @@
     <ProjectReference Include="..\Nexus.Infrastructure\Nexus.Infrastructure.csproj" />
     <ProjectReference Include="..\Nexus.Shared\Nexus.Shared.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Application\DTO\" />
-  </ItemGroup>
 </Project>

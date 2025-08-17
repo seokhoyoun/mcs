@@ -8,6 +8,6 @@ namespace Nexus.Shared.Application.DTO
 {
     public class AreaState
     {
-        public string Id { get; set; }
+        public string Id { get; set; } = default!;
     }
 }

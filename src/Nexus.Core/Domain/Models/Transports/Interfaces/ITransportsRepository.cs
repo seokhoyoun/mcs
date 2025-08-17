@@ -1,26 +1,26 @@
-﻿using System;
+﻿using Nexus.Shared.Application.DTO;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Nexus.Core.Domain.Models.Transports.Interfaces
+public interface ITransportsRepository
 {
-    public interface ITransportsRepository
-    {
-        /// <summary>
-        /// 현재 존재하는 모든 카세트(Cassette) 목록을 반환합니다.
-        /// </summary>
-        IEnumerable<Cassette> GetAllCassettes();
+    IEnumerable<CassetteState> GetAllCassettes();
+    CassetteState? GetCassetteById(string id);
+    void SaveCassette(CassetteState cassette);
+    void DeleteCassette(string id);
 
-        /// <summary>
-        /// 현재 존재하는 모든 트레이(Tray) 목록을 반환합니다.
-        /// </summary>
-        IEnumerable<Tray> GetAllTrays();
+    IEnumerable<TrayState> GetAllTrays();
+    TrayState? GetTrayById(string id);
+    void SaveTray(TrayState tray);
+    void DeleteTray(string id);
 
-        /// <summary>
-        /// 현재 존재하는 모든 메모리(Memory) 목록을 반환합니다.
-        /// </summary>
-        IEnumerable<Memory> GetAllMemories();
-    }
+    IEnumerable<MemoryState> GetAllMemories();
+    MemoryState? GetMemoryById(string id);
+    void SaveMemory(MemoryState memory);
+    void DeleteMemory(string id);
+
+    // Set 자료구조 활용을 위한 추가 메서드
+    void AddTrayToCassette(string cassetteId, string trayId);
+    void RemoveTrayFromCassette(string cassetteId, string trayId);
+    void AddMemoryToTray(string trayId, string memoryId);
+    void RemoveMemoryFromTray(string trayId, string memoryId);
 }

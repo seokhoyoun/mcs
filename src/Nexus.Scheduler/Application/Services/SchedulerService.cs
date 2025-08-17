@@ -1,4 +1,4 @@
-﻿using Nexus.Core.Domain.Models.Areas;
+﻿using Nexus.Core.Domain.Models.Areas.Service;
 using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Lots;
 using Nexus.Core.Domain.Models.Lots.Events;

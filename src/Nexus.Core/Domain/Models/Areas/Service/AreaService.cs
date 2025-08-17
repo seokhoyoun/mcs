@@ -2,7 +2,6 @@
 using Nexus.Core.Domain.Models.Areas.Interfaces;
 using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Enums;
-using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Transports;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -12,8 +11,10 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Nexus.Core.Domain.Models.Locations.Base;
+using Nexus.Core.Domain.Models.Locations.Service;
 
-namespace Nexus.Core.Domain.Models.Areas
+namespace Nexus.Core.Domain.Models.Areas.Service
 {
     public class AreaService
     {
@@ -39,9 +40,8 @@ namespace Nexus.Core.Domain.Models.Areas
 
             foreach (var area in _areas)
             {
-                var locations = new List<Location<ITransportable>>();
+                var locations = new List<Location>();
                 
-
                 _locationService.AddLocations(locations);
             }
             
@@ -61,13 +61,13 @@ namespace Nexus.Core.Domain.Models.Areas
                     var areaId = $"A{areaIdx:00}";
                     var areaName = $"AREA{areaIdx:00}";
 
-                    var cassetteLocations = new List<Location<Cassette>>();
-                    var trayLocations = new List<Location<Tray>>();
+                    var cassetteLocations = new List<CassetteLocation>();
+                    var trayLocations = new List<TrayLocation>();
 
                     for (int cassetteIdx = 1; cassetteIdx <= 6; cassetteIdx++)
                     {
                         var cassetteLocationId = $"{areaId}.CP{cassetteIdx:00}";
-                        cassetteLocations.Add(new Location<Cassette>(
+                        cassetteLocations.Add(new CassetteLocation(
                             id: cassetteLocationId,
                             name: $"{areaName}_CASSETTEPORT{cassetteIdx:00}",
                             locationType: ELocationType.Cassette));
@@ -75,7 +75,7 @@ namespace Nexus.Core.Domain.Models.Areas
                         for (int trayIdx = 1; trayIdx <= 6; trayIdx++)
                         {
                             var trayLocationId = $"{areaId}.CP{cassetteIdx:00}.TP{trayIdx:00}";
-                            trayLocations.Add(new Location<Tray>(
+                            trayLocations.Add(new TrayLocation(
                                 id: trayLocationId,
                                 name: $"{areaName}_CASSETTEPORT{cassetteIdx:00}_TRAYPORT{trayIdx:00}",
                                 locationType: ELocationType.Tray));
@@ -85,10 +85,10 @@ namespace Nexus.Core.Domain.Models.Areas
                     var sets = new List<Set>();
                     for (int i = 1; i <= 20; i++)
                     {
-                        var memoryLocations = new List<Location<Memory>>();
+                        var memoryLocations = new List<MemoryLocation>();
                         for (int m = 1; m <= 32; m++)
                         {
-                            memoryLocations.Add(new Location<Memory>(
+                            memoryLocations.Add(new MemoryLocation(
                                 id: $"{areaId}.SET{i:00}.MP{m:00}",
                                 name: $"{areaName}_SET{i:00}_MEMORYPORT{m:00}",
                                 locationType: ELocationType.Memory));
@@ -119,7 +119,7 @@ namespace Nexus.Core.Domain.Models.Areas
                 var options = new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true,
-                    IncludeFields = true
+                    //IncludeFields = true
                 };
                 var fileAreas = JsonSerializer.Deserialize<List<Area>>(json, options);
 

@@ -10,17 +10,17 @@ using System.Threading.Tasks;
 
 namespace Nexus.Core.Domain.Models.Locations
 {
-    public class CassetteLocation : Location
+    public class TrayLocation : Location
     {
-        public override ITransportable? CurrentItem 
+        public override ITransportable? CurrentItem
         {
             get => _currentItem;
-            internal set => _currentItem = (Cassette?)value; 
+            internal set => _currentItem = (Tray?)value;
         }
 
-        private Cassette? _currentItem;
+        private Tray? _currentItem;
 
-        public CassetteLocation(string id, string name, ELocationType locationType) : base(id, name, locationType)
+        public TrayLocation(string id, string name, ELocationType locationType) : base(id, name, locationType)
         {
         }
     }
