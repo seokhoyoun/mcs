@@ -2,7 +2,7 @@ using Nexus.Core.Domain.Models.Locations.Enums;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using Nexus.Core.Domain.Shared.Interfaces;
 
-namespace Nexus.Core.Domain.Models.Locations
+namespace Nexus.Core.Domain.Models.Locations.Base
 {
 
     public abstract class Location : IEntity
@@ -10,8 +10,8 @@ namespace Nexus.Core.Domain.Models.Locations
         public string Id { get; protected set; }
         public string Name { get; protected set; }
         public ELocationType LocationType { get; protected set; }
-        public ELocationStatus Status { get; protected set; }
-        public ITransportable? CurrentItem { get; protected set; }
+        public ELocationStatus Status { get; internal set; }
+        public abstract ITransportable? CurrentItem { get; internal set; }
 
         protected Location(string id, string name, ELocationType locationType) 
         {

@@ -10,14 +10,11 @@ namespace Nexus.Core.Domain.Models.Transports
 {
     public class Cassette : ITransportable
     {
-        public required string Id { get; set; }
-        public required string Name { get; set; }
- 
+        public string Id { get;  }
+        public string Name { get;  }
 
         public IReadOnlyList<IItem> Items => _trays.AsReadOnly();
         private readonly List<Tray> _trays = new List<Tray>();
-
-        
 
         public Cassette(string id, string name, IReadOnlyList<Tray> trays)
         {

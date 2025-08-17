@@ -1,9 +1,12 @@
-using Nexus.Core.Domain.Models.Areas;
 using Nexus.Core.Domain.Models.Areas.Interfaces;
+using Nexus.Core.Domain.Models.Areas.Service;
 using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
+using Nexus.Core.Domain.Models.Locations.Service;
 using Nexus.Core.Domain.Models.Lots.Events;
-using Nexus.Core.Domain.Models.Stockers;
+using Nexus.Core.Domain.Models.Stockers.Interfaces;
+using Nexus.Core.Domain.Models.Stockers.Service;
+using Nexus.Core.Domain.Models.Transports.Service;
 using Nexus.Core.Messaging;
 using Nexus.Infrastructure.Messaging;
 using Nexus.Infrastructure.Messaging.Redis;
@@ -25,16 +28,26 @@ namespace Nexus.Scheduler
             builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("redis:6379,abortConnect=false"));
             builder.Services.AddSingleton<IAreaRepository, RedisAreaRepository>();
 
+            builder.Services.AddSingleton<ILocationRepository, RedisLocationRepository>();
+            builder.Services.AddSingleton<LocationService>();
+            builder.Services.AddSingleton<ITransportsRepository, RedisTransportsRepository>();
+            builder.Services.AddSingleton<TransportService>();
+
+            builder.Services.AddSingleton<IAreaRepository, RedisAreaRepository>();
             builder.Services.AddSingleton<AreaService>();
             builder.Services.AddSingleton<SchedulerService>();
 
+            builder.Services.AddSingleton<IStockerRepository, RedisStockerRepository>();
             builder.Services.AddSingleton<StockerService>();
 
             builder.Services.AddSingleton<IMessagePublisher, RedisPublisher>();
+            builder.Services.AddSingleton<IMessageSubscriber, RedisSubscriber>();
+
             builder.Services.AddSingleton<IEventPublisher, DomainEventPublisher>();
 
 
             builder.Services.AddScoped<IEventHandler<LotCreatedEvent>, LotCreatedEventHandler>();
+            builder.Services.AddSingleton<LocationStatusChangedMessageHandler>();
 
             builder.Services.AddHostedService<Worker>();
 

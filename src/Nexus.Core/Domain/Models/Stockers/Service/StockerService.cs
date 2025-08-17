@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Nexus.Core.Domain.Models.Stockers
+namespace Nexus.Core.Domain.Models.Stockers.Service
 {
     public class StockerService
     {

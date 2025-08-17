@@ -1,4 +1,5 @@
 ﻿using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Transports;
 using Nexus.Core.Domain.Shared.Interfaces;
 using System.Collections.Generic;
@@ -10,21 +11,21 @@ namespace Nexus.Core.Domain.Models.Areas
     {
         public string Id { get; }
         public string Name { get; }
-        public IReadOnlyList<Location> CassettePorts => _cassettePorts.AsReadOnly();
-        public IReadOnlyList<Location> TrayPorts => _trayPorts.AsReadOnly();
+        public IReadOnlyList<CassetteLocation> CassetteLocations => _cassetteLocations.AsReadOnly();
+        public IReadOnlyList<TrayLocation> TrayLocations => _trayLocations.AsReadOnly();
         public IReadOnlyList<Set> Sets => _sets.AsReadOnly();
 
-        private readonly List<Location> _cassettePorts = new();
-        private readonly List<Location> _trayPorts = new();
+        private readonly List<CassetteLocation> _cassetteLocations = new();
+        private readonly List<TrayLocation> _trayLocations = new();
         private readonly List<Set> _sets = new();
 
-        public Area(string id, string name, IReadOnlyList<Location> cassettePorts, IReadOnlyList<Location> trayPorts, IReadOnlyList<Set> sets)
+        public Area(string id, string name, IReadOnlyList<CassetteLocation> cassetteLocations, IReadOnlyList<TrayLocation> trayLocations, IReadOnlyList<Set> sets)
         {
             Id = id;
             Name = name;
 
-            _cassettePorts.AddRange(cassettePorts);
-            _trayPorts.AddRange(trayPorts);
+            _cassetteLocations.AddRange(cassetteLocations);
+            _trayLocations.AddRange(trayLocations);
             _sets.AddRange(sets);
 
         }

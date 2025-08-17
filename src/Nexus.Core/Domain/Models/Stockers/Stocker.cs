@@ -14,11 +14,11 @@ namespace Nexus.Core.Domain.Models.Stockers
         public string Id { get; }
         public string Name { get; }
 
-        public IReadOnlyList<Location<Cassette>> CassettePorts => _cassettePorts.AsReadOnly();
+        public IReadOnlyList<CassetteLocation> CassettePorts => _cassettePorts.AsReadOnly();
 
-        private List<Location<Cassette>> _cassettePorts = new List<Location<Cassette>>();
+        private List<CassetteLocation> _cassettePorts = new List<CassetteLocation>();
 
-        public Stocker(string id, string name, IReadOnlyList<Location<Cassette>> cassettePorts)
+        public Stocker(string id, string name, IReadOnlyList<CassetteLocation> cassettePorts)
         {
             Id = id;
             Name = name;
