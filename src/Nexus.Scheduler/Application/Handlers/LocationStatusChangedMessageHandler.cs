@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Nexus.Core.Domain.Models.Areas;
-using Nexus.Core.Domain.Models.Locations.Service;
+using Nexus.Core.Domain.Models.Locations.Services;
 using Nexus.Core.Messaging;
 using System.Threading;
 using System.Threading.Tasks;

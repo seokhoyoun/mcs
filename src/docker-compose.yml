@@ -15,6 +15,28 @@
       POSTGRES_PASSWORD: "1234"
       POSTGRES_DB: "postgres"
 
+  n8n:
+    image: n8nio/n8n:1.106.3
+    container_name: n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+      - ./data:/home/node/data
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - N8N_BASIC_AUTH_ACTIVE=false
+      # PostgreSQL 연결 정보 (n8n 워크플로에서 사용)
+      - POSTGRES_HOST=supabase
+      - POSTGRES_DATABASE=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+    depends_on:
+      - supabase
+
   nexus.scheduler:
     image: ${DOCKER_REGISTRY-}nexusscheduler
     build:
@@ -59,6 +81,20 @@
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
       # - nexus_ui_datakeys:/app/DataProtectionKeys
 
+  nexus.gateway:
+    build:
+      context: .
+      dockerfile: Nexus.Gateway/Dockerfile
+    container_name: nexus_gateway
+    depends_on:
+      - redis
+    ports:
+      - "5050:5050"
+      - "5051:5051"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTPS_PORT=5051
+      - ASPNETCORE_URLS=http://+:5050;https://+:5051
 
   prometheus:
     image: prom/prometheus:latest

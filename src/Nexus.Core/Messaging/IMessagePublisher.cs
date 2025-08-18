@@ -9,5 +9,6 @@ namespace Nexus.Core.Messaging
         /// 지정된 채널로 메시지를 비동기적으로 발행합니다.
         /// </summary>
         Task PublishAsync(string channel, string message, CancellationToken cancellationToken = default);
+      
     }
 }
