@@ -1,14 +1,14 @@
 ﻿using Microsoft.Extensions.Logging;
-using Nexus.Core.Domain.Models.Areas.Service;
+using Nexus.Core.Domain.Models.Areas.Services;
 using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Locations.Enums;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
-using Nexus.Core.Domain.Models.Transports.Service; // TransportService using 추가
+using Nexus.Core.Domain.Models.Transports.Services; // TransportService using 추가
 using Nexus.Shared.Application.Interfaces;
 using System.Threading.Tasks;
 
-namespace Nexus.Core.Domain.Models.Locations.Service
+namespace Nexus.Core.Domain.Models.Locations.Services
 {
     public class LocationService
     {
