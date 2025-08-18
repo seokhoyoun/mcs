@@ -25,9 +25,9 @@ namespace Nexus.Infrastructure.Messaging.Redis
             Debug.Assert(!string.IsNullOrEmpty(channel), "Channel name cannot be null or empty.");
             Debug.Assert(handler != null, "Handler cannot be null.");
 
-            await _redisSubscriber.SubscribeAsync(channel, (ch, message) =>
+            await _redisSubscriber.SubscribeAsync(RedisChannel.Literal(channel), (ch, message) =>
             {
-                handler(message);
+                handler(message.ToString());
             });
 
             // 구독은 비동기적으로 계속 유지됨. 필요시 stoppingToken 활용해 구독 해제 가능

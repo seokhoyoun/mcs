@@ -1,12 +1,12 @@
 using Nexus.Core.Domain.Models.Areas.Interfaces;
-using Nexus.Core.Domain.Models.Areas.Service;
+using Nexus.Core.Domain.Models.Areas.Services;
 using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
-using Nexus.Core.Domain.Models.Locations.Service;
+using Nexus.Core.Domain.Models.Locations.Services;
 using Nexus.Core.Domain.Models.Lots.Events;
 using Nexus.Core.Domain.Models.Stockers.Interfaces;
-using Nexus.Core.Domain.Models.Stockers.Service;
-using Nexus.Core.Domain.Models.Transports.Service;
+using Nexus.Core.Domain.Models.Stockers.Services;
+using Nexus.Core.Domain.Models.Transports.Services;
 using Nexus.Core.Messaging;
 using Nexus.Infrastructure.Messaging;
 using Nexus.Infrastructure.Messaging.Redis;

@@ -26,7 +26,7 @@ namespace Nexus.Scheduler.Application.Services.EventHandlers
         {
             // 이 예시에서는 가상의 Lot 객체를 사용합니다.
             var lot = new Nexus.Core.Domain.Models.Lots.Lot { Id = @event.LotId, Name = "New Lot" };
-            _schedulerService.CreatePlanGroupForLot(lot);
+            _schedulerService.CreatePlanGroup(lot);
 
             var lotPlanAssignedEvent = new LotPlanAssignedEvent(lot.Id);
             await _eventPublisher.PublishAsync(lotPlanAssignedEvent, cancellationToken);
