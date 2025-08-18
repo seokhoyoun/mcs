@@ -14,4 +14,8 @@
     <ProjectReference Include="..\Nexus.Shared\Nexus.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Domain\Models\Lots\Services\" />
+  </ItemGroup>
+
 </Project>

@@ -2,7 +2,7 @@
 using Nexus.Shared.Application.DTO;
 using System.Collections.Generic;
 
-namespace Nexus.Core.Domain.Models.Transports.Service
+namespace Nexus.Core.Domain.Models.Transports.Services
 {
     public class TransportService
     {

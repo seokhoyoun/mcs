@@ -12,9 +12,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Nexus.Core.Domain.Models.Locations.Base;
-using Nexus.Core.Domain.Models.Locations.Service;
+using Nexus.Core.Domain.Models.Locations.Services;
 
-namespace Nexus.Core.Domain.Models.Areas.Service
+namespace Nexus.Core.Domain.Models.Areas.Services
 {
     public class AreaService
     {
