@@ -2,15 +2,8 @@
 using Nexus.Core.Domain.Models.Areas.Interfaces;
 using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Enums;
-using Nexus.Core.Domain.Models.Transports;
-using Nexus.Core.Domain.Models.Transports.Interfaces;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Locations.Services;
 
