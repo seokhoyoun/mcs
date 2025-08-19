@@ -13,7 +13,12 @@ namespace Nexus.Core.Domain.Models.Plans
 
         public string Name { get; }
 
-        public IReadOnlyList<PlanStep> PlanSteps => _planSteps.AsReadOnly();
-        private readonly List<PlanStep> _planSteps = new List<PlanStep>();
+        public List<PlanStep> PlanSteps { get; } = new List<PlanStep>();
+
+        public Plan(string id, string name)
+        {
+            Id = id;
+            Name = name;
+        }
     }
 }
