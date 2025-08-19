@@ -9,21 +9,17 @@ namespace Nexus.Core.Domain.Models.Plans
     {
         public string Id { get; }
         public string Name { get; }
-        public PlanGroupType GroupType { get; }             
-        public IPlanExecutionStrategy ExecutionStrategy { get; }
-        public List<Plan> Plans { get; }
+        public EPlanGroupType GroupType { get; }             
+        public List<Plan> Plans { get; } = new List<Plan>();
 
         public PlanGroup(string id,
                          string name,
-                         PlanGroupType groupType,              
-                         IPlanExecutionStrategy executionStrategy,
-                         IEnumerable<Plan> plans)
+                         EPlanGroupType groupType)
         {
             Id = id;
             Name = name;
             GroupType = groupType;                             
-            ExecutionStrategy = executionStrategy;
-            Plans = plans?.ToList() ?? new List<Plan>();
+
         }
     }
 }

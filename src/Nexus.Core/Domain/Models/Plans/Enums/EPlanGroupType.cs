@@ -1,6 +1,6 @@
 ﻿namespace Nexus.Core.Domain.Models.Plans.Enums
 {
-    public enum PlanGroupType
+    public enum EPlanGroupType
     {
         StockerToArea = 0,
         AreaToSet = 1,

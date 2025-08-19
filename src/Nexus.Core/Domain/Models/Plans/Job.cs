@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Nexus.Core.Domain.Models.Plans
+﻿
+namespace Nexus.Scheduler.Domain.Models.Plans
 {
     public class Job
     {
+        public string JobId { get; set; } = string.Empty;
+        public string From { get; set; } = string.Empty;
+        public string To { get; set; } = string.Empty;
     }
 }
