@@ -1,4 +1,5 @@
-﻿using Nexus.Core.Domain.Shared.Interfaces;
+﻿using Nexus.Core.Domain.Models.Plans.Enums;
+using Nexus.Core.Domain.Shared.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,12 +13,14 @@ namespace Nexus.Core.Domain.Models.Plans
         public string Id { get; }
         public string Name { get; }
         public int StepNo { get; set; }
-        public string Action { get; set; }
         public string Position { get; set; }
+        public EPlanStepAction Action { get; set; }
+        public EPlanStepStatus Status { get; set; } = EPlanStepStatus.Pending;
+
         public List<string> CarrierIds { get; set; } = new List<string>();
         public List<Job> Jobs { get; set; } = new List<Job>();
 
-        public PlanStep(string id, string name, int stepNo, string action, string position)
+        public PlanStep(string id, string name, int stepNo, EPlanStepAction action, string position)
         {
             Id = id;
             Name = name;

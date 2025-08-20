@@ -58,8 +58,8 @@ namespace Nexus.Scheduler.Application.Services
                 foreach (var cassette in lotStep.Cassettes)
                 {
                     Plan plan = new Plan("PID", $"{pg.Id}_{cassette.Id}");
-                    PlanStep cassetteLoadStep = new PlanStep();
-                    PlanStep cassetteUnloadStep = new PlanStep();
+                    PlanStep cassetteLoadStep = new PlanStep("ps", "ps", 1, EPlanStepAction.CassetteLoad, "");
+                    PlanStep cassetteUnloadStep = new PlanStep("ps", "ps", 2, EPlanStepAction.CassetteUnload, "");
 
                     plan.PlanSteps.Add(cassetteLoadStep);
                     plan.PlanSteps.Add(cassetteUnloadStep);
