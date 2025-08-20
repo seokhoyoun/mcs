@@ -16,5 +16,14 @@ namespace Nexus.Core.Domain.Models.Plans
         public string Position { get; set; }
         public List<string> CarrierIds { get; set; } = new List<string>();
         public List<Job> Jobs { get; set; } = new List<Job>();
+
+        public PlanStep(string id, string name, int stepNo, string action, string position)
+        {
+            Id = id;
+            Name = name;
+            StepNo = stepNo;
+            Action = action;
+            Position = position;
+        }
     }
 }
