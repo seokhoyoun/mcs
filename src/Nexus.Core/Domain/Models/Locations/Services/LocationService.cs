@@ -62,7 +62,41 @@ namespace Nexus.Core.Domain.Models.Locations.Services
                 }
             }
         }
+        public CassetteLocation? GetCassetteLocationById(string id)
+        {
+            foreach (CassetteLocation cassetteLocation in _cassetteLocations)
+            {
+                if (cassetteLocation.Id == id)
+                {
+                    return cassetteLocation;
+                }
+            }
+            return null;
+        }
 
+        public TrayLocation? GetTrayLocationById(string id)
+        {
+            foreach (TrayLocation trayLocation in _trayLocations)
+            {
+                if (trayLocation.Id == id)
+                {
+                    return trayLocation;
+                }
+            }
+            return null;
+        }
+
+        public MemoryLocation? GetMemoryLocationById(string id)
+        {
+            foreach (MemoryLocation memoryLocation in _memoryLocations)
+            {
+                if (memoryLocation.Id == id)
+                {
+                    return memoryLocation;
+                }
+            }
+            return null;
+        }
         /// <summary>
         /// 저장소에서 LocationState를 조회하여 Location 객체의 상태를 동기화합니다.
         /// </summary>
