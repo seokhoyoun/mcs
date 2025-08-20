@@ -1,4 +1,5 @@
-﻿using Nexus.Core.Domain.Models.Locations;
+﻿using Nexus.Core.Domain.Models.Areas.Enums;
+using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Transports;
 using Nexus.Core.Domain.Shared.Interfaces;
@@ -14,6 +15,7 @@ namespace Nexus.Core.Domain.Models.Areas
         public IReadOnlyList<CassetteLocation> CassetteLocations => _cassetteLocations.AsReadOnly();
         public IReadOnlyList<TrayLocation> TrayLocations => _trayLocations.AsReadOnly();
         public IReadOnlyList<Set> Sets => _sets.AsReadOnly();
+        public EAreaStatus Status { get; set; } = EAreaStatus.Idle;
 
         private readonly List<CassetteLocation> _cassetteLocations = new();
         private readonly List<TrayLocation> _trayLocations = new();
