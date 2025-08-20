@@ -1,5 +1,5 @@
 ﻿
-namespace Nexus.Scheduler.Domain.Models.Plans
+namespace Nexus.Core.Domain.Models.Plans
 {
     public class Job
     {
