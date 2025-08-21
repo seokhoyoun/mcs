@@ -1,6 +1,6 @@
 ﻿using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Plans.Enums;
-using Nexus.Core.Domain.Shared.Interfaces;
+using Nexus.Core.Domain.Shared.Bases;
 
 namespace Nexus.Core.Domain.Models.Plans
 {

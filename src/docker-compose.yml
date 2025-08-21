@@ -37,12 +37,12 @@
     depends_on:
       - supabase
 
-  nexus.scheduler:
-    image: ${DOCKER_REGISTRY-}nexusscheduler
+  nexus.orchestrator:
+    image: ${DOCKER_REGISTRY-}nexusorchestrator
     build:
       context: .
-      dockerfile: Nexus.Scheduler/Dockerfile
-    container_name: nexus_scheduler
+      dockerfile: Nexus.Orchestrator/Dockerfile
+    container_name: nexus.orchestrator
     depends_on:
       - redis
     ports:
@@ -50,16 +50,6 @@
     volumes:
       - ./data:/app/data
 
-  nexus.integrator:
-    image: ${DOCKER_REGISTRY-}nexusintegrator
-    build:
-      context: .
-      dockerfile: Nexus.Integrator/Dockerfile
-    container_name: nexus_integrator
-    depends_on:
-      - redis
-    ports:
-      - "9092:9092"
 
   nexus.ui:
     image: ${DOCKER_REGISTRY-}nexusui
@@ -106,8 +96,7 @@
     ports:
       - "9090:9090"
     depends_on:
-      - nexus.scheduler
-      - nexus.integrator
+      - nexus.orchestrator
 
   grafana:
     image: grafana/grafana:latest

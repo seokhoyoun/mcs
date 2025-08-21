@@ -1,5 +1,5 @@
 ﻿services:
-  nexus.scheduler:
+  nexus.orchestrator:
     environment:
       - DOTNET_ENVIRONMENT=Development
     volumes:

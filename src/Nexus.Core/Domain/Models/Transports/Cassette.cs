@@ -1,5 +1,5 @@
 ﻿using Nexus.Core.Domain.Models.Transports.Interfaces;
-using Nexus.Core.Domain.Shared.Interfaces;
+using Nexus.Core.Domain.Shared.Bases;
 using System;
 using System.Collections.Generic;
 using System.Linq;
