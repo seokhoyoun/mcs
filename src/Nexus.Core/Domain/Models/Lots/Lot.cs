@@ -1,6 +1,6 @@
 ﻿using Nexus.Core.Domain.Models.Lots.Enums;
 using Nexus.Core.Domain.Models.Transports;
-using Nexus.Core.Domain.Shared.Interfaces;
+using Nexus.Core.Domain.Shared.Bases;
 
 namespace Nexus.Core.Domain.Models.Lots
 {

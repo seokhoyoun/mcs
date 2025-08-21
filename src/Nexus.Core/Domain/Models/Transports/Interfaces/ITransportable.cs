@@ -1,4 +1,4 @@
-using Nexus.Core.Domain.Shared.Interfaces;
+using Nexus.Core.Domain.Shared.Bases;
 using System.Collections.Generic;
 
 namespace Nexus.Core.Domain.Models.Transports.Interfaces

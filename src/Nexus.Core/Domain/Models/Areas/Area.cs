@@ -2,7 +2,7 @@
 using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Transports;
-using Nexus.Core.Domain.Shared.Interfaces;
+using Nexus.Core.Domain.Shared.Bases;
 using System.Collections.Generic;
 using System.Linq;
 
