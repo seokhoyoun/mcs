@@ -4,6 +4,7 @@ using Nexus.Shared.Application.DTO;
 using StackExchange.Redis;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace Nexus.Infrastructure.Persistence.Redis
 {
@@ -258,6 +259,66 @@ namespace Nexus.Infrastructure.Persistence.Redis
         {
             _redis.KeyDelete($"memory:{id}");
             _redis.SetRemove("memories", id);
+        }
+
+        public Task<IReadOnlyList<ITransportable>> GetAllAsync(CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IReadOnlyList<ITransportable>> GetAsync(Expression<Func<ITransportable, bool>> predicate, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ITransportable?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ITransportable> AddAsync(ITransportable entity, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IEnumerable<ITransportable>> AddRangeAsync(IEnumerable<ITransportable> entities, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ITransportable> UpdateAsync(ITransportable entity, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> UpdateRangeAsync(IEnumerable<ITransportable> entities, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> DeleteAsync(ITransportable entity, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> DeleteRangeAsync(IEnumerable<ITransportable> entities, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> ExistsAsync(Expression<Func<ITransportable, bool>> predicate, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> CountAsync(Expression<Func<ITransportable, bool>>? predicate = null, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
         }
 
         #endregion

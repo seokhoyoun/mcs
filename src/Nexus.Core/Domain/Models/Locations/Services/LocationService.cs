@@ -5,15 +5,15 @@ using Nexus.Core.Domain.Models.Locations.Enums;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using Nexus.Core.Domain.Models.Transports.Services; // TransportService using 추가
+using Nexus.Core.Domain.Shared.Bases;
 using Nexus.Shared.Application.Interfaces;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Nexus.Core.Domain.Models.Locations.Services
 {
-    public class LocationService
+    public class LocationService : BaseDataService<Location, string>, ILocationService
     {
-        private readonly ILogger<AreaService> _logger;
         private readonly ILocationRepository _locationRepository;
         private readonly TransportService _transportService; // TransportService 주입
 
@@ -24,11 +24,10 @@ namespace Nexus.Core.Domain.Models.Locations.Services
         private List<MemoryLocation> _memoryLocations = new();
 
         public LocationService(
-            ILogger<AreaService> logger,
+            ILogger<LocationService> logger,
             ILocationRepository locationRepository,
-            TransportService transportService) // 생성자에 TransportService 추가
+            TransportService transportService) : base(logger, locationRepository)
         {
-            _logger = logger;
             _locationRepository = locationRepository;
             _transportService = transportService;
         }
