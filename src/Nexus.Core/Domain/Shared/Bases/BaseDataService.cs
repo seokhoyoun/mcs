@@ -14,9 +14,11 @@ namespace Nexus.Core.Domain.Shared.Bases
     public abstract class BaseDataService<T, TKey> : IDataService<T, TKey> where T : class, IEntity
     {
         protected readonly ILogger _logger;
-        
-        protected BaseDataService(ILogger logger)
+        protected readonly IRepository<T, TKey> _repository;
+
+        protected BaseDataService(ILogger logger, IRepository<T, TKey> repository)
         {
+            _repository = repository;
             _logger = logger;
         }
 
@@ -24,7 +26,7 @@ namespace Nexus.Core.Domain.Shared.Bases
         {
             try
             {
-                return await GetAllEntitiesAsync(cancellationToken);
+                return await _repository.GetAllAsync(cancellationToken);
             }
             catch (Exception ex)
             {
@@ -37,7 +39,7 @@ namespace Nexus.Core.Domain.Shared.Bases
         {
             try
             {
-                return await GetEntityByIdAsync(id, cancellationToken);
+                return await _repository.GetByIdAsync(id, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -50,7 +52,12 @@ namespace Nexus.Core.Domain.Shared.Bases
         {
             try
             {
-                return await AddEntityAsync(entity, cancellationToken);
+                var result = await _repository.AddAsync(entity, cancellationToken);
+
+                // 필요 시 이벤트 발행
+                // await _eventPublisher.PublishAsync(new EntityCreatedEvent<T>(result), cancellationToken);
+
+                return result;
             }
             catch (Exception ex)
             {
@@ -63,7 +70,8 @@ namespace Nexus.Core.Domain.Shared.Bases
         {
             try
             {
-                return await UpdateEntityAsync(entity, cancellationToken);
+                var result = await _repository.UpdateAsync(entity, cancellationToken);
+                return result;
             }
             catch (Exception ex)
             {
@@ -76,7 +84,7 @@ namespace Nexus.Core.Domain.Shared.Bases
         {
             try
             {
-                return await DeleteEntityAsync(id, cancellationToken);
+                return await _repository.DeleteAsync(id, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -89,8 +97,11 @@ namespace Nexus.Core.Domain.Shared.Bases
         {
             try
             {
-                await InitializeServiceAsync(cancellationToken);
-                _logger.LogInformation($"{GetType().Name} 초기화 완료");
+                // 서비스 초기화 로직
+                // 예: 캐시 초기화, 설정 로드 등
+                _logger.LogInformation($"{typeof(T).Name} 데이터 서비스 초기화 중...");
+
+                await Task.CompletedTask;
             }
             catch (Exception ex)
             {
@@ -99,38 +110,5 @@ namespace Nexus.Core.Domain.Shared.Bases
             }
         }
 
-        #region Abstract Methods
-        
-        /// <summary>
-        /// 모든 엔티티를 조회하는 구현을 제공합니다.
-        /// </summary>
-        protected abstract Task<IReadOnlyList<T>> GetAllEntitiesAsync(CancellationToken cancellationToken);
-        
-        /// <summary>
-        /// ID로 특정 엔티티를 조회하는 구현을 제공합니다.
-        /// </summary>
-        protected abstract Task<T?> GetEntityByIdAsync(TKey id, CancellationToken cancellationToken);
-        
-        /// <summary>
-        /// 엔티티를 추가하는 구현을 제공합니다.
-        /// </summary>
-        protected abstract Task<T> AddEntityAsync(T entity, CancellationToken cancellationToken);
-        
-        /// <summary>
-        /// 엔티티를 업데이트하는 구현을 제공합니다.
-        /// </summary>
-        protected abstract Task<T> UpdateEntityAsync(T entity, CancellationToken cancellationToken);
-        
-        /// <summary>
-        /// 엔티티를 삭제하는 구현을 제공합니다.
-        /// </summary>
-        protected abstract Task<bool> DeleteEntityAsync(TKey id, CancellationToken cancellationToken);
-        
-        /// <summary>
-        /// 서비스를 초기화하는 구현을 제공합니다.
-        /// </summary>
-        protected abstract Task InitializeServiceAsync(CancellationToken cancellationToken);
-        
-        #endregion
     }
 }

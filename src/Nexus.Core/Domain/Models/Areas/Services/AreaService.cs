@@ -11,7 +11,7 @@ using System.Text.Json;
 
 namespace Nexus.Core.Domain.Models.Areas.Services
 {
-    public class AreaService : DataService<Area, string>
+    public class AreaService : BaseDataService<Area, string>, IAreaService
     {
         public IReadOnlyList<Area> Areas => _areas.AsReadOnly();
 
@@ -20,7 +20,7 @@ namespace Nexus.Core.Domain.Models.Areas.Services
 
         private readonly List<Area> _areas = new List<Area>();
 
-        public AreaService(ILogger<AreaService> logger, IAreaRepository areaRepository, IEventPublisher eventPublisher, LocationService locationService) : base(logger, areaRepository, eventPublisher)
+        public AreaService(ILogger<AreaService> logger, IAreaRepository areaRepository, IEventPublisher eventPublisher, LocationService locationService) : base(logger, areaRepository)
         {
             _areaRepository = areaRepository;
             _locationService = locationService;

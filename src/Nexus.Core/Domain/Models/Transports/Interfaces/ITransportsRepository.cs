@@ -1,7 +1,9 @@
-﻿using Nexus.Shared.Application.DTO;
+﻿using Nexus.Core.Domain.Models.Transports.Interfaces;
+using Nexus.Core.Domain.Shared.Bases;
+using Nexus.Shared.Application.DTO;
 using System.Collections.Generic;
 
-public interface ITransportsRepository
+public interface ITransportsRepository : IRepository<ITransportable, string>
 {
     IEnumerable<CassetteState> GetAllCassettes();
     CassetteState? GetCassetteById(string id);
