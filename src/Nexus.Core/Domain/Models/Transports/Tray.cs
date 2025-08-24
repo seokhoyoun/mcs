@@ -1,4 +1,5 @@
-﻿using Nexus.Core.Domain.Models.Transports.Interfaces;
+﻿using Nexus.Core.Domain.Models.Transports.Enums;
+using Nexus.Core.Domain.Models.Transports.Interfaces;
 using Nexus.Core.Domain.Shared.Bases;
 using System;
 using System.Collections.Generic;
@@ -12,17 +13,14 @@ namespace Nexus.Core.Domain.Models.Transports
     {
         public string Id { get; }
         public string Name { get;  }
-
-        private readonly List<Memory> _memories = new List<Memory>();
-        public IReadOnlyList<IItem> Items => _memories.AsReadOnly();
+        public ETransportType TransportType => ETransportType.Tray;
+        public List<Memory> Memories { get; }
 
         public Tray(string id, string name, List<Memory> memories)
         {
             Id = id;
             Name = name;
-
-            if (memories != null)
-                _memories.AddRange(memories);
+            Memories = memories;
         }
 
     }

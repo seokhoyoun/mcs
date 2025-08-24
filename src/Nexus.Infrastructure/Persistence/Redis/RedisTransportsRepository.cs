@@ -1,324 +1,434 @@
 ﻿using Nexus.Core.Domain.Models.Transports;
+using Nexus.Core.Domain.Models.Transports.Enums;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using Nexus.Shared.Application.DTO;
 using StackExchange.Redis;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text.Json;
 
 namespace Nexus.Infrastructure.Persistence.Redis
 {
     public class RedisTransportsRepository : ITransportsRepository
     {
-        private readonly IDatabase _redis;
+        private readonly IConnectionMultiplexer _redis;
+        private readonly IDatabase _database;
+
+        // Redis 키 상수
+        private const string CASSETTE_KEY_PREFIX = "cassette:";
+        private const string TRAY_KEY_PREFIX = "tray:";
+        private const string MEMORY_KEY_PREFIX = "memory:";
+        private const string CASSETTES_SET_KEY = "cassettes";
+        private const string TRAYS_SET_KEY = "trays";
+        private const string MEMORIES_SET_KEY = "memories";
 
         public RedisTransportsRepository(IConnectionMultiplexer connectionMultiplexer)
         {
-            _redis = connectionMultiplexer.GetDatabase();
+            _redis = connectionMultiplexer;
+            _database = connectionMultiplexer.GetDatabase();
         }
 
-        #region Cassette
+        #region IRepository<ITransportable, string> Implementation
 
-        public IEnumerable<CassetteState> GetAllCassettes()
+        public async Task<IReadOnlyList<ITransportable>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            var cassetteValues = _redis.SetMembers("cassettes");
-            foreach (var x in cassetteValues)
-            {
-                if (x.IsNullOrEmpty) continue;
-                var id = (string)x!;
-                var hash = _redis.HashGetAll($"cassette:{id}");
-                if (hash.Length == 0) continue;
+            var transportables = new List<ITransportable>();
 
-                var cassetteId = hash.FirstOrDefault(x => x.Name == "Id").Value;
-                if (!cassetteId.IsNullOrEmpty)
-                {
-                    var trayValues = _redis.SetMembers($"cassette:{cassetteId}:tray_ids");
-                    var trayIds = new List<string>();
-                    foreach (var t in trayValues)
-                    {
-                        if (!t.IsNullOrEmpty)
-                            trayIds.Add((string)t!);
-                    }
+            // 모든 Cassette 조회
+            var cassettes = await GetAllCassettesAsync();
+            transportables.AddRange(cassettes);
 
-                    yield return new CassetteState
-                    {
-                        Id = cassetteId!,
-                        TrayIds = trayIds
-                    };
-                }
-            }
+            // 모든 Tray 조회
+            var trays = await GetAllTraysAsync();
+            transportables.AddRange(trays);
+
+            // 모든 Memory 조회
+            var memories = await GetAllMemoriesAsync();
+            transportables.AddRange(memories);
+
+            return transportables.AsReadOnly();
         }
 
-        public CassetteState? GetCassetteById(string id)
+        public async Task<IReadOnlyList<ITransportable>> GetAsync(Expression<Func<ITransportable, bool>> predicate, CancellationToken cancellationToken = default)
         {
-            var hash = _redis.HashGetAll($"cassette:{id}");
-            if (hash.Length == 0) return null;
+            var allTransportables = await GetAllAsync(cancellationToken);
+            var compiledPredicate = predicate.Compile();
+            return allTransportables.Where(compiledPredicate).ToList().AsReadOnly();
+        }
 
-            var cassetteId = hash.FirstOrDefault(x => x.Name == "Id").Value;
-            if (!cassetteId.IsNullOrEmpty)
-            {
-                var trayValues = _redis.SetMembers($"cassette:{cassetteId}:tray_ids");
-                var trayIds = new List<string>();
-                foreach (var t in trayValues)
-                {
-                    if (!t.IsNullOrEmpty)
-                        trayIds.Add((string)t!);
-                }
+        public async Task<ITransportable?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
+        {
+            // Cassette 먼저 확인
+            var cassette = await GetCassetteByIdAsync(id);
+            if (cassette != null)
+                return cassette;
 
-                return new CassetteState
-                {
-                    Id = cassetteId!,
-                    TrayIds = trayIds
-                };
-            }
+            // Tray 확인
+            var tray = await GetTrayByIdAsync(id);
+            if (tray != null)
+                return tray;
+
+            // Memory 확인
+            var memory = await GetMemoryByIdAsync(id);
+            if (memory != null)
+                return memory;
+
             return null;
         }
 
-        public void SaveCassette(CassetteState cassette)
+        public async Task<ITransportable> AddAsync(ITransportable entity, CancellationToken cancellationToken = default)
         {
-            var key = $"cassette:{cassette.Id}";
-            var entries = new HashEntry[]
+            switch (entity.TransportType)
             {
-                new HashEntry("Id", cassette.Id)
-            };
-            _redis.HashSet(key, entries);
+                case ETransportType.Cassette:
+                    await SaveCassetteAsync((Cassette)entity);
+                    break;
 
-            // cassettes Set에 ID 추가
-            _redis.SetAdd("cassettes", cassette.Id);
+                case ETransportType.Tray:
+                    await SaveTrayAsync((Tray)entity);
+                    break;
 
-            var setKey = $"cassette:{cassette.Id}:tray_ids";
-            _redis.KeyDelete(setKey);
-            if (cassette.TrayIds != null && cassette.TrayIds.Count > 0)
-            {
-                _redis.SetAdd(setKey, cassette.TrayIds.Select(x => (RedisValue)x).ToArray());
+                case ETransportType.Memory:
+                    await SaveMemoryAsync((Memory)entity);
+                    break;
+
+                default:
+                    throw new ArgumentException($"Unsupported transportable type: {entity.GetType()}");
             }
+
+            return entity;
         }
 
-        public void DeleteCassette(string id)
+        public async Task<IEnumerable<ITransportable>> AddRangeAsync(IEnumerable<ITransportable> entities, CancellationToken cancellationToken = default)
         {
-            _redis.KeyDelete($"cassette:{id}");
-            _redis.KeyDelete($"cassette:{id}:tray_ids");
-            _redis.SetRemove("cassettes", id);
+            var tasks = entities.Select(entity => AddAsync(entity, cancellationToken));
+            return await Task.WhenAll(tasks);
         }
+
+        public async Task<ITransportable> UpdateAsync(ITransportable entity, CancellationToken cancellationToken = default)
+        {
+            // HSet은 업데이트와 추가가 동일
+            return await AddAsync(entity, cancellationToken);
+        }
+
+        public async Task<bool> UpdateRangeAsync(IEnumerable<ITransportable> entities, CancellationToken cancellationToken = default)
+        {
+            var tasks = entities.Select(entity => UpdateAsync(entity, cancellationToken));
+            await Task.WhenAll(tasks);
+            return true;
+        }
+
+        public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+        {
+            // 어떤 타입인지 확인 후 삭제
+            if (await _database.KeyExistsAsync($"{CASSETTE_KEY_PREFIX}{id}"))
+            {
+                await DeleteCassetteAsync(id);
+                return true;
+            }
+
+            if (await _database.KeyExistsAsync($"{TRAY_KEY_PREFIX}{id}"))
+            {
+                await DeleteTrayAsync(id);
+                return true;
+            }
+
+            if (await _database.KeyExistsAsync($"{MEMORY_KEY_PREFIX}{id}"))
+            {
+                await DeleteMemoryAsync(id);
+                return true;
+            }
+
+            return false;
+        }
+
+        public async Task<bool> DeleteAsync(ITransportable entity, CancellationToken cancellationToken = default)
+        {
+            return await DeleteAsync(entity.Id, cancellationToken);
+        }
+
+        public async Task<bool> DeleteRangeAsync(IEnumerable<ITransportable> entities, CancellationToken cancellationToken = default)
+        {
+            var tasks = entities.Select(entity => DeleteAsync(entity, cancellationToken));
+            var results = await Task.WhenAll(tasks);
+            return results.All(result => result);
+        }
+
+        public async Task<bool> ExistsAsync(Expression<Func<ITransportable, bool>> predicate, CancellationToken cancellationToken = default)
+        {
+            var transportables = await GetAsync(predicate, cancellationToken);
+            return transportables.Any();
+        }
+
+        public async Task<int> CountAsync(Expression<Func<ITransportable, bool>>? predicate = null, CancellationToken cancellationToken = default)
+        {
+            if (predicate == null)
+            {
+                var cassetteCount = await _database.SetLengthAsync(CASSETTES_SET_KEY);
+                var trayCount = await _database.SetLengthAsync(TRAYS_SET_KEY);
+                var memoryCount = await _database.SetLengthAsync(MEMORIES_SET_KEY);
+                return (int)(cassetteCount + trayCount + memoryCount);
+            }
+
+            var filteredTransportables = await GetAsync(predicate, cancellationToken);
+            return filteredTransportables.Count;
+        }
+
+        #endregion
+
+        #region ITransportsRepository Set Operations
 
         public void AddTrayToCassette(string cassetteId, string trayId)
         {
-            _redis.SetAdd($"cassette:{cassetteId}:tray_ids", trayId);
+            _database.SetAdd($"{CASSETTE_KEY_PREFIX}{cassetteId}:tray_ids", trayId);
         }
 
         public void RemoveTrayFromCassette(string cassetteId, string trayId)
         {
-            _redis.SetRemove($"cassette:{cassetteId}:tray_ids", trayId);
-        }
-
-        #endregion
-
-        #region Tray
-
-        public IEnumerable<TrayState> GetAllTrays()
-        {
-            var trayValues = _redis.SetMembers("trays");
-            foreach (var x in trayValues)
-            {
-                if (x.IsNullOrEmpty) continue;
-                var id = (string)x!;
-                var hash = _redis.HashGetAll($"tray:{id}");
-                if (hash.Length == 0) continue;
-
-                var trayId = hash.FirstOrDefault(x => x.Name == "Id").Value;
-                if (!trayId.IsNullOrEmpty)
-                {
-                    var memoryValues = _redis.SetMembers($"tray:{trayId}:memory_ids");
-                    var memoryIds = new List<string>();
-                    foreach (var m in memoryValues)
-                    {
-                        if (!m.IsNullOrEmpty)
-                            memoryIds.Add((string)m!);
-                    }
-
-                    yield return new TrayState
-                    {
-                        Id = trayId!,
-                        MemoryIds = memoryIds
-                    };
-                }
-            }
-        }
-
-        public TrayState? GetTrayById(string id)
-        {
-            var hash = _redis.HashGetAll($"tray:{id}");
-            if (hash.Length == 0) return null;
-
-            var trayId = hash.FirstOrDefault(x => x.Name == "Id").Value;
-            if (!trayId.IsNullOrEmpty)
-            {
-                var memoryValues = _redis.SetMembers($"tray:{trayId}:memory_ids");
-                var memoryIds = new List<string>();
-                foreach (var m in memoryValues)
-                {
-                    if (!m.IsNullOrEmpty)
-                        memoryIds.Add((string)m!);
-                }
-
-                return new TrayState
-                {
-                    Id = trayId!,
-                    MemoryIds = memoryIds
-                };
-            }
-            return null;
-        }
-
-        public void SaveTray(TrayState tray)
-        {
-            var key = $"tray:{tray.Id}";
-            var entries = new HashEntry[]
-            {
-                new HashEntry("Id", tray.Id)
-            };
-            _redis.HashSet(key, entries);
-
-            // trays Set에 ID 추가
-            _redis.SetAdd("trays", tray.Id);
-
-            var setKey = $"tray:{tray.Id}:memory_ids";
-            _redis.KeyDelete(setKey);
-            if (tray.MemoryIds != null && tray.MemoryIds.Count > 0)
-            {
-                _redis.SetAdd(setKey, tray.MemoryIds.Select(x => (RedisValue)x).ToArray());
-            }
-        }
-
-        public void DeleteTray(string id)
-        {
-            _redis.KeyDelete($"tray:{id}");
-            _redis.KeyDelete($"tray:{id}:memory_ids");
-            _redis.SetRemove("trays", id);
+            _database.SetRemove($"{CASSETTE_KEY_PREFIX}{cassetteId}:tray_ids", trayId);
         }
 
         public void AddMemoryToTray(string trayId, string memoryId)
         {
-            _redis.SetAdd($"tray:{trayId}:memory_ids", memoryId);
+            _database.SetAdd($"{TRAY_KEY_PREFIX}{trayId}:memory_ids", memoryId);
         }
 
         public void RemoveMemoryFromTray(string trayId, string memoryId)
         {
-            _redis.SetRemove($"tray:{trayId}:memory_ids", memoryId);
+            _database.SetRemove($"{TRAY_KEY_PREFIX}{trayId}:memory_ids", memoryId);
         }
 
         #endregion
 
-        #region Memory
+        #region Private Cassette Operations
 
-        public IEnumerable<MemoryState> GetAllMemories()
+        private async Task<List<Cassette>> GetAllCassettesAsync()
         {
-            var redisValues = _redis.SetMembers("memories");
-            foreach (var x in redisValues)
-            {
-                if (x.IsNullOrEmpty) continue;
-                var id = (string)x!;
+            var cassetteIds = await _database.SetMembersAsync(CASSETTES_SET_KEY);
+            var cassettes = new List<Cassette>();
 
-                yield return new MemoryState
+            foreach (var cassetteId in cassetteIds)
+            {
+                if (!cassetteId.IsNull)
                 {
-                    Id = id
-                };
+                    var cassette = await GetCassetteByIdAsync(cassetteId!);
+                    if (cassette != null)
+                        cassettes.Add(cassette);
+                }
             }
+
+            return cassettes;
         }
 
-        public MemoryState? GetMemoryById(string id)
+        private async Task<Cassette?> GetCassetteByIdAsync(string id)
         {
-            var hash = _redis.HashGetAll($"memory:{id}");
-            if (hash.Length == 0) return null;
+            var hashEntries = await _database.HashGetAllAsync($"{CASSETTE_KEY_PREFIX}{id}");
+            if (hashEntries.Length == 0)
+                return null;
 
-            var memoryId = hash.FirstOrDefault(x => x.Name == "Id").Value;
-            if (!memoryId.IsNullOrEmpty)
+            var cassetteName = GetHashValue(hashEntries, "name");
+
+            // Tray ID 목록 조회
+            var trayIds = await _database.SetMembersAsync($"{CASSETTE_KEY_PREFIX}{id}:tray_ids");
+            var trays = new List<Tray>();
+
+            foreach (var trayId in trayIds)
             {
-                return new MemoryState
+                if (!trayId.IsNull)
                 {
-                    Id = memoryId!
-                };
+                    var tray = await GetTrayByIdAsync(trayId!);
+                    if (tray != null)
+                        trays.Add(tray);
+                }
             }
-            return null;
+
+            return new Cassette(id, cassetteName, trays);
         }
 
-        public void SaveMemory(MemoryState memory)
+        private async Task SaveCassetteAsync(Cassette cassette)
         {
-            var key = $"memory:{memory.Id}";
-            var entries = new HashEntry[]
+            var hashEntries = new HashEntry[]
             {
-                new HashEntry("Id", memory.Id)
+                new HashEntry("id", cassette.Id),
+                new HashEntry("name", cassette.Name),
+                new HashEntry("transport_type", cassette.TransportType.ToString())
             };
-            _redis.HashSet(key, entries);
 
-            // memories Set에 ID 추가
-            _redis.SetAdd("memories", memory.Id);
+            await _database.HashSetAsync($"{CASSETTE_KEY_PREFIX}{cassette.Id}", hashEntries);
+            await _database.SetAddAsync(CASSETTES_SET_KEY, cassette.Id);
+
+            // Tray ID 목록 저장
+            var traySetKey = $"{CASSETTE_KEY_PREFIX}{cassette.Id}:tray_ids";
+            await _database.KeyDeleteAsync(traySetKey);
+
+            if (cassette.Trays.Any())
+            {
+                var trayIds = cassette.Trays.Select(t => (RedisValue)t.Id).ToArray();
+                await _database.SetAddAsync(traySetKey, trayIds);
+            }
         }
 
-        public void DeleteMemory(string id)
+        private async Task DeleteCassetteAsync(string id)
         {
-            _redis.KeyDelete($"memory:{id}");
-            _redis.SetRemove("memories", id);
+            await _database.KeyDeleteAsync($"{CASSETTE_KEY_PREFIX}{id}");
+            await _database.KeyDeleteAsync($"{CASSETTE_KEY_PREFIX}{id}:tray_ids");
+            await _database.SetRemoveAsync(CASSETTES_SET_KEY, id);
         }
 
-        public Task<IReadOnlyList<ITransportable>> GetAllAsync(CancellationToken cancellationToken = default)
+        #endregion
+
+        #region Private Tray Operations
+
+        private async Task<List<Tray>> GetAllTraysAsync()
         {
-            throw new NotImplementedException();
+            var trayIds = await _database.SetMembersAsync(TRAYS_SET_KEY);
+            var trays = new List<Tray>();
+
+            foreach (var trayId in trayIds)
+            {
+                if (!trayId.IsNull)
+                {
+                    var tray = await GetTrayByIdAsync(trayId!);
+                    if (tray != null)
+                        trays.Add(tray);
+                }
+            }
+
+            return trays;
         }
 
-        public Task<IReadOnlyList<ITransportable>> GetAsync(Expression<Func<ITransportable, bool>> predicate, CancellationToken cancellationToken = default)
+        private async Task<Tray?> GetTrayByIdAsync(string id)
         {
-            throw new NotImplementedException();
+            var hashEntries = await _database.HashGetAllAsync($"{TRAY_KEY_PREFIX}{id}");
+            if (hashEntries.Length == 0)
+                return null;
+
+            string trayId = GetHashValue(hashEntries, "id");
+            string trayName = GetHashValue(hashEntries, "name");
+
+            // Memory ID 목록 조회
+            var memoryIds = await _database.SetMembersAsync($"{TRAY_KEY_PREFIX}{id}:memory_ids");
+            var memories = new List<Memory>();
+
+            foreach (var memoryId in memoryIds)
+            {
+                if (!memoryId.IsNull)
+                {
+                    var memory = await GetMemoryByIdAsync(memoryId!);
+                    if (memory != null)
+                        memories.Add(memory);
+                }
+            }
+
+
+            return new Tray(id: trayId, name: trayName, memories: memories);
         }
 
-        public Task<ITransportable?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
+        private async Task SaveTrayAsync(Tray tray)
         {
-            throw new NotImplementedException();
+            // Tray 기본 정보 저장
+            var hashEntries = new HashEntry[]
+            {
+                new HashEntry("id", tray.Id),
+                new HashEntry("name", tray.Name),
+                new HashEntry("transport_type", tray.TransportType.ToString())
+            };
+
+            await _database.HashSetAsync($"{TRAY_KEY_PREFIX}{tray.Id}", hashEntries);
+            await _database.SetAddAsync(TRAYS_SET_KEY, tray.Id);
+
+            // Memory ID 목록 저장
+            var memorySetKey = $"{TRAY_KEY_PREFIX}{tray.Id}:memory_ids";
+            await _database.KeyDeleteAsync(memorySetKey);
+
+            if (tray.Memories != null && tray.Memories.Any())
+            {
+                // 각 Memory 객체를 개별적으로 저장
+                foreach (Memory memory in tray.Memories)
+                {
+                    await SaveMemoryAsync(memory);
+                }
+
+                // Memory ID 목록을 Set으로 저장
+                var memoryIds = tray.Memories.Select(m => (RedisValue)m.Id).ToArray();
+                await _database.SetAddAsync(memorySetKey, memoryIds);
+            }
         }
 
-        public Task<ITransportable> AddAsync(ITransportable entity, CancellationToken cancellationToken = default)
+        private async Task DeleteTrayAsync(string id)
         {
-            throw new NotImplementedException();
+            await _database.KeyDeleteAsync($"{TRAY_KEY_PREFIX}{id}");
+            await _database.KeyDeleteAsync($"{TRAY_KEY_PREFIX}{id}:memory_ids");
+            await _database.SetRemoveAsync(TRAYS_SET_KEY, id);
         }
 
-        public Task<IEnumerable<ITransportable>> AddRangeAsync(IEnumerable<ITransportable> entities, CancellationToken cancellationToken = default)
+        #endregion
+
+        #region Private Memory Operations
+
+        private async Task<List<Memory>> GetAllMemoriesAsync()
         {
-            throw new NotImplementedException();
+            var memoryIds = await _database.SetMembersAsync(MEMORIES_SET_KEY);
+            var memories = new List<Memory>();
+
+            foreach (var memoryId in memoryIds)
+            {
+                if (!memoryId.IsNull)
+                {
+                    var memory = await GetMemoryByIdAsync(memoryId!);
+                    if (memory != null)
+                        memories.Add(memory);
+                }
+            }
+
+            return memories;
         }
 
-        public Task<ITransportable> UpdateAsync(ITransportable entity, CancellationToken cancellationToken = default)
+        private async Task<Memory?> GetMemoryByIdAsync(string id)
         {
-            throw new NotImplementedException();
+            var hashEntries = await _database.HashGetAllAsync($"{MEMORY_KEY_PREFIX}{id}");
+            if (hashEntries.Length == 0)
+                return null;
+
+
+            string memoryId = GetHashValue(hashEntries, "id");
+            string memoryName = GetHashValue(hashEntries, "name");
+            return new Memory(id: memoryId, name: memoryName);
         }
 
-        public Task<bool> UpdateRangeAsync(IEnumerable<ITransportable> entities, CancellationToken cancellationToken = default)
+        private async Task SaveMemoryAsync(Memory memory)
         {
-            throw new NotImplementedException();
+            var hashEntries = new HashEntry[]
+            {
+                new HashEntry("id", memory.Id),
+                new HashEntry("name", memory.Name),
+                new HashEntry("transport_type", memory.TransportType.ToString())
+            };
+
+            await _database.HashSetAsync($"{MEMORY_KEY_PREFIX}{memory.Id}", hashEntries);
+            await _database.SetAddAsync(MEMORIES_SET_KEY, memory.Id);
         }
 
-        public Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+        private async Task DeleteMemoryAsync(string id)
         {
-            throw new NotImplementedException();
+            await _database.KeyDeleteAsync($"{MEMORY_KEY_PREFIX}{id}");
+            await _database.SetRemoveAsync(MEMORIES_SET_KEY, id);
         }
 
-        public Task<bool> DeleteAsync(ITransportable entity, CancellationToken cancellationToken = default)
+        #endregion
+
+        #region Helper Methods
+
+        private static string GetHashValue(HashEntry[] hashEntries, string fieldName)
         {
-            throw new NotImplementedException();
+            return hashEntries.FirstOrDefault(e => e.Name == fieldName).Value.ToString();
         }
 
-        public Task<bool> DeleteRangeAsync(IEnumerable<ITransportable> entities, CancellationToken cancellationToken = default)
+        private static int GetHashValueAsInt(HashEntry[] hashEntries, string fieldName)
         {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> ExistsAsync(Expression<Func<ITransportable, bool>> predicate, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<int> CountAsync(Expression<Func<ITransportable, bool>>? predicate = null, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
+            var value = GetHashValue(hashEntries, fieldName);
+            return int.TryParse(value, out var result) ? result : 0;
         }
 
         #endregion

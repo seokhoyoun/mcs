@@ -1,4 +1,5 @@
-﻿using Nexus.Core.Domain.Models.Transports.Interfaces;
+﻿using Nexus.Core.Domain.Models.Transports.Enums;
+using Nexus.Core.Domain.Models.Transports.Interfaces;
 using Nexus.Core.Domain.Shared.Bases;
 using System;
 using System.Collections.Generic;
@@ -10,19 +11,16 @@ namespace Nexus.Core.Domain.Models.Transports
 {
     public class Cassette : ITransportable
     {
-        public string Id { get;  }
-        public string Name { get;  }
+        public string Id { get; }
+        public string Name { get; }
+        public ETransportType TransportType => ETransportType.Cassette;
+        public List<Tray> Trays { get; private set; }
 
-        public IReadOnlyList<IItem> Items => _trays.AsReadOnly();
-        private readonly List<Tray> _trays = new List<Tray>();
-
-        public Cassette(string id, string name, IReadOnlyList<Tray> trays)
+        public Cassette(string id, string name, List<Tray> trays)
         {
             Id = id;
             Name = name;
-
-            if (trays != null)
-                _trays.AddRange(trays);
+            Trays = trays;
         }
     }
 }
