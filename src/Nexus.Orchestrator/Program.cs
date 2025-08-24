@@ -50,7 +50,7 @@ namespace Nexus.Orchestrator
 
 
             builder.Services.AddScoped<IEventHandler<LotCreatedEvent>, LotCreatedEventHandler>();
-            builder.Services.AddSingleton<LocationStatusChangedMessageHandler>();
+            //builder.Services.AddSingleton<LocationStatusChangedMessageHandler>();
 
             // ACS 서비스 및 워커 등록
             builder.Services.AddSingleton<AcsService>();

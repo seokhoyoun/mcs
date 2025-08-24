@@ -5,9 +5,5 @@ namespace Nexus.Core.Domain.Shared.Bases
     /// </summary>
     public interface IItem : IEntity
     {
-        /// <summary>
-        /// 운반 단위에 포함된 물품 목록
-        /// </summary>
-        IReadOnlyList<IItem>? Items { get; }
     }
 }

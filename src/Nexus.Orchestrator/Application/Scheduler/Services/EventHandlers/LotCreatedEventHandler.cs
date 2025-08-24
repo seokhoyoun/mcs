@@ -26,10 +26,9 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services.EventHandlers
         public async Task HandleAsync(LotCreatedEvent @event, CancellationToken cancellationToken = default)
         {
             // 이 예시에서는 가상의 Lot 객체를 사용합니다.
-            var lot = new Core.Domain.Models.Lots.Lot { Id = @event.LotId, Name = "New Lot" };
-            _schedulerService.CreatePlanGroup(lot);
+       
 
-            var lotPlanAssignedEvent = new LotPlanAssignedEvent(lot.Id);
+            var lotPlanAssignedEvent = new LotPlanAssignedEvent(@event.LotId);
             await _eventPublisher.PublishAsync(lotPlanAssignedEvent, cancellationToken);
         }
     }

@@ -44,5 +44,9 @@ namespace Nexus.Core.Domain.Models.Lots.Interfaces
         /// <param name="cancellationToken">작업 취소 토큰</param>
         /// <returns>성공 여부</returns>
         Task<bool> UpdateLotStepStatusAsync(string lotId, string stepId, ELotStepStatus status, CancellationToken cancellationToken = default);
+
+        Task<IReadOnlyList<LotStep>> GetLotStepsByLotIdAsync(string lotId, CancellationToken cancellationToken = default);
+        Task<LotStep?> GetLotStepByIdAsync(string lotId, string stepId, CancellationToken cancellationToken = default);
+        Task<bool> AddCassetteToStepAsync(string lotId, string stepId, string cassetteId, CancellationToken cancellationToken = default);
     }
 }

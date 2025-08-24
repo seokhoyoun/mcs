@@ -1,5 +1,4 @@
-﻿
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Nexus.Core.Domain.Models.Areas.Interfaces;
 using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Base;
@@ -8,6 +7,7 @@ using Nexus.Core.Domain.Models.Locations.Services;
 using Nexus.Core.Domain.Shared.Bases;
 using Nexus.Shared.Application.Interfaces;
 using System.Text.Json;
+using Nexus.Core.Domain.Models.Areas.Enums;
 
 namespace Nexus.Core.Domain.Models.Areas.Services
 {
@@ -39,6 +39,37 @@ namespace Nexus.Core.Domain.Models.Areas.Services
             }
             
             await _areaRepository.InitializeAreasAsync(areas);
+        }
+
+        /// <summary>
+        /// 카세트 적재가 가능한 Area를 조회합니다.
+        /// </summary>
+        public Area? GetAvailableAreaForCassette()
+        {
+            var availableAreas = _areas
+                .Where(area => area.Status == EAreaStatus.Idle) // 유휴 상태인 Area만 선택
+                .ToList();
+
+            // 사용 가능한 카세트 포트가 있는 Area 반환
+            foreach (var area in availableAreas)
+            {
+                var availablePort = GetAvailableCassettePort(area);
+                if (availablePort != null)
+                {
+                    return area;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 지정된 Area에서 사용 가능한 카세트 포트를 조회합니다.
+        /// </summary>
+        public CassetteLocation? GetAvailableCassettePort(Area area)
+        {
+            return area.CassetteLocations
+                .FirstOrDefault(cp => cp.CurrentItem == null); // 비어있는 카세트 포트
         }
 
         private List<Area> LoadAreasFromLocalFile()
