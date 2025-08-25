@@ -1,0 +1,30 @@
+<Project>
+  <PropertyGroup>
+    <Authors>seokho youn</Authors>
+    <Company>stone.youn</Company>
+    <Product>Nexus MCS</Product>
+    <Copyright>Copyright © $([System.DateTime]::Now.Year) stone youn. All rights reserved.</Copyright>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
+	<PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+	<PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.1" />
+	<PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+	<PackageVersion Include="MudBlazor" Version="8.11.0" />
+    <PackageVersion Include="StackExchange.Redis" Version="2.8.58" />
+	<PackageVersion Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+	<PackageVersion Include="prometheus-net.AspNetCore" Version="8.2.1" />
+  </ItemGroup>
+
+  <PropertyGroup>
+	<OutputPath>$(MSBuildThisFileDirectory)out\$(Configuration)\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+  </PropertyGroup>
+</Project>
