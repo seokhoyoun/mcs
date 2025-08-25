@@ -7,10 +7,8 @@
     <UserSecretsId>97b4ab08-aa70-4967-bac8-5aa17da12c25</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
-    <PackageReference Include="MudBlazor" Version="8.11.0" />
-  </ItemGroup>
-
+	<ItemGroup>
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
+		<PackageReference Include="MudBlazor" />
+	</ItemGroup>
 </Project>
