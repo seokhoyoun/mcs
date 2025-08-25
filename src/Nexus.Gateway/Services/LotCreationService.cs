@@ -45,14 +45,16 @@ namespace Nexus.Gateway.Services
             {
                 foreach (CreateLotStepCommand stepCommand in command.Steps)
                 {
+                    string stepId = $"{lot.Id}_{stepCommand.No:D2}";
+
                     var lotStep = new LotStep(
-                        id: stepCommand.Id,
+                        id: stepId,
                         lotId: lot.Id,
-                        name: stepCommand.Name,
+                        name: stepId,
                         loadingType: stepCommand.LoadingType,
-                        dpcType: stepCommand.DpcType ?? string.Empty,
-                        chipset: stepCommand.Chipset ?? string.Empty,
-                        pgm: stepCommand.PGM ?? string.Empty,
+                        dpcType: stepCommand.DpcType,
+                        chipset: stepCommand.Chipset,
+                        pgm: stepCommand.PGM,
                         planPercent: stepCommand.PlanPercent,
                         status: ELotStatus.Waiting
                     );
@@ -60,7 +62,7 @@ namespace Nexus.Gateway.Services
                     // LotStep을 Lot에 추가
                     lot.LotSteps.Add(lotStep);
 
-                    await _lotRepository.AddLotStepAsync(lot.Id, lotStep, cancellationToken);
+                    //await _lotRepository.AddLotStepAsync(lot.Id, lotStep, cancellationToken);
                 }
             }
 

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Nexus.Core.Domain.Models.Stockers.Services
 {
-    public class StockerService
+    public class StockerService : IStockerService
     {
         private readonly IStockerRepository _stockerRepository;
         private readonly List<Stocker> _stockers;
@@ -25,6 +25,11 @@ namespace Nexus.Core.Domain.Models.Stockers.Services
         {
             var stockers = await _stockerRepository.GetAllStockersAsync();
             _stockers.AddRange(stockers);
+        }
+
+        public Task AssignCassetteAsync(string stockerId, string cassetteId, string portId, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
         }
     }
 }

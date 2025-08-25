@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace Nexus.Core.Domain.Models.Transports.Services
 {
-    public class TransportService
+    public class TransportService : ITransportService
     {
         private readonly List<Cassette> _cassettes = new();
         private readonly List<Tray> _trays = new();

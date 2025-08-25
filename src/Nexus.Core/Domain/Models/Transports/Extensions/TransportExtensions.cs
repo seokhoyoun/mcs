@@ -8,7 +8,6 @@ namespace Nexus.Core.Domain.Models.Transports.Extensions
        
         public static void InitializeFullCassette(this Cassette cassette)
         {
-            var trays = new List<Tray>();
 
             for (int trayIndex = 1; trayIndex <= Cassette.MAX_TRAY_CAPACITY; trayIndex++)
             {
@@ -16,9 +15,10 @@ namespace Nexus.Core.Domain.Models.Transports.Extensions
                 var tray = new Tray(id: trayId,
                                     name: trayId,
                                     memories: new List<Memory>());
+
                 tray.InitializeFullTray();
 
-                trays.Add(tray);
+                cassette.AddTray(tray);
             }
 
         }
@@ -26,13 +26,11 @@ namespace Nexus.Core.Domain.Models.Transports.Extensions
      
         public static void InitializeFullTray(this Tray tray)
         {
-            var memories = new List<Memory>();
-
             for (int memoryIndex = 1; memoryIndex <= Tray.MAX_MEMORY_CAPACITY; memoryIndex++)
             {
                 var memoryId = $"{tray.Id}_M{memoryIndex:D2}";
-                memories.Add(new Memory(id: memoryId,
-                                        name: string.Empty));
+                tray.AddMemory(new Memory(id: memoryId,
+                                          name: string.Empty));
             }
 
         }

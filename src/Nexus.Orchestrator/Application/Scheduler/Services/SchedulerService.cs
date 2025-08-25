@@ -1,4 +1,5 @@
-﻿using Nexus.Core.Domain.Models.Areas.Services;
+﻿using Nexus.Core.Domain.Models.Areas.Interfaces;
+using Nexus.Core.Domain.Models.Areas.Services;
 using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Lots;
 using Nexus.Core.Domain.Models.Lots.Events;
@@ -15,9 +16,9 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
 {
     public class SchedulerService
     {
-        private readonly AreaService _areaService;
+        private readonly IAreaService _areaService;
 
-        public SchedulerService(AreaService areaService)
+        public SchedulerService(IAreaService areaService)
         {
             _areaService = areaService;
         }

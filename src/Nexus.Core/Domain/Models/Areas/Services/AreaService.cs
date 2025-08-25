@@ -8,6 +8,7 @@ using Nexus.Core.Domain.Shared.Bases;
 using Nexus.Shared.Application.Interfaces;
 using System.Text.Json;
 using Nexus.Core.Domain.Models.Areas.Enums;
+using Nexus.Core.Domain.Models.Locations.Interfaces;
 
 namespace Nexus.Core.Domain.Models.Areas.Services
 {
@@ -16,11 +17,11 @@ namespace Nexus.Core.Domain.Models.Areas.Services
         public IReadOnlyList<Area> Areas => _areas.AsReadOnly();
 
         private readonly IAreaRepository _areaRepository;
-        private readonly LocationService _locationService;
+        private readonly ILocationService _locationService;
 
         private readonly List<Area> _areas = new List<Area>();
 
-        public AreaService(ILogger<AreaService> logger, IAreaRepository areaRepository, IEventPublisher eventPublisher, LocationService locationService) : base(logger, areaRepository)
+        public AreaService(ILogger<AreaService> logger, IAreaRepository areaRepository, IEventPublisher eventPublisher, ILocationService locationService) : base(logger, areaRepository)
         {
             _areaRepository = areaRepository;
             _locationService = locationService;

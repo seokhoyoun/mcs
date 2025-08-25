@@ -13,6 +13,7 @@ namespace Nexus.Core.Domain.Models.Transports
     {
         public string Id { get; }
         public string Name { get; }
+        public string? DeviceId { get; set; }
 
         public ETransportType TransportType => ETransportType.Memory;
 
