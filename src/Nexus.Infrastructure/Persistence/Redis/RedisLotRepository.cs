@@ -5,6 +5,7 @@ using Nexus.Core.Domain.Models.Plans;
 using Nexus.Core.Domain.Models.Plans.Enums;
 using Nexus.Core.Domain.Models.Transports;
 using StackExchange.Redis;
+using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Text.Json;
 
@@ -73,10 +74,17 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("qty", entity.Qty),
                 new HashEntry("option", entity.Option),
                 new HashEntry("line", entity.Line),
-                new HashEntry("cassette_ids", JsonSerializer.Serialize(entity.CassetteIds))
+                new HashEntry("cassette_ids", JsonSerializer.Serialize(entity.CassetteIds)),
+                new HashEntry("lot_step_ids", JsonSerializer.Serialize(entity.LotSteps.Select(step => step.Id)))
             };
 
             await _database.HashSetAsync($"{LOT_KEY_PREFIX}{entity.Id}", hashEntries);
+
+            // 각 LotStep을 개별적으로 저장
+            foreach (var lotStep in entity.LotSteps)
+            {
+                await SaveLotStepAsync(lotStep, cancellationToken);
+            }
             return entity;
         }
 
@@ -100,13 +108,24 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
         {
-            // Lot 삭제 시 관련된 LotStep들도 함께 삭제
-            var lotSteps = await GetLotStepsByLotIdAsync(id, cancellationToken);
-            foreach (var step in lotSteps)
+            // Lot에서 lot_step_ids 조회
+            var lotHashEntries = await _database.HashGetAllAsync($"{LOT_KEY_PREFIX}{id}");
+            if (lotHashEntries.Length > 0)
             {
-                await _database.KeyDeleteAsync($"{LOT_STEP_KEY_PREFIX}{step.Id}");
+                var lotStepIdsJson = GetHashValue(lotHashEntries, "lot_step_ids");
+                if (!string.IsNullOrEmpty(lotStepIdsJson))
+                {
+                    var lotStepIds = JsonSerializer.Deserialize<List<string>>(lotStepIdsJson) ?? new List<string>();
+
+                    // 각 LotStep 삭제
+                    foreach (string stepId in lotStepIds)
+                    {
+                        await _database.KeyDeleteAsync($"{LOT_STEP_KEY_PREFIX}{stepId}");
+                    }
+                }
             }
 
+            // Lot 삭제
             return await _database.KeyDeleteAsync($"{LOT_KEY_PREFIX}{id}");
         }
 
@@ -170,14 +189,37 @@ namespace Nexus.Infrastructure.Persistence.Redis
             return true;
         }
 
-        // 완전한 Lot 객체 생성을 위한 비동기 변환 메서드
+        public async Task<IReadOnlyList<LotStep>> GetLotStepsByLotIdAsync(string lotId, CancellationToken cancellationToken = default)
+        {
+            // 먼저 Lot에서 lot_step_ids 조회
+            var lotHashEntries = await _database.HashGetAllAsync($"{LOT_KEY_PREFIX}{lotId}");
+            if (lotHashEntries.Length == 0)
+                return new List<LotStep>();
+
+            var lotStepIdsJson = GetHashValue(lotHashEntries, "lot_step_ids");
+            if (string.IsNullOrEmpty(lotStepIdsJson))
+                return new List<LotStep>();
+
+            var lotStepIds = JsonSerializer.Deserialize<List<string>>(lotStepIdsJson) ?? new List<string>();
+            var lotSteps = new List<LotStep>();
+
+            foreach (string stepId in lotStepIds)
+            {
+                var lotStep = await GetLotStepByIdAsync(stepId, cancellationToken);
+                if (lotStep != null)
+                    lotSteps.Add(lotStep);
+            }
+
+            return lotSteps;
+        }
+
+
         private async Task<Lot> ConvertHashToLotAsync(string id, HashEntry[] hashEntries, CancellationToken cancellationToken = default)
         {
             var cassetteIdsJson = hashEntries.FirstOrDefault(e => e.Name == "cassette_ids").Value;
-            var cassetteIds = !cassetteIdsJson.IsNull
-                ? JsonSerializer.Deserialize<List<string>>(cassetteIdsJson!)
-                : new List<string>();
+            var cassetteIds = JsonSerializer.Deserialize<List<string>>(cassetteIdsJson!);
 
+            Debug.Assert(cassetteIds != null, "Cassette IDs should not be null");
             var lot = new Lot(
                 id: id,
                 name: GetHashValue(hashEntries, "name"),
@@ -193,37 +235,30 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 cassetteIds: cassetteIds
             );
 
-            // 관련된 LotStep들 조회 및 로드
-            var lotSteps = await GetLotStepsByLotIdAsync(id, cancellationToken);
-            lot.LotSteps.AddRange(lotSteps);
+            // lot_step_ids를 통해 관련된 LotStep들 조회 및 로드
+            var lotStepIdsJson = GetHashValue(hashEntries, "lot_step_ids");
+            if (!string.IsNullOrEmpty(lotStepIdsJson))
+            {
+                var lotStepIds = JsonSerializer.Deserialize<List<string>>(lotStepIdsJson) ?? new List<string>();
+                foreach (string stepId in lotStepIds)
+                {
+                    var lotStep = await GetLotStepByIdAsync(stepId, cancellationToken);
+                    if (lotStep != null)
+                        lot.LotSteps.Add(lotStep);
+                }
+            }
 
             return lot;
         }
 
-        // LotId로 LotStep들 조회
-        private async Task<List<LotStep>> GetLotStepsByLotIdAsync(string lotId, CancellationToken cancellationToken = default)
+  
+        private async Task<LotStep?> GetLotStepByIdAsync(string stepId, CancellationToken cancellationToken = default)
         {
-            var server = _redis.GetServer(_redis.GetEndPoints().First());
-            var keys = server.Keys(pattern: $"{LOT_STEP_KEY_PREFIX}*");
+            var stepHashEntries = await _database.HashGetAllAsync($"{LOT_STEP_KEY_PREFIX}{stepId}");
+            if (stepHashEntries.Length == 0)
+                return null;
 
-            var lotSteps = new List<LotStep>();
-            foreach (var key in keys)
-            {
-                var stepId = key.ToString().Substring(LOT_STEP_KEY_PREFIX.Length);
-                var stepHashEntries = await _database.HashGetAllAsync(key);
-
-                if (stepHashEntries.Length > 0)
-                {
-                    var stepLotId = GetHashValue(stepHashEntries, "lot_id");
-                    if (stepLotId == lotId)
-                    {
-                        var lotStep = await ConvertHashToLotStepAsync(stepId, stepHashEntries, cancellationToken);
-                        lotSteps.Add(lotStep);
-                    }
-                }
-            }
-
-            return lotSteps;
+            return await ConvertHashToLotStepAsync(stepId, stepHashEntries, cancellationToken);
         }
 
         // LotStep을 완전한 객체로 변환
@@ -328,6 +363,25 @@ namespace Nexus.Infrastructure.Persistence.Redis
         }
 
         // 헬퍼 메서드들
+        private async Task SaveLotStepAsync(LotStep lotStep, CancellationToken cancellationToken = default)
+        {
+            var stepHashEntries = new HashEntry[]
+            {
+                new HashEntry("lot_id", lotStep.LotId),
+                new HashEntry("name", lotStep.Name),
+                new HashEntry("loading_type", lotStep.LoadingType),
+                new HashEntry("dpc_type", lotStep.DpcType),
+                new HashEntry("chipset", lotStep.Chipset),
+                new HashEntry("pgm", lotStep.PGM),
+                new HashEntry("plan_percent", lotStep.PlanPercent),
+                new HashEntry("status", lotStep.Status.ToString()),
+                new HashEntry("cassette_ids", JsonSerializer.Serialize(lotStep.Cassettes.Select(c => c.Id).ToList())),
+                new HashEntry("plan_group_ids", JsonSerializer.Serialize(lotStep.PlanGroups.Select(pg => pg.Id).ToList()))
+            };
+
+            await _database.HashSetAsync($"{LOT_STEP_KEY_PREFIX}{lotStep.Id}", stepHashEntries);
+        }
+
         private static string GetHashValue(HashEntry[] hashEntries, string fieldName)
         {
             return hashEntries.FirstOrDefault(e => e.Name == fieldName).Value.ToString();
@@ -337,16 +391,6 @@ namespace Nexus.Infrastructure.Persistence.Redis
         {
             var value = GetHashValue(hashEntries, fieldName);
             return int.TryParse(value, out var result) ? result : 0;
-        }
-
-        Task<IReadOnlyList<LotStep>> ILotRepository.GetLotStepsByLotIdAsync(string lotId, CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<LotStep?> GetLotStepByIdAsync(string lotId, string stepId, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
         }
 
         public Task<bool> AddCassetteToStepAsync(string lotId, string stepId, string cassetteId, CancellationToken cancellationToken = default)

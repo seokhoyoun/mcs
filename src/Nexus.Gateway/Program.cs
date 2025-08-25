@@ -1,5 +1,13 @@
+using Nexus.Core.Domain.Models.Areas.Interfaces;
+using Nexus.Core.Domain.Models.Areas.Services;
+using Nexus.Core.Domain.Models.Locations.Interfaces;
+using Nexus.Core.Domain.Models.Locations.Services;
 using Nexus.Core.Domain.Models.Lots.Interfaces;
 using Nexus.Core.Domain.Models.Lots.Services;
+using Nexus.Core.Domain.Models.Stockers.Interfaces;
+using Nexus.Core.Domain.Models.Stockers.Services;
+using Nexus.Core.Domain.Models.Transports.Interfaces;
+using Nexus.Core.Domain.Models.Transports.Services;
 using Nexus.Core.Messaging;
 using Nexus.Gateway.Configuration;
 using Nexus.Gateway.Services;
@@ -22,6 +30,8 @@ namespace Nexus.Gateway
             // Add services to the container.
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            // JSON 설정
             builder.Services.ConfigureHttpJsonOptions(options =>
             {
                 options.SerializerOptions.PropertyNameCaseInsensitive = true;
@@ -35,14 +45,7 @@ namespace Nexus.Gateway
                 options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             });
 
-            // Repository 서비스 - LotStepRepository 제거
-            builder.Services.AddSingleton<ILotRepository, RedisLotRepository>();
-            // builder.Services.AddSingleton<ILotStepRepository, RedisLotStepRepository>(); // 제거
-
-            // 비즈니스 서비스
-            builder.Services.AddScoped<ILotCreationService, LotCreationService>();
-            builder.Services.AddScoped<LotService>(); // LotStep 관리용
-            // Redis 연결
+            // Redis 연결 설정
             var redisOptions = new RedisOptions();
             builder.Configuration.GetSection(RedisOptions.SECTION_NAME).Bind(redisOptions);
 
@@ -51,15 +54,34 @@ namespace Nexus.Gateway
                 return ConnectionMultiplexer.Connect(redisOptions.GetConnectionString());
             });
 
-            // 메시징 서비스
+            // 메시징 서비스 등록
             builder.Services.AddSingleton<IMessagePublisher, RedisPublisher>();
+            builder.Services.AddSingleton<IMessageSubscriber, RedisSubscriber>();
             builder.Services.AddSingleton<IEventPublisher, DomainEventPublisher>();
 
-            // Repository 서비스
+            // Repository 서비스 등록
             builder.Services.AddSingleton<ILotRepository, RedisLotRepository>();
 
-            // 비즈니스 서비스
+    
+            builder.Services.AddSingleton<ILocationRepository, RedisLocationRepository>();
+            builder.Services.AddSingleton<ILocationService, LocationService>();
+
+            builder.Services.AddSingleton<ITransportsRepository, RedisTransportsRepository>();
+            builder.Services.AddSingleton<ITransportService, TransportService>();
+
+            builder.Services.AddSingleton<IAreaRepository, RedisAreaRepository>();
+            builder.Services.AddSingleton<IAreaService, AreaService>();
+
+            builder.Services.AddSingleton<IStockerRepository, RedisStockerRepository>();
+            builder.Services.AddSingleton<IStockerService, StockerService>();
+
+      
+            builder.Services.AddScoped<LotService>();
+
+            // Application 서비스 등록
             builder.Services.AddScoped<ILotCreationService, LotCreationService>();
+            builder.Services.AddScoped<ICassetteCreationService, CassetteCreationService>();
+            builder.Services.AddScoped<IAreaCreationService, AreaCreationService>();
 
             var app = builder.Build();
 

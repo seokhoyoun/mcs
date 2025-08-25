@@ -15,7 +15,7 @@ namespace Nexus.Core.Domain.Models.Locations.Services
     public class LocationService : BaseDataService<Location, string>, ILocationService
     {
         private readonly ILocationRepository _locationRepository;
-        private readonly TransportService _transportService; // TransportService 주입
+        private readonly ITransportService _transportService; // TransportService 주입
 
         private Dictionary<string, Location> _locations = new();
 
@@ -26,7 +26,7 @@ namespace Nexus.Core.Domain.Models.Locations.Services
         public LocationService(
             ILogger<LocationService> logger,
             ILocationRepository locationRepository,
-            TransportService transportService) : base(logger, locationRepository)
+            ITransportService transportService) : base(logger, locationRepository)
         {
             _locationRepository = locationRepository;
             _transportService = transportService;
