@@ -43,7 +43,7 @@ namespace Nexus.Gateway.Services.Commands
 
     public class CassetteLocation
     {
-        public object currentItem { get; }
+  
 
         public string id { get; }
 
@@ -54,13 +54,13 @@ namespace Nexus.Gateway.Services.Commands
         public int status { get; }
 
         public CassetteLocation(
-            object currentItem,
+   
             string id,
             string name,
             int locationType,
             int status)
         {
-            this.currentItem = currentItem;
+
             this.id = id;
             this.name = name;
             this.locationType = locationType;
@@ -78,20 +78,18 @@ namespace Nexus.Gateway.Services.Commands
 
         public int status { get; }
 
-        public object currentItem { get; }
 
         public TrayLocation(
             string id,
             string name,
             int locationType,
-            int status,
-            object currentItem)
+            int status)
         {
             this.id = id;
             this.name = name;
             this.locationType = locationType;
             this.status = status;
-            this.currentItem = currentItem;
+
         }
     }
 
@@ -116,7 +114,6 @@ namespace Nexus.Gateway.Services.Commands
 
     public class MemoryPort
     {
-        public object currentItem { get; }
 
         public string id { get; }
 
@@ -127,13 +124,11 @@ namespace Nexus.Gateway.Services.Commands
         public int status { get; }
 
         public MemoryPort(
-            object currentItem,
             string id,
             string name,
             int locationType,
             int status)
         {
-            this.currentItem = currentItem;
             this.id = id;
             this.name = name;
             this.locationType = locationType;
