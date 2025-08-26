@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Nexus.Core.Domain.Models.Areas;
 using Nexus.Gateway.Services.Commands;
 using Nexus.Gateway.Services.Interfaces;
+using System.Text.Json;
 
 namespace Nexus.Gateway.Controllers
 {
@@ -32,18 +33,18 @@ namespace Nexus.Gateway.Controllers
         //[ProducesResponseType(typeof(string), StatusCodes.Status409Conflict)]
         //[ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<string>> InitializeAreas(
-            [FromBody] string jsonPayload,
+            [FromBody] JsonElement jsonPayload,
             CancellationToken cancellationToken = default)
         {
             try
             {
                 _logger.LogInformation("Received area initialization request.");
 
-                var result = await _areaCreationService.CreateAreaAsync(jsonPayload, cancellationToken);
+                //var result = await _areaCreationService.CreateAreaAsync(jsonPayload, cancellationToken);
 
-                _logger.LogInformation("Area initialization completed: {Result}", result);
+                _logger.LogInformation("Area initialization completed: Result");
 
-                return Ok(result);
+                return Ok();
             }
             catch (InvalidOperationException ex)
             {
