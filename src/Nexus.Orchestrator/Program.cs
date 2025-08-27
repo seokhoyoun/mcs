@@ -55,7 +55,10 @@ namespace Nexus.Orchestrator
             builder.Services.AddHostedService<AcsWorker>();
             builder.Services.AddHostedService<SchedulerWorker>();
 
-            builder.Services.AddMetricServer(options => { });
+            builder.Services.AddMetricServer(options =>
+            {
+                options.Port = 9091;
+            });
 
             var host = builder.Build();
             host.Run();
