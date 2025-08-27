@@ -29,6 +29,9 @@
       - N8N_PORT=5678
       - N8N_PROTOCOL=http
       - N8N_BASIC_AUTH_ACTIVE=false
+      - DB_SQLITE_POOL_SIZE=10
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       # PostgreSQL 연결 정보 (n8n 워크플로에서 사용)
       - POSTGRES_HOST=supabase
       - POSTGRES_DATABASE=postgres
@@ -117,6 +120,8 @@
     command: -config.file=/etc/loki/config.yml
     volumes:
       - ./loki/config.yml:/etc/loki/config.yml
+      - ./loki/data:/loki  # 통합 데이터 디렉토리
+    user: "0"  # root 권한으로 실행
 
   promtail:
     image: grafana/promtail:latest
@@ -128,6 +133,22 @@
     command: -config.file=/etc/promtail/config.yml
     depends_on:
       - loki
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    pid: "host"  # 호스트의 프로세스 정보를 공유 (핵심 설정 1)
+    volumes:
+      - /proc:/host/proc:ro  #  호스트의 proc 파일 시스템 마운트 (핵심 설정 2)
+      - /sys:/host/sys:ro   #  호스트의 sys 파일 시스템 마운트
+      - /:/host:ro          #  호스트의 전체 파일 시스템 마운트
+    command:
+      - '--path.procfs=/host/proc' #  컨테이너 내에서 호스트 proc 경로 지정 (핵심 설정 3)
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/host'
+    ports:
+      - "9100:9100"
 
 volumes:
   grafana_data:
