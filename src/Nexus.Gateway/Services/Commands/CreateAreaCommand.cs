@@ -4,16 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Nexus.Gateway.Services.Commands
 {
-    public class CreateAreaCommand
-    {
-        public List<AreaInfo> Areas { get; }
-
-        public CreateAreaCommand(List<AreaInfo> areas)
-        {
-            Areas = areas;
-        }
-    }
-
+ 
     public class AreaInfo
     {
         public string id { get; }
