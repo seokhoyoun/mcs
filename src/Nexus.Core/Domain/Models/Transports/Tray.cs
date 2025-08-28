@@ -1,4 +1,6 @@
-﻿using Nexus.Core.Domain.Models.Transports.Enums;
+﻿using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Locations.Base;
+using Nexus.Core.Domain.Models.Transports.Enums;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -8,21 +10,31 @@ namespace Nexus.Core.Domain.Models.Transports
 {
     public class Tray : ITransportable
     {
-        public const int MAX_MEMORY_CAPACITY = 25;
 
         public string Id { get; }
         public string Name { get; }
         public ETransportType TransportType => ETransportType.Tray;
         public IReadOnlyList<Memory> Memories => _memories.AsReadOnly();
 
-        private readonly List<Memory> _memories = new List<Memory>();
+        public Location? CurrentLocation 
+        {
+            get { return _currentLocation; }
+            set
+            {
+                _currentLocation = (TrayLocation?)value;
+            }
+        }
 
-        // 수량 정보 속성
         public int MemoryCount => _memories.Count;
         public int MaxMemoryCapacity => MAX_MEMORY_CAPACITY;
         public int AvailableMemorySlots => MAX_MEMORY_CAPACITY - MemoryCount;
         public bool IsFull => MemoryCount >= MAX_MEMORY_CAPACITY;
         public bool IsEmpty => MemoryCount == 0;
+
+        public const int MAX_MEMORY_CAPACITY = 25;
+
+        private readonly List<Memory> _memories = new List<Memory>();
+        private TrayLocation? _currentLocation;
 
         public Tray(string id, string name, List<Memory> memories)
         {

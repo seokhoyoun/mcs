@@ -15,13 +15,12 @@ namespace Nexus.Orchestrator.Application.Scheduler
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Scheduler Worker running at: {time}", DateTimeOffset.Now);
+            _logger.LogInformation("Scheduler Worker starting at: {time}", DateTimeOffset.Now);
 
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                await _schedulerService.RunAsync(stoppingToken);
-                await Task.Delay(1000, stoppingToken);
-            }
+            await _schedulerService.StartAsync(stoppingToken);
+
         }
+
+       
     }
 }

@@ -1,4 +1,6 @@
-﻿using Nexus.Core.Domain.Models.Transports.Enums;
+﻿using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Locations.Base;
+using Nexus.Core.Domain.Models.Transports.Enums;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using Nexus.Core.Domain.Shared.Bases;
 using System;
@@ -16,7 +18,16 @@ namespace Nexus.Core.Domain.Models.Transports
         public string? DeviceId { get; set; }
 
         public ETransportType TransportType => ETransportType.Memory;
+        public Location? CurrentLocation
+        {
+            get { return _currentLocation; }
+            set
+            {
+                _currentLocation = (MemoryLocation?)value;
+            }
+        }
 
+        private MemoryLocation? _currentLocation;
         public Memory(string id, string name)
         {
             Id = id;
