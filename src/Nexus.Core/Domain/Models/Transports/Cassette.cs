@@ -1,4 +1,6 @@
-﻿using Nexus.Core.Domain.Models.Transports.Enums;
+﻿using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Locations.Base;
+using Nexus.Core.Domain.Models.Transports.Enums;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -13,6 +15,16 @@ namespace Nexus.Core.Domain.Models.Transports
         public string Id { get; }
         public string Name { get; }
         public ETransportType TransportType => ETransportType.Cassette;
+        public Location? CurrentLocation
+        {
+            get { return _currentLocation; }
+            set
+            {
+                _currentLocation = (CassetteLocation?)value;
+            }
+        }
+
+        private CassetteLocation? _currentLocation;
         public IReadOnlyList<Tray> Trays => _trays.AsReadOnly();
 
         private readonly List<Tray> _trays = new List<Tray>();

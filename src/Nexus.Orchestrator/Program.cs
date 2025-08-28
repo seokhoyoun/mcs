@@ -4,6 +4,7 @@ using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Locations.Services;
 using Nexus.Core.Domain.Models.Lots.Events;
+using Nexus.Core.Domain.Models.Lots.Interfaces;
 using Nexus.Core.Domain.Models.Stockers.Interfaces;
 using Nexus.Core.Domain.Models.Stockers.Services;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
@@ -35,11 +36,13 @@ namespace Nexus.Orchestrator
             builder.Services.AddSingleton<ITransportsRepository, RedisTransportsRepository>();
             builder.Services.AddSingleton<IAreaRepository, RedisAreaRepository>();
             builder.Services.AddSingleton<IStockerRepository, RedisStockerRepository>();
+            builder.Services.AddSingleton<ILotRepository, RedisLotRepository>();
 
             builder.Services.AddSingleton<ILocationService, LocationService>();
             builder.Services.AddSingleton<ITransportService, TransportService>();
             builder.Services.AddSingleton<IAreaService, AreaService>();
             builder.Services.AddSingleton<IStockerService, StockerService>();
+
             builder.Services.AddSingleton<SchedulerService>();
 
 

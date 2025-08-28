@@ -28,7 +28,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Handlers
                 return;
 
             // PlanGroup 생성
-            _schedulerService.CreatePlanGroup(lot);
+            //_schedulerService.CreatePlanGroup(lot);
         }
 
         // 실제 환경에서는 Repository에서 Lot을 조회해야 함
