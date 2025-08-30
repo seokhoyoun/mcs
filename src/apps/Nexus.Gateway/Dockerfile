@@ -4,8 +4,8 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER $APP_UID
 WORKDIR /app
-EXPOSE 5050
 EXPOSE 5051
+EXPOSE 5052
 
 
 # 이 스테이지는 서비스 프로젝트를 빌드하는 데 사용됩니다.

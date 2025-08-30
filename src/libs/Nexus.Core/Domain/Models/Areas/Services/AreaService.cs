@@ -29,17 +29,17 @@ namespace Nexus.Core.Domain.Models.Areas.Services
 
         public async Task InitializeAreaService()
         {
-            var areas = LoadAreasFromLocalFile();
-            _areas.AddRange(areas);
+            //var areas = LoadAreasFromLocalFile();
+            //_areas.AddRange(areas);
 
-            foreach (var area in _areas)
-            {
-                var locations = new List<Location>();
+            //foreach (var area in _areas)
+            //{
+            //    var locations = new List<Location>();
                 
-                _locationService.AddLocations(locations);
-            }
+            //    _locationService.AddLocations(locations);
+            //}
             
-            await _areaRepository.InitializeAreasAsync(areas);
+            //await _areaRepository.InitializeAreasAsync(areas);
         }
 
         /// <summary>

@@ -22,9 +22,9 @@
     <PackageVersion Include="prometheus-net.AspNetCore" Version="8.2.1" />
   </ItemGroup>
 
-  <!--<PropertyGroup>
-	  <OutputPath>$(MSBuildThisFileDirectory)out\$(Configuration)\</OutputPath>
+<PropertyGroup>
+    <OutputPath>$(MSBuildThisFileDirectory)artifacts\$(MSBuildProjectName)\$(Configuration)\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-  </PropertyGroup>-->
+  </PropertyGroup>
 </Project>
