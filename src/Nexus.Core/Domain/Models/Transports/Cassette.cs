@@ -15,14 +15,6 @@ namespace Nexus.Core.Domain.Models.Transports
         public string Id { get; }
         public string Name { get; }
         public ETransportType TransportType => ETransportType.Cassette;
-        public Location? CurrentLocation
-        {
-            get { return _currentLocation; }
-            set
-            {
-                _currentLocation = (CassetteLocation?)value;
-            }
-        }
 
         private CassetteLocation? _currentLocation;
         public IReadOnlyList<Tray> Trays => _trays.AsReadOnly();

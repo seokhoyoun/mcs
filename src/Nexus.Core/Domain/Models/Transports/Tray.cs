@@ -16,15 +16,6 @@ namespace Nexus.Core.Domain.Models.Transports
         public ETransportType TransportType => ETransportType.Tray;
         public IReadOnlyList<Memory> Memories => _memories.AsReadOnly();
 
-        public Location? CurrentLocation 
-        {
-            get { return _currentLocation; }
-            set
-            {
-                _currentLocation = (TrayLocation?)value;
-            }
-        }
-
         public int MemoryCount => _memories.Count;
         public int MaxMemoryCapacity => MAX_MEMORY_CAPACITY;
         public int AvailableMemorySlots => MAX_MEMORY_CAPACITY - MemoryCount;

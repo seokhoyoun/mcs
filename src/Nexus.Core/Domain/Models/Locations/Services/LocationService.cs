@@ -22,6 +22,7 @@ namespace Nexus.Core.Domain.Models.Locations.Services
         private List<CassetteLocation> _cassetteLocations = new();
         private List<TrayLocation> _trayLocations = new();
         private List<MemoryLocation> _memoryLocations = new();
+        private List<RobotLocation> _robotLocations = new();
 
         public LocationService(
             ILogger<LocationService> logger,
@@ -54,6 +55,9 @@ namespace Nexus.Core.Domain.Models.Locations.Services
                     case ELocationType.Memory:
                         _memoryLocations.Add((MemoryLocation)location);
                         break;
+                    case ELocationType.Robot:  // 새로 추가
+                        _robotLocations.Add((RobotLocation)location);
+                        break;
                     default:
                         Debug.Assert(false, $"Unknown location type: {location.LocationType}");
                         _logger.LogError($"Unknown location type: {location.LocationType}");
@@ -61,41 +65,47 @@ namespace Nexus.Core.Domain.Models.Locations.Services
                 }
             }
         }
+
+ 
         public CassetteLocation? GetCassetteLocationById(string id)
         {
-            foreach (CassetteLocation cassetteLocation in _cassetteLocations)
+            if (_locations.TryGetValue(id, out var location))
             {
-                if (cassetteLocation.Id == id)
-                {
-                    return cassetteLocation;
-                }
+                return location as CassetteLocation;
             }
             return null;
         }
 
+    
         public TrayLocation? GetTrayLocationById(string id)
         {
-            foreach (TrayLocation trayLocation in _trayLocations)
+            if (_locations.TryGetValue(id, out var location))
             {
-                if (trayLocation.Id == id)
-                {
-                    return trayLocation;
-                }
+                return location as TrayLocation;
             }
             return null;
         }
 
+      
         public MemoryLocation? GetMemoryLocationById(string id)
         {
-            foreach (MemoryLocation memoryLocation in _memoryLocations)
+            if (_locations.TryGetValue(id, out var location))
             {
-                if (memoryLocation.Id == id)
-                {
-                    return memoryLocation;
-                }
+                return location as MemoryLocation;
             }
             return null;
         }
+
+     
+        public RobotLocation? GetRobotLocationById(string id)
+        {
+            if (_locations.TryGetValue(id, out var location))
+            {
+                return location as RobotLocation;
+            }
+            return null;
+        }
+
         /// <summary>
         /// 저장소에서 LocationState를 조회하여 Location 객체의 상태를 동기화합니다.
         /// </summary>

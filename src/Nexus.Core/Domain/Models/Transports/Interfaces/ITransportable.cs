@@ -11,6 +11,5 @@ namespace Nexus.Core.Domain.Models.Transports.Interfaces
     public interface ITransportable : IItem
     {
         public ETransportType TransportType { get; }
-        public Location? CurrentLocation { get; set; }
     }
 }

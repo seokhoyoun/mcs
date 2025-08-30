@@ -1,7 +1,10 @@
 ﻿using Nexus.Core.Domain.Models.Areas;
 using Nexus.Core.Domain.Models.Areas.Enums;
 using Nexus.Core.Domain.Models.Areas.Interfaces;
+using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Base;
+using Nexus.Core.Domain.Models.Locations.Enums;
+using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Lots;
 using Nexus.Core.Domain.Models.Lots.Enums;
 using Nexus.Core.Domain.Models.Lots.Events;
@@ -20,6 +23,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
         #region Fields
 
         private readonly IAreaService _areaService;
+        private readonly ILocationService _locationService;
         private readonly IMessageSubscriber _messageSubscriber;
         private readonly ILotRepository _lotRepository;
         private readonly ILogger<SchedulerService> _logger;
@@ -32,11 +36,13 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
 
         public SchedulerService(
             IAreaService areaService,
+            ILocationService locationService,
             IMessageSubscriber messageSubscriber,
             ILotRepository lotRepository,
             ILogger<SchedulerService> logger)
         {
             _areaService = areaService;
+            _locationService = locationService;
             _messageSubscriber = messageSubscriber;
             _lotRepository = lotRepository;
             _logger = logger;
@@ -206,16 +212,22 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             _logger.LogInformation("Selected Area {AreaId} (Status: {AreaStatus}) for cassette placement",
                 emptyArea.Id, emptyArea.Status);
 
-            // 스토커의 첫 번째 카세트 포트부터 시작
+            // AMR 로봇 Location 생성/조회 (물류로봇용)
+            var amrLocation = GetOrCreateAMRLocation("AMR.CP01", "물류로봇 카세트 포트 1");
 
             foreach (var cassette in lotStep.Cassettes)
             {
-                Debug.Assert(cassette.CurrentLocation != null, "Cassette must have a current location");
-                Location stockerPortLocation = cassette.CurrentLocation; // 단일 포트 사용
-
                 try
                 {
-                    // Area에서 사용 가능한 카세트 포트 찾기
+                    // 1. 카세트의 현재 위치 조회 (스토커)
+                    var stockerLocation = _locationService.GetCassetteLocationById(cassette.Id);
+                    if (stockerLocation == null)
+                    {
+                        _logger.LogWarning("Cassette location not found for CassetteId: {CassetteId}", cassette.Id);
+                        continue;
+                    }
+
+                    // 2. Area에서 사용 가능한 카세트 포트 찾기 (목표 위치)
                     var targetCassettePort = _areaService.GetAvailableCassettePort(emptyArea);
                     if (targetCassettePort == null)
                     {
@@ -224,53 +236,55 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                         continue;
                     }
 
-                    // 스토커 포트 위치 지정
-
+                    // 3. Plan 생성
                     var plan = new Plan(Guid.NewGuid().ToString(), $"StockerToArea_{cassette.Id}");
 
-                    // PlanStep 1: CassetteLoad
+                    // PlanStep 1: CassetteLoad (스토커 → AMR)
                     var cassetteLoadStep = new PlanStep(
                         Guid.NewGuid().ToString(),
-                        "Load_from_Stocker",
+                        $"1. Load_from_Stocker",
                         1,
                         EPlanStepAction.CassetteLoad,
-                        stockerPortLocation.Id);
+                        stockerLocation.Id);
 
-                    //// Job 1: 스토커에서 물류로봇으로 카세트 로드
-                    //var loadJob = new Job(
-                    //    Guid.NewGuid().ToString(),
-                    //    "",
-                    //    stockerPortLocation,    // from: 스토커 포트
-                    //    "AMR.CP01"             // to: 물류로봇 카세트 포트
-                    //);
+                    // Job 1: 스토커에서 물류로봇으로 카세트 로드
+                    var loadJob = new Job(
+                        Guid.NewGuid().ToString(),
+                        $"1. Load_{cassette.Id}_from_{stockerLocation.Id}",
+                        1,
+                        stockerLocation,    // from: 스토커 포트
+                        amrLocation         // to: AMR 카세트 포트
+                    );
 
-                    //// Job 2: 물류로봇에서 Area로 카세트 언로드
-                    //var unloadJob = new Job(
-                    //    Guid.NewGuid().ToString(),
-                    //    "AMR.CP01",            // from: 물류로봇 카세트 포트
-                    //    targetCassettePort.Id  // to: Area 카세트 포트
-                    //);
+                    cassetteLoadStep.Jobs.Add(loadJob);
+                    cassetteLoadStep.CarrierIds.Add(cassette.Id);
+                    plan.PlanSteps.Add(cassetteLoadStep);
 
-
-                    //cassetteLoadStep.Jobs.Add(loadJob);
-
-                    // PlanStep 2: CassetteUnload
+                    // PlanStep 2: CassetteUnload (AMR → Area)
                     var cassetteUnloadStep = new PlanStep(
                         Guid.NewGuid().ToString(),
-                        "Unload_to_Area",
+                        "2. Unload_to_Area",
                         2,
                         EPlanStepAction.CassetteUnload,
                         targetCassettePort.Id);
 
-                    //cassetteUnloadStep.Jobs.Add(unloadJob);
+                    // Job 1: 물류로봇에서 Area로 카세트 언로드
+                    var unloadJob = new Job(
+                        Guid.NewGuid().ToString(),
+                        $"1. Unload_{cassette.Id}_to_Area",
+                        1,
+                        amrLocation,        // from: AMR 카세트 포트
+                        targetCassettePort  // to: Area 카세트 포트
+                    );
 
-                    plan.PlanSteps.Add(cassetteLoadStep);
+                    cassetteUnloadStep.Jobs.Add(unloadJob);
+                    cassetteUnloadStep.CarrierIds.Add(cassette.Id);
                     plan.PlanSteps.Add(cassetteUnloadStep);
+
                     planGroup.Plans.Add(plan);
 
-                    _logger.LogInformation("Created StockerToArea plan: {CassetteId} from {From} to {To}",
-                        cassette.Id, stockerPortLocation, targetCassettePort.Id);
-
+                    _logger.LogInformation("Created StockerToArea plan: {CassetteId} from {From} via {Via} to {To}",
+                        cassette.Id, stockerLocation.Id, amrLocation.Id, targetCassettePort.Id);
                 }
                 catch (Exception ex)
                 {
@@ -383,6 +397,9 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             var planGroupId = Guid.NewGuid().ToString();
             var planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_AreaToStocker", EPlanGroupType.AreaToStocker);
 
+            // AMR 로봇 Location 조회
+            var amrLocation = GetOrCreateAMRLocation("AMR.CP01", "물류로봇 카세트 포트 1");
+
             const string stockerPrefix = "ST01.CP";
             int stockerPortIndex = 1;
 
@@ -404,31 +421,56 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                         continue;
                     }
 
-                    var stockerPortLocation = $"{stockerPrefix}{stockerPortIndex:D2}";
+                    // 스토커 반납 위치 생성
+                    var stockerPortLocation = CreateOrGetStockerLocation($"{stockerPrefix}{stockerPortIndex:D2}");
                     var plan = new Plan(Guid.NewGuid().ToString(), $"AreaToStocker_{cassette.Id}");
 
-                    // 에어리어에서 물류로봇으로 카세트 로드
+                    // Job 1: Area에서 AMR로 카세트 로드
+                    var loadJob = new Job(
+                        Guid.NewGuid().ToString(),
+                        $"Load_{cassette.Id}_from_Area",
+                        1,
+                        availableCassettePort,  // from: Area 카세트 포트
+                        amrLocation            // to: AMR 카세트 포트
+                    );
+
+                    // Job 2: AMR에서 스토커로 카세트 언로드
+                    var unloadJob = new Job(
+                        Guid.NewGuid().ToString(),
+                        $"Unload_{cassette.Id}_to_Stocker",
+                        1,
+                        amrLocation,           // from: AMR 카세트 포트
+                        stockerPortLocation    // to: 스토커 포트
+                    );
+
+                    // PlanStep 1: CassetteLoad (Area → AMR)
                     var cassetteLoadStep = new PlanStep(
                         Guid.NewGuid().ToString(),
                         "Load_from_Area",
                         1,
                         EPlanStepAction.CassetteLoad,
-                        availableCassettePort.Id); // from 위치
+                        availableCassettePort.Id);
 
-                    // 물류로봇에서 스토커로 카세트 언로드
+                    cassetteLoadStep.Jobs.Add(loadJob);
+                    cassetteLoadStep.CarrierIds.Add(cassette.Id);
+
+                    // PlanStep 2: CassetteUnload (AMR → Stocker)
                     var cassetteUnloadStep = new PlanStep(
                         Guid.NewGuid().ToString(),
                         "Unload_to_Stocker",
                         2,
                         EPlanStepAction.CassetteUnload,
-                        stockerPortLocation); // to 위치
+                        stockerPortLocation.Id);
+
+                    cassetteUnloadStep.Jobs.Add(unloadJob);
+                    cassetteUnloadStep.CarrierIds.Add(cassette.Id);
 
                     plan.PlanSteps.Add(cassetteLoadStep);
                     plan.PlanSteps.Add(cassetteUnloadStep);
                     planGroup.Plans.Add(plan);
 
-                    _logger.LogDebug("Created AreaToStocker plan: {CassetteId} from {From} to {To}",
-                        cassette.Id, availableCassettePort.Id, stockerPortLocation);
+                    _logger.LogDebug("Created AreaToStocker plan: {CassetteId} from {From} via {Via} to {To}",
+                        cassette.Id, availableCassettePort.Id, amrLocation.Id, stockerPortLocation.Id);
 
                     stockerPortIndex++;
                 }
@@ -444,6 +486,51 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
         #endregion
 
         #region Helper Methods
+
+        /// <summary>
+        /// AMR Location을 조회하거나 생성합니다.
+        /// </summary>
+        /// <param name="locationId">AMR Location ID (예: AMR.CP01)</param>
+        /// <param name="locationName">AMR Location 이름</param>
+        /// <returns>AMR RobotLocation</returns>
+        private RobotLocation GetOrCreateAMRLocation(string locationId, string locationName)
+        {
+            var amrLocation = _locationService.GetRobotLocationById(locationId);
+            if (amrLocation == null)
+            {
+                // AMR Location이 없으면 생성
+                amrLocation = new RobotLocation(locationId, locationName, ELocationType.Robot);
+
+                // LocationService에 등록 (실제 구현에서는 초기화 시점에 미리 등록되어야 함)
+                _locationService.AddLocations(new[] { amrLocation });
+
+                _logger.LogInformation("Created new AMR location: {LocationId}", locationId);
+            }
+
+            return amrLocation;
+        }
+
+        /// <summary>
+        /// 스토커 Location을 조회하거나 생성합니다.
+        /// </summary>
+        /// <param name="locationId">스토커 Location ID (예: ST01.CP01)</param>
+        /// <returns>스토커 CassetteLocation</returns>
+        private CassetteLocation CreateOrGetStockerLocation(string locationId)
+        {
+            var stockerLocation = _locationService.GetCassetteLocationById(locationId);
+            if (stockerLocation == null)
+            {
+                // 스토커 Location이 없으면 생성
+                stockerLocation = new CassetteLocation(locationId, locationId, ELocationType.Cassette);
+
+                // LocationService에 등록
+                _locationService.AddLocations(new[] { stockerLocation });
+
+                _logger.LogInformation("Created new stocker location: {LocationId}", locationId);
+            }
+
+            return stockerLocation;
+        }
 
         /// <summary>
         /// 비어있는 Area를 우선적으로 찾습니다.
