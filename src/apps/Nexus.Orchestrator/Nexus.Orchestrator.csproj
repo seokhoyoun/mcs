@@ -17,8 +17,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-    <ProjectReference Include="..\Nexus.Core\Nexus.Core.csproj" />
-    <ProjectReference Include="..\Nexus.Infrastructure\Nexus.Infrastructure.csproj" />
-    <ProjectReference Include="..\Nexus.Shared\Nexus.Shared.csproj" />
+    <ProjectReference Include="..\..\libs\Nexus.Core\Nexus.Core.csproj" />
+    <ProjectReference Include="..\..\libs\Nexus.Infrastructure\Nexus.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\libs\Nexus.Shared\Nexus.Shared.csproj" />
   </ItemGroup>
 </Project>
