@@ -18,14 +18,6 @@ namespace Nexus.Core.Domain.Models.Transports
         public string? DeviceId { get; set; }
 
         public ETransportType TransportType => ETransportType.Memory;
-        public Location? CurrentLocation
-        {
-            get { return _currentLocation; }
-            set
-            {
-                _currentLocation = (MemoryLocation?)value;
-            }
-        }
 
         private MemoryLocation? _currentLocation;
         public Memory(string id, string name)
