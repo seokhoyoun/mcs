@@ -399,3 +399,49 @@ FodyWeavers.xsd
 
 # n8n data files
 src/n8n_data/database.sqlite
+
+# Loki 관련 파일들
+src/loki/data/
+src/loki/wal/
+src/loki/chunks_head/
+src/loki/wal_replay/
+
+# Grafana 관련 데이터
+grafana_data/
+
+# 기타 모니터링 도구 데이터
+src/prometheus/data/
+src/promtail/data/
+
+# Docker 볼륨 데이터
+src/n8n_data/
+src/data/
+
+# Visual Studio
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+
+# Logs
+logs/
+*.log
