@@ -24,6 +24,8 @@
 LICENSE
 README.md
 data/  
+.next/
+node_modules
 !**/.gitignore
 !.git/HEAD
 !.git/config
