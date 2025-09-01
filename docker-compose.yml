@@ -71,30 +71,6 @@
       - ASPNETCORE_HTTPS_PORT=5052
       - ASPNETCORE_URLS=http://+:5051;https://+:5052
 
-  # --- nexus.portal 서비스 추가 ---
-  nexus.portal:
-    image: ${DOCKER_REGISTRY-}nexusportal
-    build:
-      context: .
-      # 새로 생성할 Dockerfile 경로
-      dockerfile: src/apps/Nexus.Portal/Dockerfile
-    container_name: nexus_portal
-    ports:
-      # Grafana(3000)와 겹치지 않도록 3001번 포트 사용
-      - "3001:3001"
-    volumes:
-      # 소스 코드 변경 시 자동 리로드를 위한 볼륨 마운트
-      - ./src/apps/Nexus.Portal/nexus.portal:/app
-      # 호스트의 node_modules가 컨테이너를 덮어쓰지 않도록 설정
-      - /app/node_modules
-    environment:
-      - WATCHPACK_POLLING=true
-      - PORT=3001
-    depends_on:
-      - nexus.gateway
-    restart: unless-stopped
-  # --------------------------------
-
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
