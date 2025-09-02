@@ -93,22 +93,8 @@ namespace Nexus.Core.Domain.Shared.Bases
             }
         }
 
-        public virtual async Task InitializeAsync(CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                // 서비스 초기화 로직
-                // 예: 캐시 초기화, 설정 로드 등
-                _logger.LogInformation($"{typeof(T).Name} 데이터 서비스 초기화 중...");
-
-                await Task.CompletedTask;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"{GetType().Name} 초기화 중 오류 발생");
-                throw;
-            }
-        }
+        public abstract Task InitializeAsync(CancellationToken cancellationToken = default);
+      
 
     }
 }

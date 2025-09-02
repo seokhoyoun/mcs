@@ -27,19 +27,10 @@ namespace Nexus.Core.Domain.Models.Areas.Services
             _locationService = locationService;
         }
 
-        public async Task InitializeAreaService()
+        public override async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
-            //var areas = LoadAreasFromLocalFile();
-            //_areas.AddRange(areas);
-
-            //foreach (var area in _areas)
-            //{
-            //    var locations = new List<Location>();
-                
-            //    _locationService.AddLocations(locations);
-            //}
-            
-            //await _areaRepository.InitializeAreasAsync(areas);
+            var areas = await _areaRepository.GetAllAsync();
+            _areas.AddRange(areas);
         }
 
         /// <summary>
@@ -160,5 +151,7 @@ namespace Nexus.Core.Domain.Models.Areas.Services
             }
             return areas;
         }
+
+ 
     }
 }
