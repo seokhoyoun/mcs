@@ -1,0 +1,147 @@
+﻿@using MudBlazor
+@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudButton Href="./"
+                   Variant="Variant.Text"
+                   StartIcon="@Icons.Material.Filled.LocationSearching"
+                   Color="Color.Primary"
+                   Style="text-transform:none">
+            MCS
+        </MudButton>
+        @* <MudText Typo="Typo.h5" Class="ml-3">Application</MudText> *@
+        <MudSpacer />
+        <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
+        <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Href="https://github.com/seokhoyoun" />
+        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
+    </MudAppBar>
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+        <NavMenu />
+    </MudDrawer>
+    <MudMainContent>
+        <MudContainer Class="mt-16 px-8" MaxWidth="MaxWidth.False">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _isDarkMode = false;
+    private MudTheme? _theme = null;
+    private bool _drawerOpen = true;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        _theme = new()
+        {
+            PaletteLight = _lightPalette,
+            PaletteDark = _evergreenPalette,
+            LayoutProperties = new LayoutProperties()
+        };
+    }
+
+    private readonly PaletteLight _lightPalette = new()
+    {
+        Black = "#110e2d",
+        AppbarText = "#424242",
+        AppbarBackground = "rgba(255,255,255,0.8)",
+        DrawerBackground = "#ffffff",
+        GrayLight = "#e8e8e8",
+        GrayLighter = "#f9f9f9",
+    };
+
+    private readonly PaletteDark _darkPalette = new PaletteDark()
+    {
+        Primary = "#7e6fff",
+        Surface = "#1e1e2d",
+        Background = "#1a1a27",
+        BackgroundGray = "#151521",
+        AppbarText = "#92929f",
+        AppbarBackground = "rgba(26,26,39,0.8)",
+        DrawerBackground = "#1a1a27",
+        ActionDefault = "#74718e",
+        ActionDisabled = "#9999994d",
+        ActionDisabledBackground = "#605f6d4d",
+        TextPrimary = "#b2b0bf",
+        TextSecondary = "#22229f",
+        TextDisabled = "#ffffff33",
+        DrawerIcon = "#92929f",
+        DrawerText = "#92929f",
+        GrayLight = "#2a2833",
+        GrayLighter = "#1e1e2d",
+        Info = "#4a86ff",
+        Success = "#3dcb6c",
+        Warning = "#ffb545",
+        Error = "#ff3f5f",
+        LinesDefault = "#33323e",
+        TableLines = "#33323e",
+        Divider = "#292838",
+        OverlayLight = "#1e1e2d80",
+    };
+
+    private readonly PaletteDark _evergreenPalette = new PaletteDark()
+    {
+        // --- 기본 색상 ---
+        Primary = "#26a69a",             // 차분한 틸(Teal) 색상
+        Surface = "#263238",             // 어두운 청회색
+        Background = "#212121",             // 짙은 회색
+        BackgroundGray = "#1e1e1e",          // 가장 어두운 배경
+
+        // --- 텍스트 및 아이콘 ---
+        TextPrimary = "#eceff1",           // 밝은 회색 (가독성)
+        TextSecondary = "#b0bec5",           // 부드러운 회색
+        TextDisabled = "#ffffff33",
+        AppbarText = "#b0bec5",
+        DrawerIcon = "#b0bec5",
+        DrawerText = "#b0bec5",
+
+        // --- 앱/드로어 배경 ---
+        AppbarBackground = "rgba(38,50,56,0.8)",
+        DrawerBackground = "#212121",
+
+        // --- 상태 및 액션 ---
+        Info = "#29b6f6",                 // 밝은 하늘색
+        Success = "#66bb6a",               // 부드러운 녹색
+        Warning = "#ffa726",               // 밝은 주황색
+        Error = "#ef5350",                 // 부드러운 빨간색
+        ActionDefault = "#b0bec5",
+        ActionDisabled = "#9999994d",
+        ActionDisabledBackground = "#605f6d4d",
+
+        // --- 구분선 및 기타 ---
+        LinesDefault = "#455a64",
+        TableLines = "#455a64",
+        Divider = "#37474f",
+        GrayLight = "#37474f",
+        GrayLighter = "#263238",
+        OverlayLight = "#26323880",
+        
+    };
+
+    public string DarkLightModeButtonIcon => _isDarkMode switch
+    {
+        true => Icons.Material.Rounded.LightMode,
+        false => Icons.Material.Outlined.DarkMode,
+    };
+
+    private void DarkModeToggle()
+    {
+        _isDarkMode = !_isDarkMode;
+    }
+
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}
+}

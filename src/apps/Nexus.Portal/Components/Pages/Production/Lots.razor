@@ -1,0 +1,109 @@
+﻿@page "/production/lots"
+@using MudBlazor
+
+<PageTitle>LOT 관리</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h3" GutterBottom="true">LOT 관리</MudText>
+    <MudText Typo="Typo.subtitle1" Class="mb-4">LOT 생성, 수정, 삭제 및 상태 관리</MudText>
+
+    <MudGrid>
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">LOT 목록</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Variant="Variant.Filled">
+                            새 LOT 생성
+                        </MudButton>
+                        <MudButton StartIcon="@Icons.Material.Filled.FileUpload" Color="Color.Secondary" Variant="Variant.Outlined">
+                            LOT 일괄 등록
+                        </MudButton>
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudTable Items="@_lotItems" Hover="true" Breakpoint="Breakpoint.Sm" Filter="_filterLot">
+                        <ToolBarContent>
+                            <MudTextField @bind-Value="_searchString" Placeholder="LOT ID 또는 제품명 검색" 
+                                        Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" 
+                                        IconSize="Size.Medium" Class="mt-0" />
+                        </ToolBarContent>
+                        <HeaderContent>
+                            <MudTh>LOT ID</MudTh>
+                            <MudTh>제품명</MudTh>
+                            <MudTh>수량</MudTh>
+                            <MudTh>상태</MudTh>
+                            <MudTh>우선순위</MudTh>
+                            <MudTh>등록일</MudTh>
+                            <MudTh>예상 완료일</MudTh>
+                            <MudTh>작업</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="LOT ID">@context.LotId</MudTd>
+                            <MudTd DataLabel="제품명">@context.ProductName</MudTd>
+                            <MudTd DataLabel="수량">@context.Quantity</MudTd>
+                            <MudTd DataLabel="상태">
+                                    @context.Status
+                            </MudTd>
+                            <MudTd DataLabel="우선순위">
+                                <MudRating SelectedValue="@context.Priority" MaxValue="5" ReadOnly="true" Size="Size.Small" />
+                            </MudTd>
+                            <MudTd DataLabel="등록일">@context.CreatedDate.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd DataLabel="예상 완료일">@context.ExpectedDate?.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd DataLabel="작업">
+                                <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small">
+                                    <MudButton StartIcon="@Icons.Material.Filled.Edit">편집</MudButton>
+                                    <MudButton StartIcon="@Icons.Material.Filled.PlayArrow">시작</MudButton>
+                                    <MudButton StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error">삭제</MudButton>
+                                </MudButtonGroup>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private string _searchString = string.Empty;
+    private readonly List<LotItem> _lotItems = new()
+    {
+        new LotItem { LotId = "LOT-20250101-001", ProductName = "Memory Test Kit A", Quantity = 100, Status = "Ready", Priority = 3, CreatedDate = DateTime.Now.AddDays(-5), ExpectedDate = DateTime.Now.AddDays(2) },
+        new LotItem { LotId = "LOT-20250101-002", ProductName = "Memory Test Kit B", Quantity = 200, Status = "InProgress", Priority = 5, CreatedDate = DateTime.Now.AddDays(-3), ExpectedDate = DateTime.Now.AddDays(1) },
+        new LotItem { LotId = "LOT-20250101-003", ProductName = "Memory Test Kit C", Quantity = 150, Status = "Completed", Priority = 2, CreatedDate = DateTime.Now.AddDays(-7), ExpectedDate = DateTime.Now.AddDays(-1) }
+    };
+
+    private bool _filterLot(LotItem lotItem)
+    {
+        return string.IsNullOrWhiteSpace(_searchString) ||
+               lotItem.LotId.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ||
+               lotItem.ProductName.Contains(_searchString, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private Color GetLotStatusColor(string status)
+    {
+        return status switch
+        {
+            "Ready" => Color.Info,
+            "InProgress" => Color.Primary,
+            "Completed" => Color.Success,
+            "Failed" => Color.Error,
+            "Cancelled" => Color.Default,
+            _ => Color.Default
+        };
+    }
+
+    public class LotItem
+    {
+        public string LotId { get; set; } = string.Empty;
+        public string ProductName { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public int Priority { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public DateTime? ExpectedDate { get; set; }
+    }
+}
