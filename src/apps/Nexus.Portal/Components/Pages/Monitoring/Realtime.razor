@@ -1,0 +1,61 @@
+﻿@page "/monitoring/realtime"
+@using System.Linq
+
+<h3>실시간 현황 — Stocker & Area</h3>
+
+<div class="grids-row">
+    <section class="grid-col">
+        <div class="stocker-title">Stocker ST01</div>
+
+        <div class="stocker-grid" role="grid" aria-label="Stocker ports">
+            @for (int i = 0; i < StockerPorts.Count; i++)
+            {
+                <div class="port @(StockerPorts[i] ? "occupied" : "empty")"
+                     role="gridcell"
+                     @onclick="() => ToggleStocker(i)"
+                     title="@($"ST01.CP{(i + 1):00}")">
+                    <div class="port-id">@($"ST01.CP{(i + 1):00}")</div>
+                    <div class="port-state">@((StockerPorts[i]) ? "Occupied" : "Empty")</div>
+                </div>
+            }
+        </div>
+    </section>
+
+    <section class="grid-col">
+        <div class="area-title">Area A01</div>
+
+        <div class="area-grid" role="grid" aria-label="Area ports">
+            @for (int i = 0; i < AreaPorts.Count; i++)
+            {
+                <div class="port @(AreaPorts[i] ? "occupied" : "empty")"
+                     role="gridcell"
+                     @onclick="() => ToggleArea(i)"
+                     title="@($"A01.CP{(i + 1):00}")">
+                    <div class="port-id">@($"A01.CP{(i + 1):00}")</div>
+                    <div class="port-state">@((AreaPorts[i]) ? "Occupied" : "Empty")</div>
+                </div>
+            }
+        </div>
+    </section>
+</div>
+
+@code {
+    private int StockerPortCount { get; set; } = 8;
+    private int AreaPortCount { get; set; } = 6;
+
+    private List<bool> StockerPorts { get; set; } = new();
+    private List<bool> AreaPorts { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        StockerPorts = Enumerable.Repeat(false, StockerPortCount).ToList();
+        AreaPorts = Enumerable.Repeat(false, AreaPortCount).ToList();
+
+     
+    }
+
+    private void ToggleStocker(int index) => StockerPorts[index - 1] = !StockerPorts[index - 1];
+    private void ToggleArea(int index) => AreaPorts[index - 1] = !AreaPorts[index - 1];
+}
