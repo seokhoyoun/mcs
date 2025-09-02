@@ -33,6 +33,35 @@ namespace Nexus.Core.Domain.Models.Locations.Services
             _transportService = transportService;
         }
 
+        public override async Task InitializeAsync(CancellationToken cancellationToken = default)
+        {
+            var locations = await _locationRepository.GetAllAsync();
+            foreach (var location in locations)
+            {
+                _locations.Add(location.Id, location);
+
+                switch (location.LocationType)
+                {
+                    case ELocationType.Cassette:
+                        _cassetteLocations.Add((CassetteLocation)location);
+                        break;
+                    case ELocationType.Tray:
+                        _trayLocations.Add((TrayLocation)location);
+                        break;
+                    case ELocationType.Memory:
+                        _memoryLocations.Add((MemoryLocation)location);
+                        break;
+                    case ELocationType.Robot:  
+                        _robotLocations.Add((RobotLocation)location);
+                        break;
+                    default:
+                        Debug.Assert(false, $"Unknown location type: {location.LocationType}");
+                        _logger.LogError($"Unknown location type: {location.LocationType}");
+                        break;
+                }
+            }
+        }
+
         public void AddLocations(IEnumerable<Location> locations)
         {
             foreach (var location in locations)
@@ -134,8 +163,6 @@ namespace Nexus.Core.Domain.Models.Locations.Services
             }
         }
 
-    
 
-      
     }
 }

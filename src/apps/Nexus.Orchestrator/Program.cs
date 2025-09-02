@@ -43,8 +43,8 @@ namespace Nexus.Orchestrator
             builder.Services.AddSingleton<IAreaService, AreaService>();
             builder.Services.AddSingleton<IStockerService, StockerService>();
 
+            builder.Services.AddSingleton<AcsService>();
             builder.Services.AddSingleton<SchedulerService>();
-
 
             builder.Services.AddSingleton<IMessagePublisher, RedisPublisher>();
             builder.Services.AddSingleton<IMessageSubscriber, RedisSubscriber>();
@@ -53,8 +53,6 @@ namespace Nexus.Orchestrator
 
             builder.Services.AddScoped<IEventHandler<LotCreatedEvent>, LotCreatedEventHandler>();
 
-            // ACS 서비스 및 워커 등록
-            builder.Services.AddSingleton<AcsService>();
             builder.Services.AddHostedService<AcsWorker>();
             builder.Services.AddHostedService<SchedulerWorker>();
 

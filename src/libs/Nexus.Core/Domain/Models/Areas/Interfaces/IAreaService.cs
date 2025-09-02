@@ -15,12 +15,6 @@ namespace Nexus.Core.Domain.Models.Areas.Interfaces
         IReadOnlyList<Area> Areas { get; }
 
         /// <summary>
-        /// 에어리어 서비스를 초기화합니다.
-        /// 로컬 파일에서 에어리어 데이터를 로드하고 위치 서비스에 등록합니다.
-        /// </summary>
-        Task InitializeAreaService();
-
-        /// <summary>
         /// 카세트 적재가 가능한 Area를 조회합니다.
         /// </summary>
         Area? GetAvailableAreaForCassette();

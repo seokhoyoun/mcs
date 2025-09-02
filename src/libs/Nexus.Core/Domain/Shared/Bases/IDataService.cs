@@ -10,7 +10,7 @@ namespace Nexus.Core.Domain.Shared.Bases
     /// </summary>
     /// <typeparam name="T">관리할 엔티티 타입</typeparam>
     /// <typeparam name="TKey">엔티티의 주 식별자 타입</typeparam>
-    public interface IDataService<T, TKey> where T : class, IEntity
+    public interface IDataService<T, TKey> : IService where T : class, IEntity
     {
         /// <summary>
         /// 모든 엔티티를 조회합니다.
@@ -51,10 +51,6 @@ namespace Nexus.Core.Domain.Shared.Bases
         /// <returns>삭제 성공 여부</returns>
         Task<bool> DeleteAsync(TKey id, CancellationToken cancellationToken = default);
 
-        /// <summary>
-        /// 데이터베이스 동기화 및 초기화 작업을 수행합니다.
-        /// </summary>
-        /// <param name="cancellationToken">작업 취소 토큰</param>
-        Task InitializeAsync(CancellationToken cancellationToken = default);
+    
     }
 }

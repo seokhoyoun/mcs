@@ -1,61 +1,69 @@
 ﻿@page "/monitoring/realtime"
+@using Nexus.Core.Domain.Models.Stockers.Interfaces
 @using System.Linq
+@using MudBlazor
 
-<h3>실시간 현황 — Stocker & Area</h3>
+@inject IStockerService StockerService
 
-<div class="grids-row">
-    <section class="grid-col">
-        <div class="stocker-title">Stocker ST01</div>
-
-        <div class="stocker-grid" role="grid" aria-label="Stocker ports">
-            @for (int i = 0; i < StockerPorts.Count; i++)
-            {
-                <div class="port @(StockerPorts[i] ? "occupied" : "empty")"
-                     role="gridcell"
-                     @onclick="() => ToggleStocker(i)"
-                     title="@($"ST01.CP{(i + 1):00}")">
-                    <div class="port-id">@($"ST01.CP{(i + 1):00}")</div>
-                    <div class="port-state">@((StockerPorts[i]) ? "Occupied" : "Empty")</div>
-                </div>
-            }
-        </div>
-    </section>
-
-    <section class="grid-col">
-        <div class="area-title">Area A01</div>
-
-        <div class="area-grid" role="grid" aria-label="Area ports">
-            @for (int i = 0; i < AreaPorts.Count; i++)
-            {
-                <div class="port @(AreaPorts[i] ? "occupied" : "empty")"
-                     role="gridcell"
-                     @onclick="() => ToggleArea(i)"
-                     title="@($"A01.CP{(i + 1):00}")">
-                    <div class="port-id">@($"A01.CP{(i + 1):00}")</div>
-                    <div class="port-state">@((AreaPorts[i]) ? "Occupied" : "Empty")</div>
-                </div>
-            }
-        </div>
-    </section>
-</div>
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-4">Realtime Overview</MudText>
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-2">Stocker ST01</MudText>
+                <MudGrid>
+                    @for (int index = 0; index < StockerPorts.Count; index++)
+                    {
+                        int i = index; // Local copy for lambda capture
+                        <MudItem xs="6" sm="4" md="3">
+                            <MudPaper Class="@($"d-flex flex-column align-items-center pa-2 {(StockerPorts[i] ? "mud-theme-success" : "mud-theme-surface")}")" Elevation="2">
+                                <MudText Typo="Typo.subtitle2">@($"ST01.CP{(i + 1):00}")</MudText>
+                                <MudChip T="string" Color="@(StockerPorts[i] ? Color.Success : Color.Default)" Variant="Variant.Filled" Class="mt-1">
+                                    @(StockerPorts[i] ? "Occupied" : "Empty")
+                                </MudChip>
+                            </MudPaper>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-2">Area A01</MudText>
+                <MudGrid>
+                    @for (int index = 0; index < AreaPorts.Count; index++)
+                    {
+						int i = index; // Local copy for lambda capture
+                        <MudItem xs="6" sm="4" md="3">
+                            <MudPaper Class="@($"d-flex flex-column align-items-center pa-2 {(AreaPorts[i] ? "mud-theme-success" : "mud-theme-surface")}")" Elevation="2">
+                                <MudText Typo="Typo.subtitle2">@($"A01.CP{(i + 1):00}")</MudText>
+                                <MudChip T="string" Color="@(AreaPorts[i] ? Color.Success : Color.Default)" Variant="Variant.Filled" Class="mt-1">
+                                    @(AreaPorts[i] ? "Occupied" : "Empty")
+                                </MudChip>
+                            </MudPaper>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
 
 @code {
     private int StockerPortCount { get; set; } = 8;
     private int AreaPortCount { get; set; } = 6;
 
-    private List<bool> StockerPorts { get; set; } = new();
-    private List<bool> AreaPorts { get; set; } = new();
+    // 선언과 동시에 초기화하여 코드를 간결하게 만듭니다.
+    private List<bool> StockerPorts { get; set; } = Enumerable.Repeat(false, 8).ToList();
+    private List<bool> AreaPorts { get; set; } = Enumerable.Repeat(false, 6).ToList();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
+        // 1. StockerService에서 초기 상태 가져오기
+        var stockers = await StockerService.GetAllAsync();
+        // StockerPorts = stockerStatus.Ports.Select(p => p.IsOccupied).ToList();
 
-        StockerPorts = Enumerable.Repeat(false, StockerPortCount).ToList();
-        AreaPorts = Enumerable.Repeat(false, AreaPortCount).ToList();
+   
 
-     
     }
-
-    private void ToggleStocker(int index) => StockerPorts[index - 1] = !StockerPorts[index - 1];
-    private void ToggleArea(int index) => AreaPorts[index - 1] = !AreaPorts[index - 1];
 }
