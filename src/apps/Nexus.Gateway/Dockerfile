@@ -4,18 +4,22 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER $APP_UID
 WORKDIR /app
-EXPOSE 5051
-EXPOSE 5052
+EXPOSE 8080
+EXPOSE 8081
 
 
 # 이 스테이지는 서비스 프로젝트를 빌드하는 데 사용됩니다.
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["Nexus.Gateway/Nexus.Gateway.csproj", "Nexus.Gateway/"]
-RUN dotnet restore "./Nexus.Gateway/Nexus.Gateway.csproj"
+COPY ["Directory.build.props", "."]
+COPY ["src/apps/Nexus.Gateway/Nexus.Gateway.csproj", "src/apps/Nexus.Gateway/"]
+COPY ["src/libs/Nexus.Core/Nexus.Core.csproj", "src/libs/Nexus.Core/"]
+COPY ["src/libs/Nexus.Shared/Nexus.Shared.csproj", "src/libs/Nexus.Shared/"]
+COPY ["src/libs/Nexus.Infrastructure/Nexus.Infrastructure.csproj", "src/libs/Nexus.Infrastructure/"]
+RUN dotnet restore "./src/apps/Nexus.Gateway/Nexus.Gateway.csproj"
 COPY . .
-WORKDIR "/src/Nexus.Gateway"
+WORKDIR "/src/src/apps/Nexus.Gateway"
 RUN dotnet build "./Nexus.Gateway.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # 이 스테이지는 최종 스테이지에 복사할 서비스 프로젝트를 게시하는 데 사용됩니다.

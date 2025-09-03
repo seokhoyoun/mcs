@@ -1,7 +1,7 @@
 # 디버그 컨테이너를 사용자 지정하는 방법과 Visual Studio 이 Dockerfile을 사용하여 더 빠른 디버깅을 위해 이미지를 빌드하는 방법을 알아보려면 https://aka.ms/customizecontainer를 참조하세요.
 
 # 이 스테이지는 VS에서 빠른 모드로 실행할 때 사용됩니다(디버그 구성의 기본값).
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+FROM mcr.microsoft.com/dotnet/runtime:8.0 AS base
 USER $APP_UID
 WORKDIR /app
 
@@ -10,10 +10,14 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["Nexus.Orchestrator/Nexus.Orchestrator.csproj", "Nexus.Orchestrator/"]
-RUN dotnet restore "./Nexus.Orchestrator/Nexus.Orchestrator.csproj"
+COPY ["Directory.build.props", "."]
+COPY ["src/apps/Nexus.Orchestrator/Nexus.Orchestrator.csproj", "src/apps/Nexus.Orchestrator/"]
+COPY ["src/libs/Nexus.Core/Nexus.Core.csproj", "src/libs/Nexus.Core/"]
+COPY ["src/libs/Nexus.Shared/Nexus.Shared.csproj", "src/libs/Nexus.Shared/"]
+COPY ["src/libs/Nexus.Infrastructure/Nexus.Infrastructure.csproj", "src/libs/Nexus.Infrastructure/"]
+RUN dotnet restore "./src/apps/Nexus.Orchestrator/Nexus.Orchestrator.csproj"
 COPY . .
-WORKDIR "/src/Nexus.Orchestrator"
+WORKDIR "/src/src/apps/Nexus.Orchestrator"
 RUN dotnet build "./Nexus.Orchestrator.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # 이 스테이지는 최종 스테이지에 복사할 서비스 프로젝트를 게시하는 데 사용됩니다.
