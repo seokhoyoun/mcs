@@ -400,6 +400,7 @@ FodyWeavers.xsd
 # n8n data files
 src/n8n_data/database.sqlite
 src/n8n_data/database.sqlite-wal
+src/n8n_data/database.sqlite-shm
 
 # Loki 관련 파일들
 src/loki/data/
