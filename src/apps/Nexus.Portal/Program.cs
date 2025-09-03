@@ -20,13 +20,13 @@ namespace Nexus.Portal
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
-            builder.Services.AddSingleton<IStockerRepository, RedisStockerRepository>();
-            builder.Services.AddSingleton<IAreaRepository, RedisAreaRepository>();
+            //builder.Services.AddSingleton<IStockerRepository, RedisStockerRepository>();
+            //builder.Services.AddSingleton<IAreaRepository, RedisAreaRepository>();
 
-            builder.Services.AddSingleton<IStockerService, StockerService>();
-            builder.Services.AddSingleton<IService>(sp => sp.GetRequiredService<IStockerService>());
-            builder.Services.AddSingleton<IAreaService, AreaService>();
-            builder.Services.AddSingleton<IService>(sp => sp.GetRequiredService<IAreaService>());
+            //builder.Services.AddSingleton<IStockerService, StockerService>();
+            //builder.Services.AddSingleton<IService>(sp => sp.GetRequiredService<IStockerService>());
+            //builder.Services.AddSingleton<IAreaService, AreaService>();
+            //builder.Services.AddSingleton<IService>(sp => sp.GetRequiredService<IAreaService>());
 
             builder.Services.AddMudServices();
 
