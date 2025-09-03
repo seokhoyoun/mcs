@@ -4,16 +4,16 @@
     container_name: redis
     ports:
       - "6379:6379"
-
+ 
   supabase:
     image: postgres:15-alpine
     container_name: supabase_db
     ports:
-      - "5432:5432"
+        - "5432:5432"
     environment:
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "1234"
-      POSTGRES_DB: "postgres"
+        POSTGRES_USER: "postgres"
+        POSTGRES_PASSWORD: "1234"
+        POSTGRES_DB: "postgres"
 
   n8n:
     image: n8nio/n8n:1.109.0
@@ -41,7 +41,7 @@
       - supabase
 
   nexus.orchestrator:
-    image: ${DOCKER_REGISTRY-}nexusorchestrator
+    image: ghcr.io/seokhoyoun/nexus-orchestrator:latest
     build:
       context: .
       # 'src/' 경로 추가
@@ -50,12 +50,16 @@
     depends_on:
       - redis
     ports:
-      - "9091:9091"
+      - "8081:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Redis__ConnectionString=redis:6379
     volumes:
       # './src/' 경로 추가
       - ./src/data:/app/data
 
   nexus.gateway:
+    image: ghcr.io/seokhoyoun/nexus-gateway:latest
     build:
       context: .
       # 'src/' 경로 추가
@@ -64,12 +68,23 @@
     depends_on:
       - redis
     ports:
-      - "5051:5051"
-      - "5052:5052"
+      - "8082:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_HTTPS_PORT=5052
-      - ASPNETCORE_URLS=http://+:5051;https://+:5052
+      - Redis__ConnectionString=redis:6379
+
+  nexus.portal:
+    image: ghcr.io/seokhoyoun/nexus-portal:latest
+    build:
+      context: .
+      dockerfile: src/apps/Nexus.Portal/Dockerfile
+    ports:
+      - "8080:8080" # 포털은 대표 포트인 8080을 사용하도록 설정
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - Redis__ConnectionString=redis:6379
+  # ------------------------------
 
   prometheus:
     image: prom/prometheus:latest
