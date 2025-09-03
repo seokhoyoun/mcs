@@ -9,11 +9,10 @@
     <DockerfileContext>..\..\..</DockerfileContext>
   </PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
-		<PackageReference Include="Swashbuckle.AspNetCore" />
-		<PackageReference Include="StackExchange.Redis" />
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+		<PackageReference Include="StackExchange.Redis" Version="2.8.58" />
 	</ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\libs\Nexus.Core\Nexus.Core.csproj" />
     <ProjectReference Include="..\..\libs\Nexus.Infrastructure\Nexus.Infrastructure.csproj" />

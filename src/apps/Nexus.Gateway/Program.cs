@@ -9,7 +9,6 @@ using Nexus.Core.Domain.Models.Stockers.Services;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using Nexus.Core.Domain.Models.Transports.Services;
 using Nexus.Core.Messaging;
-using Nexus.Gateway.Configuration;
 using Nexus.Gateway.Services;
 using Nexus.Gateway.Services.Interfaces;
 using Nexus.Infrastructure.Messaging;
@@ -46,12 +45,10 @@ namespace Nexus.Gateway
             });
 
             // Redis 연결 설정
-            var redisOptions = new RedisOptions();
-            builder.Configuration.GetSection(RedisOptions.SECTION_NAME).Bind(redisOptions);
 
             builder.Services.AddSingleton<IConnectionMultiplexer>(serviceProvider =>
             {
-                return ConnectionMultiplexer.Connect(redisOptions.GetConnectionString());
+                return ConnectionMultiplexer.Connect("redis:6379");
             });
 
             // 메시징 서비스 등록
