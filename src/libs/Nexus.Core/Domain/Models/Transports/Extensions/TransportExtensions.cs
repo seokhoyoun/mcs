@@ -1,0 +1,40 @@
+using System;
+using System.Collections.Generic;
+
+namespace Nexus.Core.Domain.Models.Transports.Extensions
+{
+    public static class TransportExtensions
+    {
+       
+        public static void InitializeFullCassette(this Cassette cassette)
+        {
+
+            for (int trayIndex = 1; trayIndex <= Cassette.MAX_TRAY_CAPACITY; trayIndex++)
+            {
+                var trayId = $"{cassette.Id}_T{trayIndex:D2}";
+                var tray = new Tray(id: trayId,
+                                    name: trayId,
+                                    memories: new List<Memory>());
+
+                tray.InitializeFullTray();
+
+                cassette.AddTray(tray);
+            }
+
+        }
+
+     
+        public static void InitializeFullTray(this Tray tray)
+        {
+            for (int memoryIndex = 1; memoryIndex <= Tray.MAX_MEMORY_CAPACITY; memoryIndex++)
+            {
+                var memoryId = $"{tray.Id}_M{memoryIndex:D2}";
+                tray.AddMemory(new Memory(id: memoryId,
+                                          name: string.Empty));
+            }
+
+        }
+
+     
+    }
+}

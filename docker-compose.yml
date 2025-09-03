@@ -1,0 +1,139 @@
+﻿services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  supabase:
+    image: postgres:15-alpine
+    container_name: supabase_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "1234"
+      POSTGRES_DB: "postgres"
+
+  n8n:
+    image: n8nio/n8n:1.109.0
+    container_name: n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    volumes:
+      # './src/' 경로 추가
+      - ./src/n8n_data:/home/node/.n8n
+      - ./src/data:/home/node/data
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - N8N_BASIC_AUTH_ACTIVE=false
+      - DB_SQLITE_POOL_SIZE=10
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - POSTGRES_HOST=supabase
+      - POSTGRES_DATABASE=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234
+    depends_on:
+      - supabase
+
+  nexus.orchestrator:
+    image: ${DOCKER_REGISTRY-}nexusorchestrator
+    build:
+      context: .
+      # 'src/' 경로 추가
+      dockerfile: src/apps/Nexus.Orchestrator/Dockerfile
+    container_name: nexus.orchestrator
+    depends_on:
+      - redis
+    ports:
+      - "9091:9091"
+    volumes:
+      # './src/' 경로 추가
+      - ./src/data:/app/data
+
+  nexus.gateway:
+    build:
+      context: .
+      # 'src/' 경로 추가
+      dockerfile: src/apps/Nexus.Gateway/Dockerfile
+    container_name: nexus_gateway
+    depends_on:
+      - redis
+    ports:
+      - "5051:5051"
+      - "5052:5052"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTPS_PORT=5052
+      - ASPNETCORE_URLS=http://+:5051;https://+:5052
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      # './src/' 경로 추가
+      - ./src/prometheus:/etc/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090"
+    depends_on:
+      - nexus.orchestrator
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/config.yml
+    volumes:
+      # './src/' 경로 추가
+      - ./src/loki/config.yml:/etc/loki/config.yml
+      - ./src/loki/data:/loki
+    user: "0"
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    volumes:
+      - //./pipe/docker_engine://./pipe/docker_engine
+      # './src/' 경로 추가
+      - ./src/promtail/config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    pid: "host"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/host'
+    ports:
+      - "9100:9100"
+
+volumes:
+  grafana_data:
+
