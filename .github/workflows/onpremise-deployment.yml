@@ -36,7 +36,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          dockerfile: src/apps/Nexus.Gateway/Dockerfile
+          file: src/apps/Nexus.Gateway/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/nexus-gateway:latest
 
@@ -44,7 +44,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          dockerfile: src/apps/Nexus.Orchestrator/Dockerfile
+          file: src/apps/Nexus.Orchestrator/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/nexus-orchestrator:latest
 
@@ -52,7 +52,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          dockerfile: src/apps/Nexus.Portal/Dockerfile
+          file: src/apps/Nexus.Portal/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/nexus-portal:latest
 
