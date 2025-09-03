@@ -1,0 +1,59 @@
+@page "/equipment/areas"
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+    <MudText Typo="Typo.h3" GutterBottom="true">에어리어 관리</MudText>
+    <MudText Typo="Typo.subtitle1" Class="mb-4">에어리어 관련 정보를 관리합니다.</MudText>
+
+    <MudCard>
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">에어리어 목록</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudTable Items="@_areas" Hover="true" Breakpoint="Breakpoint.Sm">
+                <HeaderContent>
+                    <MudTh>에어리어 ID</MudTh>
+                    <MudTh>위치</MudTh>
+                    <MudTh>상태</MudTh>
+                    <MudTh>작업</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="에어리어 ID">@context.AreaId</MudTd>
+                    <MudTd DataLabel="위치">@context.Location</MudTd>
+                    <MudTd DataLabel="상태">@context.Status" </MudTd>
+                    <MudTd DataLabel="작업">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">상세 보기</MudButton>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code { 
+    private readonly List<Area> _areas = new()
+    {
+        new Area { AreaId = "A01", Location = "1층", Status = "Active" },
+        new Area { AreaId = "A02", Location = "2층", Status = "Inactive" },
+        new Area { AreaId = "A03", Location = "지하", Status = "Maintenance" }
+    };
+
+    private Color GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "Active" => Color.Success,
+            "Inactive" => Color.Warning,
+            "Maintenance" => Color.Info,
+            _ => Color.Default
+        };
+    }
+
+    private class Area
+    {
+        public string AreaId { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+    }
+}

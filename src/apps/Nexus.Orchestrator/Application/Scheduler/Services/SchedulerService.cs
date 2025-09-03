@@ -1,0 +1,591 @@
+﻿using Nexus.Core.Domain.Models.Areas;
+using Nexus.Core.Domain.Models.Areas.Enums;
+using Nexus.Core.Domain.Models.Areas.Interfaces;
+using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Locations.Base;
+using Nexus.Core.Domain.Models.Locations.Enums;
+using Nexus.Core.Domain.Models.Locations.Interfaces;
+using Nexus.Core.Domain.Models.Lots;
+using Nexus.Core.Domain.Models.Lots.Enums;
+using Nexus.Core.Domain.Models.Lots.Events;
+using Nexus.Core.Domain.Models.Lots.Interfaces;
+using Nexus.Core.Domain.Models.Plans;
+using Nexus.Core.Domain.Models.Plans.Enums;
+using Nexus.Core.Messaging;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Text.Json;
+
+namespace Nexus.Orchestrator.Application.Scheduler.Services
+{
+    public class SchedulerService
+    {
+        #region Fields
+
+        private readonly IAreaService _areaService;
+        private readonly ILocationService _locationService;
+        private readonly IMessageSubscriber _messageSubscriber;
+        private readonly ILotRepository _lotRepository;
+        private readonly ILogger<SchedulerService> _logger;
+
+        private readonly ConcurrentQueue<string> _pendingLotIds = new();
+
+        #endregion
+
+        #region Constructor
+
+        public SchedulerService(
+            IAreaService areaService,
+            ILocationService locationService,
+            IMessageSubscriber messageSubscriber,
+            ILotRepository lotRepository,
+            ILogger<SchedulerService> logger)
+        {
+            _areaService = areaService;
+            _locationService = locationService;
+            _messageSubscriber = messageSubscriber;
+            _lotRepository = lotRepository;
+            _logger = logger;
+        }
+
+        #endregion
+
+        #region Public Methods
+
+        public async Task StartAsync(CancellationToken stoppingToken)
+        {
+            var subscriptionTask = SubscribeToLotCreatedEventsAsync(stoppingToken);
+            var processingTask = ProcessPendingLotsAsync(stoppingToken);
+
+            await Task.WhenAll(subscriptionTask, processingTask);
+        }
+
+        #endregion
+
+        #region Message Subscription
+
+        private async Task SubscribeToLotCreatedEventsAsync(CancellationToken stoppingToken)
+        {
+            try
+            {
+                await _messageSubscriber.SubscribeAsync("LotCreatedEvent", HandleLotCreatedEventMessage, stoppingToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while subscribing to LotCreatedEvent");
+            }
+        }
+
+        private void HandleLotCreatedEventMessage(string message)
+        {
+            try
+            {
+                var lotCreatedEvent = JsonSerializer.Deserialize<LotCreatedEvent>(message);
+                if (lotCreatedEvent == null)
+                {
+                    _logger.LogWarning("Failed to deserialize LotCreatedEvent from message: {Message}", message);
+                    return;
+                }
+
+                _logger.LogInformation("Received LotCreatedEvent for LotId: {LotId}", lotCreatedEvent.LotId);
+
+                // 대기열에 추가
+                _pendingLotIds.Enqueue(lotCreatedEvent.LotId);
+
+                _logger.LogInformation("Added LotId {LotId} to pending queue", lotCreatedEvent.LotId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling LotCreatedEvent for message: {Message}", message);
+            }
+        }
+
+        #endregion
+
+        #region Lot Processing
+
+        private async Task ProcessPendingLotsAsync(CancellationToken stoppingToken)
+        {
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    // 대기열에서 Lot 처리
+                    while (_pendingLotIds.TryDequeue(out var lotId))
+                    {
+                        await ProcessLotAsync(lotId, stoppingToken);
+                    }
+
+                    // 1초마다 체크
+                    await Task.Delay(1000, stoppingToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error in ProcessPendingLotsAsync");
+                    await Task.Delay(5000, stoppingToken); // 에러 시 5초 대기
+                }
+            }
+        }
+
+        private async Task ProcessLotAsync(string lotId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                // Lot 정보 조회
+                var lot = await _lotRepository.GetByIdAsync(lotId, cancellationToken);
+                if (lot == null)
+                {
+                    _logger.LogWarning("Lot not found with ID: {LotId}", lotId);
+                    return;
+                }
+
+                // PlanGroup 생성 (조건 체크 없이 무조건 생성)
+                CreatePlanGroups(lot);
+
+                // Lot 상태를 Assigned로 변경
+                lot.Status = ELotStatus.Assigned;
+                await _lotRepository.UpdateAsync(lot, cancellationToken);
+
+                _logger.LogInformation("Successfully created plan groups for LotId: {LotId}", lotId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing lot {LotId}", lotId);
+
+                // 에러 발생 시 다시 대기열에 추가 (재시도)
+                _pendingLotIds.Enqueue(lotId);
+            }
+        }
+
+        private void CreatePlanGroups(Lot lot)
+        {
+            foreach (var lotStep in lot.LotSteps)
+            {
+                _logger.LogInformation("Creating plan groups for LotStep: {LotStepId}", lotStep.Id);
+
+                // 1. StockerToArea PlanGroup 생성 (우선적으로 비어있는 Area 찾기)
+                var stockerToAreaPlanGroup = CreateStockerToAreaPlanGroup(lotStep);
+                lotStep.PlanGroups.Add(stockerToAreaPlanGroup);
+
+                // 2. AreaToSet PlanGroup 생성
+                var areaToSetPlanGroup = CreateAreaToSetPlanGroup(lotStep);
+                lotStep.PlanGroups.Add(areaToSetPlanGroup);
+
+                // 3. SetToArea PlanGroup 생성
+                var setToAreaPlanGroup = CreateSetToAreaPlanGroup(lotStep);
+                lotStep.PlanGroups.Add(setToAreaPlanGroup);
+
+                // 4. AreaToStocker PlanGroup 생성
+                var areaToStockerPlanGroup = CreateAreaToStockerPlanGroup(lotStep);
+                lotStep.PlanGroups.Add(areaToStockerPlanGroup);
+
+                _logger.LogInformation("Created {PlanGroupCount} plan groups for LotStep: {LotStepId}",
+                    lotStep.PlanGroups.Count, lotStep.Id);
+            }
+        }
+
+        #endregion
+
+        #region PlanGroup Creation Methods
+
+        private PlanGroup CreateStockerToAreaPlanGroup(LotStep lotStep)
+        {
+            var planGroupId = Guid.NewGuid().ToString();
+            var planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_StockerToArea", EPlanGroupType.StockerToArea);
+
+            _logger.LogInformation("Creating StockerToArea plan group for {CassetteCount} cassettes", lotStep.Cassettes.Count);
+
+            // 비어있는 Area를 우선적으로 찾기
+            var emptyArea = GetEmptyAreaForCassettes(lotStep.Cassettes.Count);
+            if (emptyArea == null)
+            {
+                _logger.LogWarning("No empty area available for {CassetteCount} cassettes. Using available area instead", lotStep.Cassettes.Count);
+                emptyArea = _areaService.GetAvailableAreaForCassette();
+            }
+
+            if (emptyArea == null)
+            {
+                _logger.LogError("No available area found for StockerToArea plan group");
+                return planGroup;
+            }
+
+            _logger.LogInformation("Selected Area {AreaId} (Status: {AreaStatus}) for cassette placement",
+                emptyArea.Id, emptyArea.Status);
+
+            // AMR 로봇 Location 생성/조회 (물류로봇용)
+            var amrLocation = GetOrCreateAMRLocation("AMR.CP01", "물류로봇 카세트 포트 1");
+
+            foreach (var cassette in lotStep.Cassettes)
+            {
+                try
+                {
+                    // 1. 카세트의 현재 위치 조회 (스토커)
+                    var stockerLocation = _locationService.GetCassetteLocationById(cassette.Id);
+                    if (stockerLocation == null)
+                    {
+                        _logger.LogWarning("Cassette location not found for CassetteId: {CassetteId}", cassette.Id);
+                        continue;
+                    }
+
+                    // 2. Area에서 사용 가능한 카세트 포트 찾기 (목표 위치)
+                    var targetCassettePort = _areaService.GetAvailableCassettePort(emptyArea);
+                    if (targetCassettePort == null)
+                    {
+                        _logger.LogWarning("No available cassette port found in area {AreaId} for cassette {CassetteId}",
+                            emptyArea.Id, cassette.Id);
+                        continue;
+                    }
+
+                    // 3. Plan 생성
+                    var plan = new Plan(Guid.NewGuid().ToString(), $"StockerToArea_{cassette.Id}");
+
+                    // PlanStep 1: CassetteLoad (스토커 → AMR)
+                    var cassetteLoadStep = new PlanStep(
+                        Guid.NewGuid().ToString(),
+                        $"1. Load_from_Stocker",
+                        1,
+                        EPlanStepAction.CassetteLoad,
+                        stockerLocation.Id);
+
+                    // Job 1: 스토커에서 물류로봇으로 카세트 로드
+                    var loadJob = new Job(
+                        Guid.NewGuid().ToString(),
+                        $"1. Load_{cassette.Id}_from_{stockerLocation.Id}",
+                        1,
+                        stockerLocation,    // from: 스토커 포트
+                        amrLocation         // to: AMR 카세트 포트
+                    );
+
+                    cassetteLoadStep.Jobs.Add(loadJob);
+                    cassetteLoadStep.CarrierIds.Add(cassette.Id);
+                    plan.PlanSteps.Add(cassetteLoadStep);
+
+                    // PlanStep 2: CassetteUnload (AMR → Area)
+                    var cassetteUnloadStep = new PlanStep(
+                        Guid.NewGuid().ToString(),
+                        "2. Unload_to_Area",
+                        2,
+                        EPlanStepAction.CassetteUnload,
+                        targetCassettePort.Id);
+
+                    // Job 1: 물류로봇에서 Area로 카세트 언로드
+                    var unloadJob = new Job(
+                        Guid.NewGuid().ToString(),
+                        $"1. Unload_{cassette.Id}_to_Area",
+                        1,
+                        amrLocation,        // from: AMR 카세트 포트
+                        targetCassettePort  // to: Area 카세트 포트
+                    );
+
+                    cassetteUnloadStep.Jobs.Add(unloadJob);
+                    cassetteUnloadStep.CarrierIds.Add(cassette.Id);
+                    plan.PlanSteps.Add(cassetteUnloadStep);
+
+                    planGroup.Plans.Add(plan);
+
+                    _logger.LogInformation("Created StockerToArea plan: {CassetteId} from {From} via {Via} to {To}",
+                        cassette.Id, stockerLocation.Id, amrLocation.Id, targetCassettePort.Id);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating StockerToArea plan for cassette {CassetteId}", cassette.Id);
+                }
+            }
+
+            _logger.LogInformation("Created StockerToArea plan group with {PlanCount} plans", planGroup.Plans.Count);
+            return planGroup;
+        }
+
+        private PlanGroup CreateAreaToSetPlanGroup(LotStep lotStep)
+        {
+            var planGroupId = Guid.NewGuid().ToString();
+            var planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_AreaToSet", EPlanGroupType.AreaToSet);
+
+            foreach (var cassette in lotStep.Cassettes)
+            {
+                try
+                {
+                    var availableArea = _areaService.GetAvailableAreaForCassette();
+                    if (availableArea == null)
+                    {
+                        _logger.LogWarning("No available area found for AreaToSet plan");
+                        continue;
+                    }
+
+                    var plan = new Plan(Guid.NewGuid().ToString(), $"AreaToSet_{cassette.Id}");
+
+                    // 트레이 로드 및 메모리 픽앤플레이스 작업
+                    var trayLoadStep = new PlanStep(
+                        Guid.NewGuid().ToString(),
+                        "TrayLoad_from_Area",
+                        1,
+                        EPlanStepAction.TrayLoad,
+                        $"{availableArea.Id}.CP01.TP01"); // 구체적인 위치 명시
+
+                    var memoryPickPlaceStep = new PlanStep(
+                        Guid.NewGuid().ToString(),
+                        "MemoryPickAndPlace_to_Set",
+                        2,
+                        EPlanStepAction.MemoryPickAndPlace,
+                        $"{availableArea.Id}.SET01.MP01"); // 구체적인 위치 명시
+
+                    plan.PlanSteps.Add(trayLoadStep);
+                    plan.PlanSteps.Add(memoryPickPlaceStep);
+                    planGroup.Plans.Add(plan);
+
+                    _logger.LogDebug("Created AreaToSet plan for cassette {CassetteId}", cassette.Id);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating AreaToSet plan for cassette {CassetteId}", cassette.Id);
+                }
+            }
+
+            return planGroup;
+        }
+
+        private PlanGroup CreateSetToAreaPlanGroup(LotStep lotStep)
+        {
+            var planGroupId = Guid.NewGuid().ToString();
+            var planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_SetToArea", EPlanGroupType.SetToArea);
+
+            foreach (var cassette in lotStep.Cassettes)
+            {
+                try
+                {
+                    var availableArea = _areaService.GetAvailableAreaForCassette();
+                    if (availableArea == null)
+                    {
+                        _logger.LogWarning("No available area found for SetToArea plan");
+                        continue;
+                    }
+
+                    var plan = new Plan(Guid.NewGuid().ToString(), $"SetToArea_{cassette.Id}");
+
+                    // 메모리 회수 및 트레이 언로드 작업
+                    var memoryPickPlaceStep = new PlanStep(
+                        Guid.NewGuid().ToString(),
+                        "MemoryPickAndPlace_from_Set",
+                        1,
+                        EPlanStepAction.MemoryPickAndPlace,
+                        $"{availableArea.Id}.SET01.MP01"); // from 위치
+
+                    var trayUnloadStep = new PlanStep(
+                        Guid.NewGuid().ToString(),
+                        "TrayUnload_to_Area",
+                        2,
+                        EPlanStepAction.TrayUnload,
+                        $"{availableArea.Id}.CP01.TP01"); // to 위치
+
+                    plan.PlanSteps.Add(memoryPickPlaceStep);
+                    plan.PlanSteps.Add(trayUnloadStep);
+                    planGroup.Plans.Add(plan);
+
+                    _logger.LogDebug("Created SetToArea plan for cassette {CassetteId}", cassette.Id);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating SetToArea plan for cassette {CassetteId}", cassette.Id);
+                }
+            }
+
+            return planGroup;
+        }
+
+        private PlanGroup CreateAreaToStockerPlanGroup(LotStep lotStep)
+        {
+            var planGroupId = Guid.NewGuid().ToString();
+            var planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_AreaToStocker", EPlanGroupType.AreaToStocker);
+
+            // AMR 로봇 Location 조회
+            var amrLocation = GetOrCreateAMRLocation("AMR.CP01", "물류로봇 카세트 포트 1");
+
+            const string stockerPrefix = "ST01.CP";
+            int stockerPortIndex = 1;
+
+            foreach (var cassette in lotStep.Cassettes)
+            {
+                try
+                {
+                    var availableArea = _areaService.GetAvailableAreaForCassette();
+                    if (availableArea == null)
+                    {
+                        _logger.LogWarning("No available area found for AreaToStocker plan");
+                        continue;
+                    }
+
+                    var availableCassettePort = _areaService.GetAvailableCassettePort(availableArea);
+                    if (availableCassettePort == null)
+                    {
+                        _logger.LogWarning("No available cassette port found for AreaToStocker plan");
+                        continue;
+                    }
+
+                    // 스토커 반납 위치 생성
+                    var stockerPortLocation = CreateOrGetStockerLocation($"{stockerPrefix}{stockerPortIndex:D2}");
+                    var plan = new Plan(Guid.NewGuid().ToString(), $"AreaToStocker_{cassette.Id}");
+
+                    // Job 1: Area에서 AMR로 카세트 로드
+                    var loadJob = new Job(
+                        Guid.NewGuid().ToString(),
+                        $"Load_{cassette.Id}_from_Area",
+                        1,
+                        availableCassettePort,  // from: Area 카세트 포트
+                        amrLocation            // to: AMR 카세트 포트
+                    );
+
+                    // Job 2: AMR에서 스토커로 카세트 언로드
+                    var unloadJob = new Job(
+                        Guid.NewGuid().ToString(),
+                        $"Unload_{cassette.Id}_to_Stocker",
+                        1,
+                        amrLocation,           // from: AMR 카세트 포트
+                        stockerPortLocation    // to: 스토커 포트
+                    );
+
+                    // PlanStep 1: CassetteLoad (Area → AMR)
+                    var cassetteLoadStep = new PlanStep(
+                        Guid.NewGuid().ToString(),
+                        "Load_from_Area",
+                        1,
+                        EPlanStepAction.CassetteLoad,
+                        availableCassettePort.Id);
+
+                    cassetteLoadStep.Jobs.Add(loadJob);
+                    cassetteLoadStep.CarrierIds.Add(cassette.Id);
+
+                    // PlanStep 2: CassetteUnload (AMR → Stocker)
+                    var cassetteUnloadStep = new PlanStep(
+                        Guid.NewGuid().ToString(),
+                        "Unload_to_Stocker",
+                        2,
+                        EPlanStepAction.CassetteUnload,
+                        stockerPortLocation.Id);
+
+                    cassetteUnloadStep.Jobs.Add(unloadJob);
+                    cassetteUnloadStep.CarrierIds.Add(cassette.Id);
+
+                    plan.PlanSteps.Add(cassetteLoadStep);
+                    plan.PlanSteps.Add(cassetteUnloadStep);
+                    planGroup.Plans.Add(plan);
+
+                    _logger.LogDebug("Created AreaToStocker plan: {CassetteId} from {From} via {Via} to {To}",
+                        cassette.Id, availableCassettePort.Id, amrLocation.Id, stockerPortLocation.Id);
+
+                    stockerPortIndex++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating AreaToStocker plan for cassette {CassetteId}", cassette.Id);
+                }
+            }
+
+            return planGroup;
+        }
+
+        #endregion
+
+        #region Helper Methods
+
+        /// <summary>
+        /// AMR Location을 조회하거나 생성합니다.
+        /// </summary>
+        /// <param name="locationId">AMR Location ID (예: AMR.CP01)</param>
+        /// <param name="locationName">AMR Location 이름</param>
+        /// <returns>AMR RobotLocation</returns>
+        private RobotLocation GetOrCreateAMRLocation(string locationId, string locationName)
+        {
+            var amrLocation = _locationService.GetRobotLocationById(locationId);
+            if (amrLocation == null)
+            {
+                // AMR Location이 없으면 생성
+                amrLocation = new RobotLocation(locationId, locationName, ELocationType.Robot);
+
+                // LocationService에 등록 (실제 구현에서는 초기화 시점에 미리 등록되어야 함)
+                _locationService.AddLocations(new[] { amrLocation });
+
+                _logger.LogInformation("Created new AMR location: {LocationId}", locationId);
+            }
+
+            return amrLocation;
+        }
+
+        /// <summary>
+        /// 스토커 Location을 조회하거나 생성합니다.
+        /// </summary>
+        /// <param name="locationId">스토커 Location ID (예: ST01.CP01)</param>
+        /// <returns>스토커 CassetteLocation</returns>
+        private CassetteLocation CreateOrGetStockerLocation(string locationId)
+        {
+            var stockerLocation = _locationService.GetCassetteLocationById(locationId);
+            if (stockerLocation == null)
+            {
+                // 스토커 Location이 없으면 생성
+                stockerLocation = new CassetteLocation(locationId, locationId, ELocationType.Cassette);
+
+                // LocationService에 등록
+                _locationService.AddLocations(new[] { stockerLocation });
+
+                _logger.LogInformation("Created new stocker location: {LocationId}", locationId);
+            }
+
+            return stockerLocation;
+        }
+
+        /// <summary>
+        /// 비어있는 Area를 우선적으로 찾습니다.
+        /// </summary>
+        /// <param name="requiredCassetteSlots">필요한 카세트 슬롯 수</param>
+        /// <returns>비어있는 Area 또는 null</returns>
+        private Area? GetEmptyAreaForCassettes(int requiredCassetteSlots)
+        {
+            try
+            {
+                // 모든 Area 중에서 Idle 상태인 것을 우선적으로 선택
+                var emptyAreas = _areaService.Areas
+                    .Where(area => area.Status == EAreaStatus.Idle)
+                    .Where(area => GetAvailableCassettePortCount(area) >= requiredCassetteSlots)
+                    .OrderBy(area => GetCassetteOccupancy(area)) // 가장 비어있는 것부터
+                    .ToList();
+
+                if (emptyAreas.Any())
+                {
+                    var selectedArea = emptyAreas.First();
+                    _logger.LogInformation("Found empty area {AreaId} with {AvailableSlots} available cassette slots",
+                        selectedArea.Id, GetAvailableCassettePortCount(selectedArea));
+                    return selectedArea;
+                }
+
+                _logger.LogWarning("No empty area found with {RequiredSlots} available slots", requiredCassetteSlots);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while searching for empty area");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Area의 사용 가능한 카세트 포트 수를 계산합니다.
+        /// </summary>
+        private int GetAvailableCassettePortCount(Area area)
+        {
+            return area.CassetteLocations.Count(cp => cp.CurrentItem == null);
+        }
+
+        /// <summary>
+        /// Area의 카세트 점유율을 계산합니다 (0.0 = 비어있음, 1.0 = 가득참).
+        /// </summary>
+        private double GetCassetteOccupancy(Area area)
+        {
+            if (area.CassetteLocations.Count == 0)
+                return 1.0; // 포트가 없으면 가득 찬 것으로 간주
+
+            var occupiedPorts = area.CassetteLocations.Count(cp => cp.CurrentItem != null);
+            return (double)occupiedPorts / area.CassetteLocations.Count;
+        }
+
+        #endregion
+    }
+}

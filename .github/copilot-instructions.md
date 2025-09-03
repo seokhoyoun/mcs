@@ -1,0 +1,1819 @@
+﻿## C# Coding Conventions
+
+### Core Principles
+
+* **Prioritize readability above all else.**
+    * In most cases, the code itself should serve as its own documentation.
+* **Follow the IDE's automatic formatting unless there is a specific reason not to.**
+    * (e.g., Visual Studio's "Ctrl + K + D" function).
+
+---
+
+### Naming Conventions
+
+1.  **Class and Struct Names:** Use **PascalCase**.
+    * `class PlayerManager`
+    * `struct PlayerData`
+2.  **Local Variable and Function Parameter Names:** Use **camelCase**.
+    * `public void SomeMethod(int someParameter)`
+    * `int someNumber;`
+3.  **Method Names:**
+    * Follow a **verb (imperative) + noun (object)** format.
+    * All method names use **PascalCase**.
+    * For methods that simply return a **boolean** status, use **`Is`**, **`Can`**, **`Has`**, or **`Should`** as the verb prefix. If this feels unnatural, use another third-person singular verb that indicates a state.
+        * `public bool IsAlive(Person person);`
+        * `public bool HasChild(Person person);`
+        * `public bool Exists(Person person);`
+        * `public uint GetAge();`
+4.  **Constant Names:**
+    * Use **all uppercase** letters, with words separated by an **underscore (`_`)**.
+    * `const int SOME_CONSTANT = 1;`
+5.  **`static readonly` Variables (used as constants):**
+    * Use **all uppercase** letters, with words separated by an **underscore (`_`)**.
+    * `public static readonly MyConstClass MY_CONST_OBJECT = new MyConstClass();`
+6.  **Namespace Names:** Use **PascalCase**.
+    * `namespace System.Graphics`
+7.  **`boolean` Variables:**
+    * Prefix the variable name with **`b`**.
+    * `bool bFired;`
+8.  **`boolean` Properties:**
+    * Prefix the name with **`Is`**, **`Has`**, **`Can`**, or **`Should`**.
+    * `public bool IsFired { get; private set; }`
+    * `public bool HasChild { get; private set; }`
+9.  **Interface Names:**
+    * Prefix the name with **`I`**.
+    * `interface ISomeInterface`
+10. **Enum Names:**
+    * Prefix the name with **`E`**.
+    * `public enum EDirection { North, South }`
+11. **`private` Member Variables:**
+    * Prefix the name with an **underscore (`_`)** and use **camelCase**.
+    * `private readonly string _password;`
+    * `private bool _bFired;`
+12. **Value-Returning Function Names:**
+    * Name them to clearly indicate what they return.
+    * `public uint GetAge();`
+13. **Loop Variable Names:**
+    * For variables that are not simply used in a loop, avoid names like `i` or `e`. Instead, use descriptive names like `index` or `employee` that clearly identify the data being stored.
+14. **Abbreviations:**
+    * If an abbreviation is not followed by another word, use **all uppercase letters**.
+    * `public int OrderID { get; private set; }`
+    * `public int HttpCode { get; private set; }`
+15. **Recursive Function Names:**
+    * Append **`Recursive`** to the name.
+    * `public void FibonacciRecursive();`
+16. **`async` Method Names:**
+    * Append the **`-Async`** suffix to the name.
+17. **Nullable Parameters/Return Values:**
+    * Append **`OrNull`** to the name.
+    * `public Person GetEmployeeOrNull(int id);`
+
+---
+
+### Implementation Rules
+
+1.  **`readonly` Variables:**
+    * Declare variables as `readonly` if their value doesn't change after initialization.
+    * `private readonly string _password;`
+2.  **Properties:**
+    * Use **properties** instead of separate getter and setter methods.
+    * **Incorrect:** `public string GetName();` `public string SetName(string name);`
+    * **Correct:** `public string Name { get; set; }`
+3.  **Local Variable Declaration:**
+    * Declare local variables on the same line where they are first used.
+4.  **Floating-Point Values:**
+    * Unless a `double` is strictly necessary, append **`f`** to floating-point values to declare them as `float`.
+    * `float f = 0.5F;`
+5.  **`switch` Statements:**
+    * Always include a **`default:`** case.
+6.  **`Debug.Assert()`:**
+    * Use `Debug.Assert()` to enforce all assumptions made during development.
+    * `Debug.Fail("unknown type");`
+7.  **Function Overloading:**
+    * Avoid function overloading when parameter types are generic.
+    * **Correct:** `public Anim GetAnimByIndex(int index);` `public Anim GetAnimByName(string name);`
+    * **Incorrect:** `public Anim GetAnim(int index);` `public Anim GetAnim(string name);`
+    * **Prefer function overloading over default parameters.** If default parameters must be used, use values with a zero bit pattern like `null`, `false`, or `0`.
+8.  **Collections:**
+    * Always use containers from **`System.Collections.Generic`** instead of `System.Collections`. Using a pure array is also acceptable.
+9.  **`var` Keyword:**
+    * Try to avoid using the `var` keyword.
+    * Exceptions are allowed when the data type is clearly visible on the right side of the assignment statement (e.g., `"string obviously"`, `new Employee()`) or when the data type is not critical.
+10. **`async` Methods:**
+    * Use **`async Task`** instead of `async void`. The only exception is for event handlers.
+11. **Data Validation:**
+    * Validate external data at the external/internal boundary. If there are issues, return before passing the data to an internal function.
+    * This means all data that enters the internal system can be assumed to be valid.
+12. **Exception Handling:**
+    * Try not to throw exceptions from internal functions. Exceptions should be handled at the boundaries.
+    * **Exception Allowed:** It is acceptable to throw an exception in a `default:` case within a `switch` statement on an `enum` to catch unhandled enum values.
+13. **`null` Values:**
+    * Strive to not allow `null` as a function parameter, especially for `public` functions.
+    * Strive to not return `null` from a function, especially a `public` function.
+
+---
+
+### Structural Rules
+
+1.  **Classes/Source Files:**
+    * Each class should be in a separate source file.
+    * A small exception is allowed for a few small, related classes that are logically grouped in a single file.
+2.  **File Names:**
+    * File names **must match the class name** exactly, including case.
+    * `public class PlayerAnimation` -> `PlayerAnimation.cs`
+3.  **`partial` Classes:**
+    * The file name should start with the class name, followed by a period and a descriptive sub-name.
+    * `public partial class Human` -> `Human.Head.cs`, `Human.Body.cs`
+4.  **Member Order within a Class:**
+    * The order of member variables and methods within a class should be:
+        1.  **Properties** (the corresponding `private` member variable should be placed directly above the property).
+        2.  **Member variables**.
+        3.  **Constructors**.
+        4.  **Methods** (in the order of public -> private).
+5.  **Grouping:**
+    * Group related methods and member variables together within the class.
+6.  **Bit Flag Enums:**
+    * Append **`Flags`** to the name.
+    * `[Flags]`
+    * `public enum EVisibilityFlags`
+7.  **Variable Shadowing:**
+    * **Variable shadowing is not allowed.** If an outer variable is using a name, use a different name for the inner variable.
+8.  **Object Initializers:**
+    * Try to avoid using object initializers.
+
+# MCS-ACS  통신 사양서 v1.4.1
+
+
+
+[TOC]
+
+## 1. 개요
+
+본 문서는 MCS(Manufacturing Control System)를 **서버**, ACS(Automatic Control System)를 **클라이언트**로 하여 WebSocket 기반으로 통신하는 시스템의 기본 사양을 정의합니다.
+
+---
+
+
+
+## 2. 시스템 구성
+
+- **MCS (서버)**: 중앙 통합 제어 시스템, WebSocket 서버 역할 수행
+
+- **ACS (클라이언트)**: 각 설비 제어 시스템, WebSocket 클라이언트로 MCS에 연결
+
+  
+
+---
+
+
+
+## 3. 용어 정리
+
+| 용어                          | 설명                                                         | 식별자 예시      |
+| ----------------------------- | ------------------------------------------------------------ | ---------------- |
+| **스토커(Stocker)**           | 여러 개의 카세트를 적재할 수 있는 포트(입출구)를 가진 설비 (포트 개수 추후 확정) | `ST01`, `ST02`   |
+| **카세트 포트(CP)**           | 카세트를 담을 수 있는 포트                                   | `CP01`, `CP02`   |
+| **트레이 포트(TP)**           | 트레이를 담을 수 있는 포트                                   | `TP01`, `TP15`   |
+| **메모리 포트(MP)**           | 시료를 담을 수 있는 포트                                     | `MP01`, `MP25`   |
+| **에어리어(Area)**            | 6개의 카세트 적재 포트를 가진 공간 단위 (포트 개수, 구조 추후 확정) | `A01`, `A02`     |
+| **세트(Set)**                 | 32개의 시료(Memory) 테스트가 가능한 검사기                   | `SET01`, `SET12` |
+| **물류로봇(Logistics Robot)** | 한 개의 카세트 적재 포트를 가진 물류 운반 로봇               |                  |
+| **작업로봇(Control Robot)**   | 여러 개의 트레이를 다룰 수 있는 포트를 가진 작업 전용 로봇   |                  |
+
+
+
+### 3.1 위치정보 표기
+
+**주요 포트/슬롯별 위치정보 표기**
+
+- **카세트 포트(Cassette Port, CP)**
+
+  - 설명: 카세트를 적재/이송하는 입출구 포트
+  - 표기 예시:  
+    - 에어리어1의 2번 카세트 포트 → `A01.CP02`
+    - 스토커2의 5번 카세트 포트 → `ST02.CP05`
+
+- **트레이 포트(Tray Port, TP)**
+
+  - 설명: 트레이를 적재/이송하는 포트
+
+  - 표기 예시:  
+
+    - 작업로봇의 3번 트레이 포트 → `AMR.TP03`
+
+      
+
+- **메모리 포트(Memory Port, MP)**
+
+  - 설명: 메모리(시료)를 적재하는 슬롯(포트)
+  - 표기 예시:  
+    - 세트2의 15번 메모리 포트 → `SET02.MP15`
+
+**위치정보(포트, 세트, 트레이 등)의 번호 부여 원칙**
+
+- **설비 공식 도면(Top View)** 기준으로 한다.
+
+- **단일 행(1단) 배열**
+  좌상단에서 오른쪽으로 1번부터 n번까지 순차 부여 (예: `CP01`, `SET01`)
+  
+- **다단(2단 이상) 배열**
+  상단 행부터 아래로(Top to Bottom), 각 행은 좌측에서 우측(Left to Right)으로 1번부터 부여  
+  (예: 2행 3열 세트의 경우)
+  
+  ```
+  1행: SET01 SET02 SET03
+  2행: SET04 SET05 SET06
+  ```
+  
+- 한 자리 숫자도 항상 2자리로 0을 패딩하여 표기합니다. (예: `CP01`, `SET04`)
+
+- 다른 위치 요소도 동일 원칙 적용
+
+- **조합 예시**
+    - 에어리어1의 2번째 카세트포트: `A01.CP02`
+- 번호 부여 방식은 **설비 도면 및 운영시스템 화면과 최대한 일치시킵니다.**
+- 복잡한 구조(3단 이상, 불규칙 배열 등)는 별도 도면/설명 추가 가능
+
+
+
+> 모든 위치정보 표기는 위 원칙을 따라 일관성 있게 부여합니다.
+
+
+
+---
+
+
+
+## 4. 통신 프로토콜
+
+- **프로토콜**: WebSocket (ws://, wss://)
+- **통신 방향**:  
+  - 각 ACS(클라이언트) 파트(물류로봇/작업로봇)가 MCS(서버)에 개별적으로 접속  
+  - 연결 후 양방향 실시간 메시지 송수신 지원
+
+---
+
+
+
+## 5. 기본 통신 절차
+
+1. **ACS(클라이언트) 파트(물류로봇/작업로봇)**가 MCS(서버)로 WebSocket 연결 요청
+2. 연결 성공 시, ACS는 **초기 인증 메시지**를 전송
+3. MCS가 인증을 확인하고, 필요시 초기 설정/응답을 전송
+4. 이후 실시간 데이터/명령/이벤트를 양방향으로 송수신
+
+
+
+### 5.1 MCS Request Commands (MCS -> ACS)
+
+| Command                 | 설명                                                       |
+| ----------------------- | ---------------------------------------------------------- |
+| `ExecutionPlan`         | Lot 단위 작업 흐름 전달. 복수 Step 포함                    |
+| `CancelPlan`            | 작업 대기 중인 플랜 취소 요청                              |
+| `AbortPlan`             | 즉시 중단 및 정지 요청 (긴급 중단)                         |
+| `PausePlan`             | 작업 일시 정지 요청                                        |
+| `ResumePlan`            | 작업 재개 요청                                             |
+| `SyncConfig`            | 공정 구성, 포트, 트레이 매핑 등 정보 전달                  |
+| `RequestAcsPlans`       | ACS의 현재 할당 된 플랜 현황 요청                          |
+| `RequestAcsPlanHistory` | ACS에서 완료 된 플랜 결과 조회 (Offline to Online 시 사용) |
+| `RequestAcsErrorList`   | ACS의 현재 발생 한 에러/알람 요청                          |
+
+
+
+### 5.2 ACS Request Commands (ACS -> MCS)
+
+| Command              | 설명                                             |
+| -------------------- | ------------------------------------------------ |
+| `Registration`       | 초기 MCS 서버 연결 메세지                        |
+| `PlanReport`         | Plan 상태 보고                                   |
+| `StepReport`         | Step 상태 보고                                   |
+| `JobReport`          | Job 상태 보고                                    |
+| `ErrorReport`        | 에러 또는 경고 이벤트 발생 보고                  |
+| `RobotStatusUpdate`  | Robot의 현재 상태 정보 (주기적 또는 이벤트 기반) |
+| `TscStateUpdate`     | TSC 상태 변경 시 보고                            |
+| `CancelResultReport` | 작업 취소 요청 결과 반환                         |
+| `AbortResultReport`  | 긴급 중단 요청 결과 반환                         |
+| `PauseResultReport`  | 일시 중지 요청 결과 반환                         |
+| `ResumeResultReport` | 작업 재개 요청 결과 반환                         |
+| `AcsCommStateUpdate` | ACS의 연결 상태 보고                             |
+
+
+
+### 5.3 ACS Periodic Reporting Commands (ACS -> MCS)
+
+| Command               | 설명                                                         |
+| --------------------- | ------------------------------------------------------------ |
+| `RobotPositionUpdate` | 로봇 위치 정보를 0.2(200msec)초마다 주기적으로 MCS로 전송합니다. |
+
+---
+
+
+
+## 6. 메시지 구조
+
+- 모든 메시지는 **JSON 포맷**을 사용하며,  메시지 타입 및 데이터 구조는 다음과 같습니다.
+- 모든 JSON 메시지의 필드명은 camelCase(소문자로 시작, 단어 구분 시 대문자)로 표기합니다.
+
+
+
+### 6.1 공통 메시지 포맷
+
+```json
+// 모든 요청(request) 메시지는 아래와 같은 공통 포맷을 공통 JSON 포맷을 사용한다.
+
+{
+  "command": "명령어 또는 이벤트 타입",
+  "transactionId": "3f0f8b9e-095d-4dbf-bb13-1e8f4c1875a1",  // UUID (string),
+  "timestamp": "2025-07-02T21:00:00.123+09:00", // ISO 8601 포맷의 현지 시간
+  "payload": { 
+    // 명령/이벤트별 상세 데이터 객체 
+  }
+}
+
+```
+
+```json
+// 모든 응답(response) 메시지는 아래와 같은 공통 포맷을 사용한다.
+// 모든 커맨드(command) 요청에 대해, 실제 실행 가능 여부(성공/실패)에 관계없이 반드시 응답 메시지(ACK)를 반환해야 한다.
+
+{
+  "command": "요청에 대한 응답 명령어",
+  "transactionId": "3f0f8b9e-095d-4dbf-bb13-1e8f4c1875a1",
+  "timestamp": "2025-07-02T21:00:00.456+09:00",
+  "result": "Success",   // "Success", "Fail" 
+  "message": "응답/에러 상세 설명 (필요 시)",
+  "payload": {
+    // 응답별 상세 데이터 객체 (필요 시)
+  }
+}
+```
+
+`* 정의되지 않은 payload가 수신 된 경우 "result" : "Fail"`
+
+### 6.2 초기 연결 (Registration)
+
+```json
+// [ACS → MCS] 초기 연결/로봇 등록 메시지 예시
+{
+  "command": "Registration",
+  "transactionId": "e8e497a9-03e9-4b52-bb9a-43c83deac3b4",
+  "timestamp": "2025-07-02T18:30:00.000+09:00",
+  "payload": {
+    
+  }
+}
+
+```
+
+```json
+// [MCS → ACS] Registration 응답(ACK) 메시지
+{
+  "command": "RegistrationAck",
+  "transactionId": "d4f56d67-965e-42c1-b125-4e7be5e2a6a3", // 요청과 동일하게 반환
+  "timestamp": "2025-07-02T18:30:01.200+09:00",
+  "result": "Success",
+  "message": "등록이 완료되었습니다.",
+  "payload": {}
+}
+
+```
+
+```mermaid
+sequenceDiagram
+    participant LR_ACS as ACS(로봇 클라이언트)
+    participant MCS as MCS(서버)
+
+    rect rgb(230,247,255)
+        note right of LR_ACS: 물류로봇 ACS<br/>
+        LR_ACS->>MCS: Registration
+        MCS-->>LR_ACS: RegistrationAck
+    end
+
+
+
+```
+
+```mermaid
+sequenceDiagram
+    participant ACS as ACS(로봇 클라이언트)
+    participant MCS as MCS(서버)
+
+    ACS->>MCS: Registration 
+    MCS-->>ACS: RegistrationAck
+
+    Note over ACS,MCS: 🟦 초기 연결 후 ACS에서 <br>현재 가지고있는 플랜 현황 정보 업데이트
+
+    MCS->>ACS: RequestAcsPlans
+    ACS-->>MCS: RequestAcsPlansAck(plans)
+    
+  
+
+```
+
+
+
+
+
+### 6.3 물류 로봇 실행 명령 (ExecutionPlan)
+
+| 액션명         | 설명                                                         | 예시 from | 예시 to  |
+| -------------- | ------------------------------------------------------------ | --------- | -------- |
+| CassetteLoad   | 카세트를 물류로봇의 CP로 적재                                | ST01.CP02 | AMR.CP01 |
+| CassetteUnload | 물류로봇에서 스토커 또는 에어리어의 CP 등으로 카세트 언로드(반납) | AMR.CP01  | A02.CP04 |
+
+```json
+// [MCS → ACS] ExecutionPlan 메시지 예시 
+{
+  "command": "ExecutionPlan",
+  "transactionId": "e2a97f63-4ed2-4d85-a2b3-11a51c188111",
+  "timestamp": "2025-07-02T18:45:00.000+09:00",
+  "payload": {
+    "planId": "PLAN-20250702-001", // 작업 계획(Plan) 고유ID
+    "lotId": "LOTSAMPLE_0001",     // LOT 식별자
+    "priority": 10,                // (옵션) 우선순위
+    "steps": [
+      {
+        "stepNo": 1,
+        "action": "CassetteLoad",     // 트레이 적재 대신 카세트 적재
+        "position": "A01.CP01",       // 에어리어1의 카세트포트1 (CP)
+        "carrierIds": ["CASSETTE_01"],          
+        "jobs": [
+          {
+            "jobId": "a4184b0d-bc13-4eb2-b9e2-2ab3a150a1c1",
+            "from": "A01.CP01",        // 설비의 카세트포트1 (CP)
+            "to": "AMR.CP01"          // 물류로봇의 Cassette Port (예시)
+          }
+        ]
+      },
+      {
+        "stepNo": 2,
+        "action": "CassetteUnload",   // 언로드(반납) 작업
+        "position": "A02.CP03",       // 반납 대상 위치 (예시: 에어리어2, CP03)
+        "carrierIds": ["CASSETTE_01"],          
+        "jobs": [
+          {
+            "jobId": "b2dc9951-3e2e-44b2-b6e9-04ec4d09c013",
+            "from": "AMR.CP01",
+            "to": "A02.CP03"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+```
+
+```json
+// [ACS → MCS] ExecutionPlanAck 메시지 예시 
+
+{
+  "command": "ExecutionPlanAck", 
+  "transactionId": "e2a97f63-4ed2-4d85-a2b3-11a51c188111", // 요청과 동일하게 반환
+  "timestamp": "2025-07-02T18:45:01.025+09:00", 
+  "result": "Success",          // "Success" 또는 "Fail"
+  "message": "Plan registered Successfully.", // 성공/실패 메시지
+  "payload": {
+    "planId": "PLAN-20250702-001",  // 등록된(혹은 거부된) Plan ID
+    // 추가로 필요한 응답 데이터가 있다면 여기에 삽입
+  }
+}
+
+```
+
+```mermaid
+sequenceDiagram
+    participant MCS as MCS(서버)
+    participant ACS as ACS(로봇 클라이언트)
+
+    %% ExecutionPlan - 🟪
+    Note over MCS,ACS: 🟪 ExecutionPlan 
+    MCS->>ACS: ExecutionPlan
+    ACS-->>MCS: ExecutionPlanAck
+
+	loop 
+
+    %% JobReport - 🟧
+    Note over ACS,MCS: 🟧 JobReport 
+    ACS-->>MCS: JobReport (Job 01 완료)
+    ACS-->>MCS: JobReport (Job 02 완료)
+    ACS-->>MCS: JobReport (Job 03 완료)
+
+    %% StepReport - 🟦
+    Note over ACS,MCS: 🟦 StepReport 
+    ACS-->>MCS: StepReport (Step 01 완료)
+    
+	end
+
+
+```
+
+```apl
+// MCS 측 JobReport / StepReport의 Ack는 위 다이어그램에서는 생략되었음. 
+```
+
+
+
+### 6.4 작업 로봇 실행 명령 (ExecutionPlan)
+
+| 액션명             | 설명                                        | 예시 from     | 예시 to        |
+| ------------------ | ------------------------------------------- | ------------- | -------------- |
+| TrayLoad           | 트레이를 작업로봇의 TP로 적재               | A01.CP01.TP01 | AMR.TP01       |
+| MemoryPickAndPlace | 시료를 트레이 내 MP ↔ SET 내 MP로 이동      | AMR.TP01.MP01 | A01.SET01.MP01 |
+| TrayUnload         | 작업 로봇에서 다른 TP로 트레이 언로드(반납) | AMR.TP03      | A01.CP01.TP01  |
+| CloseSetCover      | 세트 커버 Close                             |               |                |
+| OpenSetCover       | 세트 커버 Open                              |               |                |
+| Start              | 시작 버튼 Push                              |               |                |
+
+```json
+// [MCS → ACS] ExecutionPlan 메시지 예시
+
+{
+  "command": "ExecutionPlan",
+  "transactionId": "e2a97f63-4ed2-4d85-a2b3-11a51c188111",
+  "timestamp": "2025-07-02T18:45:00.000+09:00",
+  "payload": {
+    "planId": "PLAN-20250702-001", // 작업 계획(Plan) 고유ID
+    "lotId": "LOTSAMPLE_0001",             // LOT 식별자
+    "priority": 10,                // (옵션) 우선순위
+    "steps": [
+      {
+        "stepNo": 1, // 1번 step (순서대로)
+        "action": "TrayLoad",
+        "carrierIds": ["TRAY_01", "TRAY_02"],
+        "position": "A01.CP01",
+        "jobs": [
+          {
+            "jobId": "cd3a109a-8f19-4f19-86ea-552e2cb445f7",
+            "from": "A01.CP01.TP01",
+            "to": "AMR.TP01"
+          },
+          {
+            "jobId": "b3bc9fc6-2603-4710-b9ed-6e228e99c1d2",
+            "from": "A01.CP01.TP02",
+            "to": "AMR.TP02"
+          }
+        ]
+      },
+      {
+        "stepNo": 2,
+        "action": "MemoryPickAndPlace",
+        "position": "A01.SET01",
+        "carrierIds": [], // MemoryPickAndPlace에서는 보내지 않음.
+        "jobs": [
+          {
+            "jobId": "f34c1ea4-0fa2-4c0f-9f2e-0702b2d2671d",
+            "from": "AMR.TP01.MP01",
+            "to": "A01.SET01.MP01"
+          },
+          {
+            "jobId": "e0dc96b8-5f5a-4d8b-a7c1-18b29e13e53d",
+            "from": "AMR.TP02.MP01",
+            "to": "A01.SET01.MP02"
+          }
+        ]
+      },
+      {
+        "stepNo": 3,
+        "action": "TrayUnload",
+        "position": "A01.CP01",
+        "carrierIds": ["TRAY_01","TRAY_02"],          
+        "jobs": [
+          {
+            "jobId": "aa0be8ca-5d22-4c3c-a671-932fd8c71f8b",
+            "from": "AMR.TP01",
+            "to": "A01.CP01.TP03"
+          },
+          {
+            "jobId": "53b7155d-bffd-4b90-a72f-5e94fdf257e2",
+            "from": "AMR.TP02",
+            "to": "A01.CP01.TP04"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+```
+
+```json
+// [ACS → MCS] ExecutionPlanAck 메시지 예시 
+
+{
+  "command": "ExecutionPlanAck", 
+  "transactionId": "e2a97f63-4ed2-4d85-a2b3-11a51c188111", // 요청과 동일하게 반환
+  "timestamp": "2025-07-02T18:45:01.025+09:00", 
+  "result": "Success",          // "Success" 또는 "Fail"
+  "message": "Plan registered Successfully.", // 성공/실패 메시지
+  "payload": {
+    "planId": "PLAN-20250702-001",  // 등록된(혹은 거부된) Plan ID
+    // 추가로 필요한 응답 데이터가 있다면 여기에 삽입
+  }
+}
+
+```
+
+```mermaid
+sequenceDiagram
+    participant MCS as MCS(서버)
+    participant ACS as ACS(로봇 클라이언트)
+
+    Note over MCS,ACS: 📝 ExecutionPlan : 작업 계획 전달 (planId)
+
+    alt 등록이 성공하는 경우
+        MCS->>ACS: 🟦 ExecutionPlan(planId)
+        ACS-->>MCS: 🟩 ExecutionPlanAck(result: Success, message: "Plan accepted")
+        Note right of ACS: Plan 정상 등록, 큐에 추가
+    else 비정상(Abnormal) - 등록 거부/실패
+        MCS->>ACS: 🟦 ExecutionPlan(planId)
+        ACS-->>MCS: 🟥 ExecutionPlanAck(result: Fail, message: "Queue Full or Duplicated Plan")
+        Note right of ACS: Plan 등록 실패, 사유 응답 
+    end
+
+```
+
+
+
+### 6.5 작업 취소 (CancelPlan) 
+
+```json
+// [MCS → ACS] 실행 중 작업(Plan) 중단 요청(CancelPlan)
+// AMR 도착 전 까지 취소 가능
+{
+  "command": "CancelPlan",
+  "transactionId": "4f9a5e50-8b6f-4f0d-b41f-38791bc3ee8a",
+  "timestamp": "2025-07-02T18:50:00.000+09:00",
+  "payload": {
+    "planId": "PLAN-20250702-002",
+    "reason": "User request"
+  }
+}
+
+```
+
+```json
+// [ACS → MCS] 작업 중단 요청에 대한 응답(CancelPlanAck)
+{
+  "command": "CancelPlanAck",
+  "transactionId": "4f9a5e50-8b6f-4f0d-b41f-38791bc3ee8a",
+  "timestamp": "2025-07-02T18:50:00.500+09:00",
+  "result": "Success",
+  "message": "Plan cancelled Successfully.",
+  "payload": {
+    "planId": "PLAN-20250702-002"
+  }
+}
+```
+
+```mermaid
+sequenceDiagram
+    participant MCS as MCS (서버)
+    participant ACS as ACS (로봇 클라이언트)
+
+    Note over MCS,ACS: 🔁 Plan 취소 절차
+
+    MCS->>ACS: 🟥 CancelPlan(planId)
+    ACS-->>MCS: 🟩 CancelPlanAck(result: Success)
+
+    Note right of ACS: Cancel 가능 여부 판단 (ACS)
+
+    ACS-->>MCS: 🟩 CancelResultReport(planId, status: Success)
+    MCS-->>ACS: 🟩 CancelResultReportAck
+
+```
+
+#### 6.5.A 작업 취소 결과 보고 (CancelResultReport) 
+
+```json
+// [ACS → MCS] CancelPlan 요청 이후 실제 Plan 상태 보고
+{
+  "command": "CancelResultReport",
+  "transactionId": "a83f4e2b-d54a-4baf-9b88-fc888d7d4321",
+  "timestamp": "2025-08-07T10:22:00.000+09:00",
+  "payload": {
+    "planId": "PLAN-20250702-002",
+    "result": "Success", // 실제 Cancel 완료되면 "Success"
+    "message": "Plan has been successfully cancelled."
+  }
+}
+
+```
+
+```json
+// [MCS → ACS] CancelResultReport에 대한 응답(CancelResultReportAck)
+{
+  "command": "CancelResultReportAck",
+  "transactionId": "a83f4e2b-d54a-4baf-9b88-fc888d7d4321",
+  "timestamp": "2025-08-07T10:22:00.150+09:00",
+  "result": "Success",
+  "message": "Cancellation result received.",
+  "payload": {}
+}
+
+```
+
+#### Abnormal Case 01. 작업 중 CancelPlan 요청 시,
+
+- 플랜이 이미 작업 중 `CancelPlan` 발생할 경우,  `CancelResultReport`의 응답을 `Failed` 처리
+
+  
+
+
+
+### 6.6 긴급 중단 (AbortPlan) 
+
+```json
+// [MCS → ACS] 긴급 강제 중단 요청(AbortPlan)
+{
+  "command": "AbortPlan",
+  "transactionId": "ee327ea6-845a-4fd5-ae89-96011e69a6df",
+  "timestamp": "2025-07-02T18:51:00.000+09:00",
+  "payload": {
+    "planId": "PLAN-20250702-002",
+    "reason": "Emergency stop triggered"
+  }
+}
+
+```
+
+```json
+// [ACS → MCS] 긴급 중단 요청에 대한 응답(AbortPlanAck)
+{
+  "command": "AbortPlanAck",
+  "transactionId": "ee327ea6-845a-4fd5-ae89-96011e69a6df",
+  "timestamp": "2025-07-02T18:51:00.200+09:00",
+  "result": "Success",
+  "message": "Plan aborted immediately.",
+  "payload": {
+    "planId": "PLAN-20250702-002"
+  }
+}
+```
+
+
+
+#### 6.6.A Abort 결과 보고 (AbortResultReport)
+
+```json
+// [ACS → MCS] AbortPlan 요청 처리 결과 보고 
+{
+  "command": "AbortResultReport",
+  "transactionId": "7adcf771-3b6e-4de2-90a5-d91d23f14152",
+  "timestamp": "2025-08-07T10:30:00.000+09:00",
+  "payload": {
+    "planId": "PLAN-20250702-002",
+    "result": "Success", 
+    "message": "Plan aborted."
+  }
+}
+
+```
+
+```json
+// [MCS → ACS] AbortResultReportAck
+{
+  "command": "AbortResultReportAck",
+  "transactionId": "7adcf771-3b6e-4de2-90a5-d91d23f14152",
+  "timestamp": "2025-08-07T10:30:00.150+09:00",
+  "result": "Success",
+  "message": "Abort result received.",
+  "payload": {}
+}
+```
+
+
+
+### 6.7 작업 일시 정지 (PausePlan)
+
+```json
+// [MCS → ACS] 작업 일시 정지 요청(PausePlan)
+{
+  "command": "PausePlan",
+  "transactionId": "8bca2d62-df39-4c60-9c4c-57f4bdf6e09f",
+  "timestamp": "2025-07-02T18:52:00.000+09:00",
+  "payload": {
+    "planId": "PLAN-20250702-002",
+    "reason": "Temporary stop for inspection"
+  }
+}
+
+```
+
+```json
+// [ACS → MCS] 작업 일시 정지 요청에 대한 응답(PausePlanAck)
+{
+  "command": "PausePlanAck",
+  "transactionId": "8bca2d62-df39-4c60-9c4c-57f4bdf6e09f",
+  "timestamp": "2025-07-02T18:52:00.300+09:00",
+  "result": "Success",
+  "message": "Plan paused.",
+  "payload": {
+    "planId": "PLAN-20250702-002"
+  }
+}
+```
+
+#### 6.7.A Pause 결과 보고 (PauseResultReport)
+
+```json
+// [ACS → MCS] PausePlan 요청 처리 결과 보고 
+{
+  "command": "PauseResultReport",
+  "transactionId": "3b8c1294-6ac6-4a85-9565-e4624aa44b82",
+  "timestamp": "2025-08-07T10:31:00.000+09:00",
+  "payload": {
+    "planId": "PLAN-20250702-002",
+    "result": "Success", 
+    "message": "Plan paused successfully."
+  }
+}
+
+```
+
+```json
+// [MCS → ACS] PauseResultReportAck
+{
+  "command": "PauseResultReportAck",
+  "transactionId": "3b8c1294-6ac6-4a85-9565-e4624aa44b82",
+  "timestamp": "2025-08-07T10:31:00.150+09:00",
+  "result": "Success",
+  "message": "Pause result received.",
+  "payload": {}
+}
+
+```
+
+🔹 Plan이 실제로 `Paused` 상태로 전환된 경우, ACS는 아래 메시지를 **필수적으로 보고**해야 합니다:
+
+- `RobotStatusUpdate`: 로봇의 동작 중단 상태 보고 
+- `PlanReport(status: Paused)`: Plan 상태 변경 보고
+- `PauseResultReport`: Pause 실행 결과 보고
+
+```mermaid
+sequenceDiagram
+    participant MCS as MCS (서버)
+    participant ACS as ACS (로봇 클라이언트)
+
+    MCS->>ACS: ⏸️ PausePlan(planId)
+    ACS-->>MCS: PausePlanAck    
+
+    Note right of ACS: 내부 작업 정지 → 로봇 상태 변경 보고
+
+    ACS-->>MCS: 🔄 RobotStatusUpdate(robotStatus: Stopped)
+    ACS-->>MCS: 🟩 PlanReport(status: Paused)
+    ACS-->>MCS: 🟦 PauseResultReport(status: Paused)
+    MCS->>ACS: ⏸️ PauseResultReportAck
+
+```
+
+
+
+
+
+### 6.8 작업 재개 (ResumePlan)
+
+```json
+// [MCS → ACS] 작업 재개 요청(ResumePlan)
+{
+  "command": "ResumePlan",
+  "transactionId": "e0b6c644-2851-4b17-853e-6766f6e81f1b",
+  "timestamp": "2025-07-02T18:53:00.000+09:00",
+  "payload": {
+    "planId": "PLAN-20250702-002"
+  }
+}
+
+```
+
+```json
+// [ACS → MCS] 작업 재개 요청에 대한 응답(ResumePlanAck)
+{
+  "command": "ResumePlanAck",
+  "transactionId": "e0b6c644-2851-4b17-853e-6766f6e81f1b",
+  "timestamp": "2025-07-02T18:53:00.150+09:00",
+  "result": "Success",
+  "message": "Plan resumed.",
+  "payload": {
+    "planId": "PLAN-20250702-002"
+  }
+}
+```
+
+#### 6.8.A Resume 결과 보고 (ResumeResultReport)
+
+```json
+// [ACS → MCS] ResumePlan 요청 처리 결과 보고 (실제 재개 완료 시점)
+{
+  "command": "ResumeResultReport",
+  "transactionId": "fbf125f4-d8d1-49c1-802d-dbd22728c55b",
+  "timestamp": "2025-08-07T10:32:00.000+09:00",
+  "payload": {
+    "planId": "PLAN-20250702-002",
+    "result": "Success", 
+    "message": "Plan resumed successfully."
+  }
+}
+
+```
+
+```json
+// [MCS → ACS] ResumeResultReportAck
+{
+  "command": "ResumeResultReportAck",
+  "transactionId": "fbf125f4-d8d1-49c1-802d-dbd22728c55b",
+  "timestamp": "2025-08-07T10:32:00.150+09:00",
+  "result": "Success",
+  "message": "Resume result received.",
+  "payload": {}
+}
+
+```
+
+
+
+
+
+### 6.9 ~~구성 동기화 (SyncConfig) <span style="color: red;">  </span>~~
+
+```json
+// [MCS → ACS] 구성 정보 동기화 요청(SyncConfig)
+// 사용 속성 정보 검토 중..
+
+```
+
+```json
+// [ACS → MCS] 구성 동기화 요청에 대한 응답(SyncConfigAck)
+{
+  "command": "SyncConfigAck",
+  "transactionId": "6c1e4b86-69a1-4e1f-bc93-4e6c1ef4de0c",
+  "timestamp": "2025-07-02T18:54:00.200+09:00",
+  "result": "Success",
+  "message": "Config synced Successfully.",
+  "payload": {}
+}
+```
+
+
+
+### 6.10 플랜 현황 요청 (RequestAcsPlans)
+
+| 플랜 상태  | 설명                                     |
+| ---------- | ---------------------------------------- |
+| Pending    | 실행 대기 중. 아직 시작되지 않음         |
+| InProgress | 현재 실행 중인 Step이 있음               |
+| Paused     | 외부 조건 또는 수동 조작으로 일시 중단됨 |
+
+```json
+// [MCS → ACS] ACS의 현재 할당 된 플랜 현황 질의
+{
+  "command": "RequestAcsPlans",
+  "transactionId": "e731223b-b1a6-4e0d-8e7c-f8c8774a0fa7",
+  "timestamp": "2025-07-02T18:55:00.000+09:00",
+  "payload": {
+  }
+}
+
+```
+
+```json
+// [ACS → MCS] 상태 요청에 대한 응답(RequestAcsStatusAck)
+{
+  "command": "RequestAcsPlansAck",
+  "transactionId": "a211ba25-24e2-47c2-bda2-2d8e3a1bbd77",
+  "timestamp": "2025-07-03T11:22:00.035+09:00",
+  "result": "success",
+  "message": "ACS status returned.",
+  "payload": { 
+    "plans": [
+      {
+        "planId": "PLAN-20250703-200",
+        "robotId": "CR01",
+        "status": "Pending",       // Pending, InProgress, Paused
+        "stepNo": 1,
+        "jobId": "1311ba25-24e2-47c2-bda2-2d8e3a1b8412",
+        "currentAction": "TrayLoad",
+        "startTime": "2025-07-03T11:18:00.000+09:00",
+        "endTime": null
+      },
+      {
+        "planId": "PLAN-20250703-201",
+        "robotId": "CR02",
+        "status": "InProgress",    // (위와 동일)
+        "stepNo": 2,
+        "jobId": "4311ba25-24e2-47ab-bda2-2d8e3a1b5687",
+        "currentAction": "MemoryPickAndPlace",
+        "startTime": "2025-07-03T11:20:00.000+09:00",
+        "endTime": null
+      }
+    ]
+  }
+}
+```
+
+```mermaid
+sequenceDiagram
+    participant MCS as MCS(서버)
+    participant ACS as ACS(클라이언트)
+
+    Note over MCS,ACS: 🔎 RequestAcsStatus : ACS 상태 및 플랜 현황 실시간 질의
+
+   
+        MCS->>ACS: 🟦 RequestAcsStatus()
+        ACS-->>MCS: 🟩 RequestAcsStatusAck(connectedRobots, plans)
+        Note right of ACS: 현재 연결된 CR 목록 및 각 Plan의 상태 정보(Pending, InProgress 등) 반환
+  
+  
+
+```
+
+* **status가 `Pending`인 경우** `stepNo`와 `jobId`는 플랜의 **첫 번째 Step과 해당 Step의 첫 번째 Job**을 표기합니다.
+
+* **status가 `InProgress`인 경우** `stepNo`와 `jobId`는 **진행 중인 Step (InProgress)과 진행 중인 Job (InProgress)**을 표기합니다.
+
+* **status가 `Paused`인 경우** `stepNo`는 **진행 중이던 Step (InProgress)**, `jobId`는 **일시 중지 (Paused)된 Job**을 표기합니다.
+
+
+
+### 6.11 ACS 플랜 이력 조회 (RequestAcsPlanHistory)
+
+| 플랜 상태  | 설명                                                         |
+| ---------- | ------------------------------------------------------------ |
+| Pending    | 실행 대기 중. 아직 시작되지 않음                             |
+| InProgress | 현재 실행 중인 Step이 있음                                   |
+| Paused     | 외부 조건 또는 수동 조작으로 일시 중단됨                     |
+| Completed  | 모든 Step이 정상적으로 완료됨                                |
+| Failed     | 하나 이상의 Step에서 오류가 발생하여 Plan 전체가 실패        |
+| Cancelled  | 외부에서 작업이 취소됨 (사용자/상위 시스템 등)               |
+| Aborted    | 긴급/비정상 상황에서 즉시 중단됨 (비상 중단, 시스템 보호 등) |
+
+```json
+// [MCS → ACS] 특정 Plan ID(들)로 완료된 플랜 결과 이력 조회
+{
+  "command": "RequestAcsPlanHistory",
+  "transactionId": "fbc1b890-b173-4f71-b4d8-093e8d8a8f73",
+  "timestamp": "2025-07-03T12:10:00.000+09:00",
+  "payload": {
+    "planIds": [
+      "PLAN-20250701-051",
+      "PLAN-20250701-052"
+    ]
+  }
+}
+
+
+```
+
+```json
+// [ACS → MCS] 해당 planId의 완료 이력(배열) 응답
+
+{
+  "command": "RequestAcsPlanHistoryAck",
+  "transactionId": "fbc1b890-b173-4f71-b4d8-093e8d8a8f73",
+  "timestamp": "2025-07-03T12:10:00.030+09:00",
+  "result": "Success",
+  "message": "",
+  "payload": {
+    "plans": [
+      {
+        "planId": "PLAN-20250701-051",
+        "robotId": "CR01",
+        "status": "Completed",       
+        "stepNo": 0,
+        "jobId": null,
+        "currentAction": null,
+        "startTime": "2025-07-03T11:18:00.000+09:00",
+        "endTime": "2025-07-03T12:35:20.000+09:00"
+      },
+      {
+        "planId": "PLAN-20250701-052",
+        "robotId": "CR01",
+        "status": "Failed",    
+        "stepNo": 2, 
+        "jobId": "4311ba25-24e2-47ab-bda2-2d8e3a1b5687",
+        "currentAction": "MemoryPickAndPlace",
+        "startTime": "2025-07-03T11:20:00.000+09:00",
+        "endTime": "2025-07-03T11:55:10.000+09:00"
+      }
+    ]
+  }
+}
+
+```
+
+```mermaid
+sequenceDiagram
+    participant MCS as MCS (서버)
+    participant ACS as ACS (로봇 클라이언트)
+
+    Note over MCS,ACS: 📜 RequestAcsPlanHistory : 특정 planId로 완료 이력 조회
+
+    MCS->>ACS: 🟦 RequestAcsPlanHistory(planIds)
+    ACS-->>MCS: 🟩 RequestAcsPlanHistoryAck(plans)
+
+```
+
+* **status**가 **` Completed`일 땐** `stepNo`는 0, `jobId`는 `null`로 표기합니다.
+
+* **status가 `Failed`인 경우** `stepNo`와 `jobId`는 **실패가 발생한 단계(step)와 해당 작업(job)의 식별자**를 표기합니다. 
+
+### 6.12 Plan 상태 보고 (PlanReport)
+
+| 플랜 상태  | 설명                                                         |
+| ---------- | ------------------------------------------------------------ |
+| Pending    | 실행 대기 중. 아직 시작되지 않음                             |
+| InProgress | 현재 실행 중인 Step이 있음                                   |
+| Paused     | 외부 조건 또는 수동 조작으로 일시 중단됨                     |
+| Completed  | 모든 Step이 정상적으로 완료됨                                |
+| Failed     | 하나 이상의 Step에서 오류가 발생하여 Plan 전체가 실패        |
+| Cancelled  | 외부에서 작업이 취소됨 (사용자/상위 시스템 등)               |
+| Aborted    | 긴급/비정상 상황에서 즉시 중단됨 (비상 중단, 시스템 보호 등) |
+
+```json
+// [ACS → MCS] Plan 상태 변경 시 보고(PlanReport)
+{
+  "command": "PlanReport",
+  "transactionId": "f7e1b865-552f-4d18-8d0c-cd330f2821f7",
+  "timestamp": "2025-07-03T11:45:00.000+09:00",
+  "payload": {
+    "planId": "PLAN-20250703-200",
+    "status": "Completed",   
+    "message": "Plan 모든 Step이 정상 완료됨.",
+  }
+}
+
+```
+
+```json
+// [MCS → ACS] PlanReportAck (정상/비정상)
+{
+  "command": "PlanReportAck",
+  "transactionId": "f7e1b865-552f-4d18-8d0c-cd330f2821f7",
+  "timestamp": "2025-07-03T11:45:00.050+09:00",
+  "result": "Success", // 또는 "fail"
+  "message": "PlanReport received.",
+  "payload": {}
+}
+```
+
+```mermaid
+sequenceDiagram
+    participant ACS as ACS(로봇 클라이언트)
+    participant MCS as MCS(서버)
+
+    Note over ACS,MCS: 📝 PlanReport : 플랜 상태 변경 시 MCS에 보고
+
+    ACS-->>MCS: 🟩 PlanReport(status: Completed/Failed/Cancelled/Aborted)
+    MCS-->>ACS: 🟩 PlanReportAck(result: success)
+    Note right of MCS: PlanReport 정상 수신/처리
+   
+
+```
+
+
+
+
+
+### 6.13 Step 상태 보고 (StepReport)
+
+| 상태       | 설명                                                         |
+| ---------- | ------------------------------------------------------------ |
+| Pending    | 이전 Step이 완료될 때까지 대기(Ready 상태), 대기열에 있음    |
+| Dispatched | 해당 Step이 AMR 또는 Robot에게 전달(할당)된 상태             |
+| InProgress | 해당 Step이 실제로 실행(수행) 중 (이동, 픽/플레이스 등 포함) |
+| Completed  | Step 내 모든 Job이 성공적으로 완료된 상태                    |
+| Failed     | 하나 이상의 Job이 실패하여 Step 전체가 실패 처리됨           |
+| Skipped    | 조건 분기, 예외 처리, 수동 오퍼레이션 등으로 건너뜀          |
+
+```json
+// [ACS → MCS] Step 상태 보고(StepReport)
+{
+  "command": "StepReport",
+  "transactionId": "7b591b54-6f8d-47cc-9e39-6ed2a88f7a9d",
+  "timestamp": "2025-07-02T21:00:00.000+09:00",
+  "payload": {
+    "planId": "PLAN-20250702-010",
+    "robotId": "CR01",
+    "stepNo": 2,
+    "status": "Completed",  // Pending, Dispatched, InProgress, Completed, Failed, Skipped
+    "message": "Step executed Successfully."
+  }
+}
+
+```
+
+```json
+// [MCS → ACS] Step 상태 보고에 대한 응답(StepReportAck)
+{
+  "command": "StepReportAck",
+  "transactionId": "7b591b54-6f8d-47cc-9e39-6ed2a88f7a9d",
+  "timestamp": "2025-07-02T21:00:00.100+09:00",
+  "result": "Success",
+  "message": "Step report received.",
+  "payload": {}
+}
+```
+
+```mermaid
+sequenceDiagram
+    participant ACS as ACS(클라이언트)
+    participant MCS as MCS(서버)
+
+    Note over ACS,MCS: 📄 StepReport : Step 상태 변경 시 
+
+   
+    ACS-->>MCS: 🟩 StepReport(stepNo, status)
+   
+
+```
+
+
+
+### 6.14 Job 상태 보고 (JobReport)
+
+| 상태         | 설명                                       |
+| ------------ | ------------------------------------------ |
+| Pending      | 아직 로봇에게 전달되지 않음                |
+| Instructed   | 로봇에게 명령 전달 완료                    |
+| InProgress   | 로봇이 해당 작업을 수행 중                 |
+| Completed    | 작업이 정상적으로 완료됨                   |
+| Failed       | 작업 도중 오류 발생                        |
+| ~~Retrying~~ | ~~실패한 작업을 재시도 중~~                |
+| ~~Timeout~~  | ~~제한 시간 내 완료되지 않아 실패 처리됨~~ |
+
+```json
+// [ACS → MCS] Job 상태 보고(JobReport)
+{
+  "command": "JobReport",
+  "transactionId": "0a62528f-0b32-4c15-b45e-60b3e1ef9b6f",
+  "timestamp": "2025-07-02T21:02:15.000+09:00",
+  "payload": {
+    "planId": "PLAN-20250702-010",
+    "robotId": "CR01",
+    "stepNo": 2,
+    "jobId": "fa6bdb41-60ee-4b52-8c6f-8a6222b2b5c1",
+    "status": "inProgress", // Pending, Instructed, InProgress, Completed, Failed, Timeout
+    "message": "Job picking started."
+  }
+}
+
+```
+
+```json
+// [MCS → ACS] Job 상태 보고에 대한 응답(JobReportAck)
+{
+  "command": "JobReportAck",
+  "transactionId": "0a62528f-0b32-4c15-b45e-60b3e1ef9b6f",
+  "timestamp": "2025-07-02T21:02:15.050+09:00",
+  "result": "Success",
+  "message": "Job report received.",
+  "payload": {}
+}
+```
+
+
+
+```mermaid
+sequenceDiagram
+    participant ACS as ACS (로봇 클라이언트)
+    participant MCS as MCS (서버)
+
+    Note over ACS,MCS: 📝 JobReport : 개별 작업(Job)의 <br>상태를 MCS에 보고
+
+   
+    ACS-->>MCS: 🟩 JobReport
+    Note right of ACS: Job 상태 변경 시 
+ 
+
+```
+
+#### Abnormal Case 01. Job Failed
+
+- 작업 중 하나 이상의 Job에서 `Failed` 상태가 발생할 경우, 해당 Step은 즉시 `Failed` 상태로 보고됨  
+- Step이 실패하면, 해당 Step이 포함된 전체 Plan도 `Failed` 상태로 즉시 전환  `StepReport / PlanReport (status: Failed)`
+- 아직 실행되지 않은 나머지 Step 및 Job은 **별도 상태 보고 없이** **중단 처리**
+- 조치 후  **새로운 Plan으로 재전달**
+
+```mermaid
+sequenceDiagram
+    participant ACS as ACS(로봇 클라이언트)
+    participant MCS as MCS(서버)
+
+    Note over ACS,MCS: 🔴 Job 3 실패 → Step 실패 → Plan 실패 처리
+
+    ACS-->>MCS: 🟥 JobReport(jobId: ..., status: Failed)
+    ACS-->>MCS: 🟥 StepReport(stepNo: ..., status: Failed)
+    ACS-->>MCS: 🟥 PlanReport(planId: ..., status: Failed)
+
+```
+
+#### Abnormal Case 02. Plan Aborted
+
+- MCS로부터 `AbortPlan` 명령을 수신한 경우, 특이 사항이 없는 경우, 해당 Plan은 즉시 **Aborted 상태**로 전환.
+- 단, **이미 InProgress 상태로 실행 중인 Job**이 존재하는 경우에는,
+  → 해당 Job은 중단하지 않고 **정상 완료될 때까지 실행**을 계속함
+- InProgress Job이 모두 완료된 이후, ACS는 Plan 상태를 `Aborted`로 보고함
+- **나머지 아직 실행되지 않은 Step 및 Job(Pending 상태)**에 대해서는 **별도의 상태 보고 없이 중단**
+- 중단된 Job/Step에 대해 `JobReport`, `StepReport` 등은 **송신하지 않음**
+- 최종적으로 다음 메시지만 보고됨:
+  1. `JobReport(status: Completed)` — 이미 진행 중이던 Job이 완료된 경우
+  2. `PlanReport(status: Aborted)` — Plan 전체 중단 완료 보고
+
+
+
+
+
+### 6.15 에러/알람 이벤트 보고 (ErrorReport) <span style="color: red;">*상세 정의 필요</span>
+
+```json
+// [ACS → MCS] 에러 또는 경고 이벤트 발생 보고(ErrorReport) 
+{
+  "command": "ErrorReport",
+  "transactionId": "d6c22da8-98bc-4e76-bdd9-6c89e1e3c8fa",
+  "timestamp": "2025-07-02T21:05:33.000+09:00",
+  "payload": {
+    "robotId": "CR01",
+    "planId": "PLAN-20250702-010",
+    "state" : true, // true인 경우 발생, false인 경우 에러 해제 
+    "stepNo": 2,
+    "jobId": "fa6bdb41-60ee-4b52-8c6f-8a6222b2b5c1", // 필요시
+    "errorCode": "추후 정의",
+    "level" : "heavy",		// "heavy", "light"
+    "message": "Tray is not detected in port."
+  }
+}
+
+```
+
+```json
+// [MCS → ACS] 에러/경고 이벤트 보고에 대한 응답(ErrorReportAck)
+{
+  "command": "ErrorReportAck",
+  "transactionId": "d6c22da8-98bc-4e76-bdd9-6c89e1e3c8fa",
+  "timestamp": "2025-07-02T21:05:33.060+09:00",
+  "result": "Success",
+  "message": "Error report received.",
+  "payload": {}
+}
+```
+
+
+
+### 6.16 로봇 상태 정보 갱신 (RobotStatusUpdate)
+
+| robotStatus  | 의미                       |
+| ------------ | -------------------------- |
+| Init         | 초기화 중                  |
+| Disconnected | 통신 끊김                  |
+| Manual       | 수동 제어 상태             |
+| Idle         | 유휴 상태 (할당 작업 없음) |
+| Moving       | 이동 중                    |
+| Arrival      | 목적지/포트 도착함         |
+| Docking      | 포트에 도킹 중             |
+| UnDocking    | 도킹 해제 중               |
+| Working      | 로봇 작업 수행 중          |
+| Charging     | 충전 중                    |
+| Error        | 장애 또는 이상 발생        |
+| Stopped      | 외부 중지 또는 수동 정지   |
+
+```json
+// [ACS → MCS] robot status,position 또는 Port 적재 유무 등의 로봇 상태가 변경 될 경우,
+
+// 물류로봇의 상태 변화
+{
+  "command": "RobotStatusUpdate",
+  "transactionId": "b332fcbe-8916-4cd8-9ebc-2d6c76082b2c",
+  "timestamp": "2025-07-02T22:36:00.000+09:00",
+  "payload": {
+    "robotId": "LR01",
+    "robotType": "LR",          // 물류 로봇인 경우 "LR"   
+    "robotStatus": "Docking",
+    "position": "A01.CP03",
+    "carrierIds": ["CASSETTE_01"],
+    "planId": null,
+    "stepNo": null,
+    "jobId": null,
+    "message": "포트 도킹 중"
+  }
+}
+
+// 작업로봇
+{
+  "command": "RobotStatusUpdate",
+  "transactionId": "d322ff09-23b8-4e3a-8c0a-ff1cd7c8123a",
+  "timestamp": "2025-07-02T22:38:00.000+09:00",
+  "payload": {
+    "robotId": "CR01",
+    "robotType": "CR",              // 작업 로봇인 경우 "CR"   
+    "robotStatus": "Working",
+    "position": "A01.SET03",
+    "carrierIds": ["TRAY_01", "TRAY_02", "TRAY_03"],
+    "planId": "PLAN-20250703-110",
+    "stepNo": 2,
+    "jobId": "d3324f09-00b8-1e3a-2c0a-aa1cd7c8123a3",
+    "message": "트레이 핸들링 작업 중"
+  }
+}
+
+
+// 작업로봇 (carrierIds TP02/TP03만 존재하는 경우) [v1.2.0 설명 추가]
+{
+  "command": "RobotStatusUpdate",
+  "transactionId": "d322ff09-23b8-4e3a-8c0a-ff1cd7c8123a",
+  "timestamp": "2025-07-02T22:38:00.000+09:00",
+  "payload": {
+    "robotId": "CR01",
+    "robotType": "CR",   
+    "robotStatus": "Working",
+    "position": "A01.SET03",
+    "carrierIds": [null, "TRAY_02", "TRAY_03"], // 트레이포트(TP)가 비어있는 경우 null로 전달. 
+    "planId": "PLAN-20250703-110",
+    "stepNo": 2,
+    "jobId": "d3324f09-00b8-1e3a-2c0a-aa1cd7c8123a3",
+    "message": "트레이 핸들링 작업 중"
+  }
+}
+```
+
+```json
+// [MCS → ACS] RobotStatusUpdate에 대한 응답 (RobotStatusUpdateAck)
+{
+  "command": "RobotStatusUpdateAck",
+  "transactionId": "fda3335e-013b-4b0a-b01b-ec01a0cfa399",
+  "timestamp": "2025-07-02T22:42:10.030+09:00",
+  "result": "Success",
+  "message": "Status update received.",
+  "payload": {}
+}
+```
+
+```mermaid
+sequenceDiagram
+    participant ACS as ACS(로봇 클라이언트)
+    participant MCS as MCS(서버)
+
+    Note over ACS,MCS: 🔄 RobotStatusUpdate : 로봇 상태가 변경 될 경우 MCS에 즉시 보고
+    
+    ACS-->>MCS: 🟩 RobotStatusUpdate(robotId, robotStatus: Arrival → Docking)
+    ACS-->>MCS: 🟩 RobotStatusUpdate(robotId, position: A01.SET02 → A01.SET03)
+    ACS-->>MCS: 🟩 RobotStatusUpdate(robotId, hasTray: false → true)
+    ACS-->>MCS: 🟥 RobotStatusUpdate(robotId, robotStatus: Alarm)
+   
+
+    Note right of ACS: 상태값(robotStatus, position) 변화마다<br>즉시/이벤트성 송신
+
+```
+
+```apl
+// MCS 측 JobReport / StepReport의 Ack는 위 다이어그램에서는 생략되었음. 
+```
+
+
+
+### 6.17 에러/알람 현황 요청 (RequestAcsErrorList)
+
+```json
+// [MCS → ACS] ACS의 현재 발생 된 에러/알람 현황 질의
+{
+  "command": "RequestAcsErrorList",
+  "transactionId": "e731223b-b1a6-4e0d-8e7c-f8c8774a0fa7",
+  "timestamp": "2025-07-02T18:55:00.000+09:00",
+  "payload": {
+   }
+}
+
+```
+
+```json
+// [ACS → MCS] 상태 요청에 대한 응답(RequestAcsStatusAck)
+{
+  "command": "RequestAcsErrorListAck",
+  "transactionId": "a211ba25-24e2-47c2-bda2-2d8e3a1bbd77",
+  "timestamp": "2025-07-03T11:22:00.035+09:00",
+  "result": "Success",
+  "message": "ACS alarms returned.",
+  "payload": { 
+    "errors": [
+     {
+	    "robotId": "CR01",
+    	"planId": "PLAN-20250702-010",
+	    "state" : true, // true인 경우 발생, false인 경우 에러 해제 
+    	"stepNo": 2,
+	    "jobId": "fa6bdb41-60ee-4b52-8c6f-8a6222b2b5c1", // 필요시
+    	"errorCode": "추후 정의",
+	    "level" : "heavy",		// "heavy", "light"
+    	"message": "Tray is not detected in port."
+	  },
+      {
+	    "robotId": "CR01",
+	    "state" : true, // true인 경우 발생, false인 경우 에러 해제 
+    	"errorCode": "추후 정의",
+	    "level" : "light",		// "heavy", "light"
+    	"message": "low battery"
+	  },
+    ]
+  }
+} 
+```
+
+
+
+### 6.19 로봇 위치 정보 갱신 (RobotPositionUpdate)
+
+```json
+{
+  "command": "RobotPositionUpdate",
+  "transactionId": "b332fcbe-8916-4cd8-9ebc-2d6c76082b2c",
+  "timestamp": "2025-07-02T22:36:00.000+09:00",
+  "payload": {
+    "robots": [
+      {
+        "robotId": "LR01",
+        "x": 10.24,
+        "y": 15.87,
+        "angle": 90,
+        "battery": 75
+      },
+      {
+        "robotId": "CR01",
+        "x": 12.11,
+        "y": 8.45,
+        "angle": 45,
+        "battery": 64
+      }
+    ]
+  }
+}
+
+```
+
+| 필드명  | 타입   | 설명      |
+| ------- | ------ | --------- |
+| robotId | string | 로봇 ID   |
+| x       | number | X 좌표    |
+| y       | number | Y 좌표    |
+| angle   | number | 각도      |
+| battery | number | 배터리(%) |
+
+> ⏱️ RobotPositionUpdate 메시지는 200밀리초(0.2초) 간격으로 계속 업데이트됩니다.
+>
+> ⚠️ RobotPositionUpdate 메시지에 대해 서버는 별도의 Ack(확인) 메시지를 전달하지 않습니다.
+
+
+
+### 6.20 TSC 상태 보고 (TscStateUpdate)
+
+```json
+// [ACS → MCS] 현재 TSC 상태 변경 시
+{
+  "command": "TscStateUpdate",
+  "transactionId": "9f13f236-2c4b-42af-b94b-1e47b4de2f1a",
+  "timestamp": "2025-07-03T11:25:00.000+09:00",
+  "payload": {
+    "state": "Auto"   // "Auto", "Paused", "Pausing"
+  }
+}
+```
+
+```json
+// [MCS → ACS] TSC 상태 업데이트 수신에 대한 응답
+{
+  "command": "TscStateUpdateAck",
+  "transactionId": "9f13f236-2c4b-42af-b94b-1e47b4de2f1a", 
+  "timestamp": "2025-07-03T11:25:01.000+09:00",
+  "result": "Success",               
+  "message": "TSC state update received successfully.",
+  "payload": {}
+}
+```
+
+| state   | 의미                                      |
+| ------- | ----------------------------------------- |
+| Auto    | Plan을 수행 할 수 있는 상태               |
+| Paused  | Plan 수행이 일시 중지 된 상태             |
+| Pausing | Paused 변경 시도 후 완료하기 전 대기 상태 |
+
+⚠️ TscStateUpdate 메시지를 초기 연결 시 한번, 이후로는 상태 변경 시에 보냅니다.
+
+---
+
+
+
+### 6.21 ACS 통신 상태 보고 (AcsCommStateUpdate)
+
+```json
+// [ACS → MCS] ACS 통신 연결 상태 보고
+{
+  "command": "AcsCommStateUpdate",
+  "transactionId": "c7c8c9ae-3aa5-4f9e-bbfa-8140a59c94b6",
+  "timestamp": "2025-08-07T11:10:00.000+09:00",
+  "payload": {
+    "isConnected": true    // true: 연결됨, false: 연결 끊김 또는 복구 대기 중
+  }
+}
+
+```
+
+```json
+// [MCS → ACS] AcsCommStateUpdate에 대한 응답
+{
+  "command": "AcsCommStateUpdateAck",
+  "transactionId": "c7c8c9ae-3aa5-4f9e-bbfa-8140a59c94b6",
+  "timestamp": "2025-08-07T11:10:00.150+09:00",
+  "result": "Success",
+  "message": "Comm state received.",
+  "payload": {}
+}
+
+```
+
+#### Abnormal Case 01. isConnected = false
+
+- `isConnected`가 `false`로 보고된 경우, 해당 ACS는 통신이 불안정하거나 연결이 끊긴 상태로 간주함
+- 이 상태에서는 **MCS는 해당 ACS로 Plan을 전달하지 않습니다**
+- 연결이 복구되어 `isConnected = true`로 전환되기 전까지는 Plan 생성 또는 재전송을 보류함
+
+
+
+---
+
+
+
+
+
+## 7. 확장 및 상세 정의
+
+실제 적용 시 각 메시지 타입, 시나리오, 상세 데이터 구조는 추가 정의 필요
+
+---
+
+
+
+## 8.참고
+
+* 모든 CP, TP, MP 등 Port 정보는 각 설비(스토커, 로봇 등) 상태 및 이벤트 메시지에서 사용됨
+
+* 문서의 내용은 고객사 요구, 프로젝트 상황 등에 따라 변경될 수 있음
+
+
+
+### 8.1 경로 맵 참고자료 
+
+**<span style="color: red;">* 실제 수량과 다를 수 있음.</span>**
+
+- **스토커(ST)**: 1개
+  - **카세트 포트(CP)**: 6개
+
+- **에어리어:** 1개 
+  - **카세트 포트(CP)**: 6개
+    - **트레이 포트(TP)**: 4개
+  - **세트(SET):** 12개
+    - **메모리 포트(MP)**: 32개
+- **물류로봇:** 1개 
+  - **카세트 포트(CP)**: 1개
+- **작업로봇:** 1개 
+  - **트레이 포트(TP)**: 3개
+    - **메모리 포트(MP)**: 25개
+
+
+
+| No   | 구분                     | FullPath            | 비고                                 |
+| ---- | ------------------------ | ------------------- | ------------------------------------ |
+| 1    | 스토커-카세트포트        | ST01.CP01           | 스토커1-카세트포트1                  |
+| 2    | 스토커-카세트포트        | ST01.CP02           | 스토커1-카세트포트2                  |
+| 3    | 스토커-카세트포트        | ST01.CP03           | 스토커1-카세트포트3                  |
+| 4    | 스토커-카세트포트        | ST01.CP04           | 스토커1-카세트포트4                  |
+| 5    | 스토커-카세트포트        | ST01.CP05           | 스토커1-카세트포트5                  |
+| 6    | 스토커-카세트포트        | ST01.CP06           | 스토커1-카세트포트6                  |
+| 7    | 에어리어-카세트포트      | A01.CP01            | 에어리어1-카세트포트1                |
+| 8    | 에어리어-트레이포트      | A01.CP01.TP01       | 에어리어1-카세트포트1-트레이포트1    |
+| 9    | 에어리어-트레이포트      | A01.CP01.TP02       | 에어리어1-카세트포트1-트레이포트2    |
+| 10   | 에어리어-트레이포트      | A01.CP01.TP03       | 에어리어1-카세트포트1-트레이포트3    |
+| 11   | 에어리어-트레이포트      | A01.CP01.TP04       | 에어리어1-카세트포트1-트레이포트4    |
+| 12   | 에어리어-카세트포트      | A01.CP02            | 에어리어1-카세트포트2                |
+| 13   | 에어리어-트레이포트      | A01.CP02.TP01       | 에어리어1-카세트포트2-트레이포트1    |
+| 14   | 에어리어-트레이포트      | A01.CP02.TP02       | 에어리어1-카세트포트2-트레이포트2    |
+| 15   | 에어리어-트레이포트      | A01.CP02.TP03       | 에어리어1-카세트포트2-트레이포트3    |
+| 16   | 에어리어-트레이포트      | A01.CP02.TP04       | 에어리어1-카세트포트2-트레이포트4    |
+| 17   | 에어리어-카세트포트      | A01.CP03            | 에어리어1-카세트포트3                |
+| 18   | 에어리어-트레이포트      | A01.CP03.TP01       | 에어리어1-카세트포트3-트레이포트1    |
+| 19   | 에어리어-트레이포트      | A01.CP03.TP02       | 에어리어1-카세트포트3-트레이포트2    |
+| 20   | 에어리어-트레이포트      | A01.CP03.TP03       | 에어리어1-카세트포트3-트레이포트3    |
+| 21   | 에어리어-트레이포트      | A01.CP03.TP04       | 에어리어1-카세트포트3-트레이포트4    |
+| 22   | 에어리어-카세트포트      | A01.CP04            | 에어리어1-카세트포트4                |
+| 23   | 에어리어-트레이포트      | A01.CP04.TP01       | 에어리어1-카세트포트4-트레이포트1    |
+| 24   | 에어리어-트레이포트      | A01.CP04.TP02       | 에어리어1-카세트포트4-트레이포트2    |
+| 25   | 에어리어-트레이포트      | A01.CP04.TP03       | 에어리어1-카세트포트4-트레이포트3    |
+| 26   | 에어리어-트레이포트      | A01.CP04.TP04       | 에어리어1-카세트포트4-트레이포트4    |
+| 27   | 에어리어-카세트포트      | A01.CP05            | 에어리어1-카세트포트5                |
+| 28   | 에어리어-트레이포트      | A01.CP05.TP01       | 에어리어1-카세트포트5-트레이포트1    |
+| 29   | 에어리어-트레이포트      | A01.CP05.TP02       | 에어리어1-카세트포트5-트레이포트2    |
+| 30   | 에어리어-트레이포트      | A01.CP05.TP03       | 에어리어1-카세트포트5-트레이포트3    |
+| 31   | 에어리어-트레이포트      | A01.CP05.TP04       | 에어리어1-카세트포트5-트레이포트4    |
+| 32   | 에어리어-카세트포트      | A01.CP06            | 에어리어1-카세트포트6                |
+| 33   | 에어리어-트레이포트      | A01.CP06.TP01       | 에어리어1-카세트포트6-트레이포트1    |
+| 34   | 에어리어-트레이포트      | A01.CP06.TP02       | 에어리어1-카세트포트6-트레이포트2    |
+| 35   | 에어리어-트레이포트      | A01.CP06.TP03       | 에어리어1-카세트포트6-트레이포트3    |
+| 36   | 에어리어-트레이포트      | A01.CP06.TP04       | 에어리어1-카세트포트6-트레이포트4    |
+| 37   | 에어리어-세트            | A01.SET01           | 에어리어1-세트1                      |
+| 38   | 에어리어-세트-메모리포트 | A01.SET01.MP01~MP32 | 에어리어1-세트1-메모리포트1~32       |
+| 39   | 에어리어-세트            | A01.SET02           | 에어리어1-세트2                      |
+| 40   | 에어리어-세트-메모리포트 | A01.SET02.MP01~MP32 | 에어리어1-세트2-메모리포트1~32       |
+| 41   | 에어리어-세트            | A01.SET03           | 에어리어1-세트3                      |
+| 42   | 에어리어-세트-메모리포트 | A01.SET03.MP01~MP32 | 에어리어1-세트3-메모리포트1~32       |
+| 43   | 에어리어-세트            | A01.SET04           | 에어리어1-세트4                      |
+| 44   | 에어리어-세트-메모리포트 | A01.SET04.MP01~MP32 | 에어리어1-세트4-메모리포트1~32       |
+| 45   | 에어리어-세트            | A01.SET05           | 에어리어1-세트5                      |
+| 46   | 에어리어-세트-메모리포트 | A01.SET05.MP01~MP32 | 에어리어1-세트5-메모리포트1~32       |
+| 47   | 에어리어-세트            | A01.SET06           | 에어리어1-세트6                      |
+| 48   | 에어리어-세트-메모리포트 | A01.SET06.MP01~MP32 | 에어리어1-세트6-메모리포트1~32       |
+| 49   | 에어리어-세트            | A01.SET07           | 에어리어1-세트7                      |
+| 50   | 에어리어-세트-메모리포트 | A01.SET07.MP01~MP32 | 에어리어1-세트7-메모리포트1~32       |
+| 51   | 에어리어-세트            | A01.SET08           | 에어리어1-세트8                      |
+| 52   | 에어리어-세트-메모리포트 | A01.SET08.MP01~MP32 | 에어리어1-세트8-메모리포트1~32       |
+| 53   | 에어리어-세트            | A01.SET09           | 에어리어1-세트9                      |
+| 54   | 에어리어-세트-메모리포트 | A01.SET09.MP01~MP32 | 에어리어1-세트9-메모리포트1~32       |
+| 55   | 에어리어-세트            | A01.SET10           | 에어리어1-세트10                     |
+| 56   | 에어리어-세트-메모리포트 | A01.SET10.MP01~MP32 | 에어리어1-세트10-메모리포트1~32      |
+| 57   | 에어리어-세트            | A01.SET11           | 에어리어1-세트11                     |
+| 58   | 에어리어-세트-메모리포트 | A01.SET11.MP01~MP32 | 에어리어1-세트11-메모리포트1~32      |
+| 59   | 에어리어-세트            | A01.SET12           | 에어리어1-세트12                     |
+| 60   | 에어리어-세트-메모리포트 | A01.SET12.MP01~MP32 | 에어리어1-세트12-메모리포트1~32      |
+| 61   | 물류로봇-카세트포트      | AMR.CP01            | 물류로봇1-카세트포트1                |
+| 62   | 작업로봇-트레이포트      | AMR.TP01            | 작업로봇1-트레이포트1                |
+| 63   | 작업로봇-메모리포트      | AMR.TP01.MP01~MP25  | 작업로봇1-트레이포트1-메모리포트1~25 |
+| 64   | 작업로봇-트레이포트      | AMR.TP02            | 작업로봇1-트레이포트2                |
+| 65   | 작업로봇-메모리포트      | AMR.TP02.MP01~MP25  | 작업로봇1-트레이포트2-메모리포트1~25 |
+| 66   | 작업로봇-트레이포트      | AMR.TP03            | 작업로봇1-트레이포트3                |
+| 67   | 작업로봇-메모리포트      | AMR.TP03.MP01~MP25  | 작업로봇1-트레이포트3-메모리포트1~25 |
+
+
+
+
+
+## 9. 문서 정보
+
+- **버전**: v1.4.1
+- **작성일**: 2025-08-11
+- **작성자**: 제이원소프트 윤석호
+- **비고**:  본 문서는 고객사 요청 또는 개발 진행 과정에서 내용이 변경될 수 있습니다.
+
+---
+
+
+
+### 9.1 수정 사항
+
+* **v1.4.1**
+  - **<span style="color: red;">6.10 플랜 현황 요청 (RequestAcsPlans)  </span>**
+    - `status` 값에 따른 `stepNo`, `jobId` 표기 규칙 추가
+      - Pending의 경우, 첫 번째 Step과 해당 Step의 첫 번째 Job
+      - InProgress의 경우, 진행 중인 Step과 진행 중인 Job
+      - Paused의 경우, 진행 중이던 Step과 일시 중지된 Job
+  - <span style="color: red;">**6.11 ACS 플랜 이력 조회 (RequestAcsPlanHistory)**</span>
+    - `status` 값에 따른 `stepNo`, `jobId` 표기 규칙 추가
+      - Failed의 경우, 실패가 발생한 *Step*과 해당 *Job*
+      - Completed의 경우, *stepNo*는 0,  *jobId*는 `null`
+
+- **v1.4.0**
+  - 작업 (취소/중단/일시정지/재개) 커맨드 내 결과 보고 커맨드 추가
+  - Abnormal Case 발생 시 내용 보완
+  - 6.21 ACS 통신 상태 보고 (AcsCommStateUpdate) 커맨드 추가
+
+- **v1.3.0**
+  - 6.20 TSC 상태 보고 메세지 추가
+  
+- **v1.2.1**
+  - 6.16 로봇 상태 업데이트 커맨드 변경 (*robotType* 속성 추가)
+  - 6.19 배터리 스테이션 업데이트 커맨드 삭제
+
+- **v1.2.0**
+  - 5.3 로봇 위치, 배터리 스테이션 상태 등의 정보를 주기적으로 전송하는 커맨드 항목 추가 (6.18, 6.19 커맨드)
+  - 6.16 로봇 상태 정보 갱신 RobotStatusUpdate 메세지 변경 (*battery* 속성 삭제)
+  - 6.16 로봇 상태 정보 갱신 RobotStatusUpdate 메세지 (*carrierIds* 설명 추가 - TP가 비어있는 경우)
+
+- **v1.1.0**
+  - MCS - ACS 통신 클라이언트는 하나로 운용
+  - 6.2 Registration 메세지 변경 (*robotType* 삭제)
+  - 6.14 Job 상태 보고 메세지 내 *Status* 속성 값 중[*Retrying*] 상태 사용 안함
+  - 6.3~6.4 ExecutionPlan 실행 명령 메세지 변경 (*carrierIds* 추가)
+  - 6.15 에러/알람 이벤트 보고 메세지 내 속성 추가 (에러 해제 기능/ level)
+  - 6.16 로봇 상태 정보 갱신 RobotStatusUpdate 메세지 변경 (*ports* 삭제, *carrierIds* 추가)
+  - 6.17 에러/알람 현황 요청 메세지 추가 (RequestAcsErrorList)
+  - 6.10 플랜 현황 요청 메세지에 ACS 측에서 보고하는 플랜 리스트의 status 속성은 (*Pending, InProgress, Paused*)로 제한
+
+- **v1.0.1**
+  - 초기 연결 (Registration) 메세지 내  payload 수정. (트레이 / 카세트 유무 송수신 삭제)
+
+  - 플랜 상태 보고 메세지 추가.
+
+  - RequestAcsStatus 메세지 내 payload 수정.
+
+  - StatusUpdate 메세지 명칭 변경 (RobotStatusUpdate)
+
+  - RobotStatusUpdate (트레이/카세트 유무 )
+
+  - RequestAcsStatus 메세지 명칭 변경 (RequestAcsPlans)
+  - ACS 플랜 이력 조회 메세지 추가 
+
+

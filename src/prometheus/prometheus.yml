@@ -4,10 +4,10 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: 'nexus-scheduler'
+  - job_name: 'nexus-orchestrator'
     static_configs:
-      - targets: ['nexus.scheduler:9091'] # docker-compose 서비스 이름을 사용
+      - targets: ['nexus.orchestrator:9091'] # docker-compose 서비스 이름을 사용
 
-  - job_name: 'nexus-integrator'
+  - job_name: 'node-exporter'
     static_configs:
-      - targets: ['nexus.integrator:9092'] # docker-compose 서비스 이름을 사용
+      - targets: ['node-exporter:9100'] 
