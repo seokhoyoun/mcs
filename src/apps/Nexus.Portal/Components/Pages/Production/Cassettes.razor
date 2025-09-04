@@ -1,11 +1,11 @@
-﻿@page "/cassettes"
+﻿@page "/production/cassettes"
 @using Nexus.Core.Domain.Models.Locations.Interfaces
 @using Nexus.Core.Domain.Models.Transports
 @using Nexus.Core.Domain.Models.Transports.Interfaces
 @using Nexus.Core.Domain.Models.Locations
 @using Nexus.Core.Domain.Models.Locations.Services
 @inject ITransportsRepository TransportsRepo
-@inject ILocationService LocationService
+@* @inject ILocationService LocationService  *@
 
 <PageTitle>Cassettes</PageTitle>
 
@@ -25,34 +25,11 @@
             <MudTd>@context.Id</MudTd>
             <MudTd>@context.Name</MudTd>
             <MudTd>@context.TransportType</MudTd>
-            <MudTd>@context.Trays?.Count ?? 0</MudTd>
-            <MudTd>@GetLocationName(context.Id)</MudTd>
-            <MudTd>@GetLocationStatus(context.Id)</MudTd>
+            <MudTd>@context.Trays.Count</MudTd>
+            <MudTd>@* @GetLocationName(context.Id) *@</MudTd>
+            <MudTd>@* @GetLocationStatus(context.Id) *@</MudTd>
         </RowTemplate>
-       <ChildRowContent>
-        <MudExpansionPanels>
-            <MudExpansionPanel Text="Trays">
-                    <MudList T="Tray" Dense="true">
-                    @foreach (var tray in context.Trays)
-                    {
-                        <MudListItem>
-                            <MudText>@tray.Id - @tray.Name</MudText>
-                            <MudExpansionPanels Class="ml-4">
-                                <MudExpansionPanel Text="Memories">
-                                    <MudList Dense="true">
-                                        @foreach (var mem in tray.Memories)
-                                        {
-                                            <MudListItem>@mem.Id - @mem.Name</MudListItem>
-                                        }
-                                    </MudList>
-                                </MudExpansionPanel>
-                            </MudExpansionPanels>
-                        </MudListItem>
-                    }
-                </MudList>
-            </MudExpansionPanel>
-        </MudExpansionPanels>
-    </ChildRowContent>
+      
     </MudTable>
 </MudPaper>
 
@@ -62,19 +39,27 @@
     protected override async Task OnInitializedAsync()
     {
         var all = await TransportsRepo.GetAllAsync();
+        if (all.Count == 0)
+        {
+            await TransportsRepo.AddAsync(new Cassette("CS-001", "Cassette 1", new List<Tray>())); 
+            all = await TransportsRepo.GetAllAsync();
+        }
+
         cassettes = all.OfType<Cassette>().ToList();
-        await LocationService.InitializeAsync();
+    
     }
 
     private string GetLocationName(string cassetteId)
     {
-        var loc = LocationService.GetCassetteLocationById(cassetteId);
-        return loc?.Name ?? "-";
+        return null;
+        // var loc = LocationService.GetCassetteLocationById(cassetteId);
+        // return loc?.Name ?? "-";
     }
 
     private string GetLocationStatus(string cassetteId)
     {
-        var loc = LocationService.GetCassetteLocationById(cassetteId);
-        return loc?.Status.ToString() ?? "-";
+        return null;
+        // var loc = LocationService.GetCassetteLocationById(cassetteId);
+        // return loc?.Status.ToString() ?? "-";
     }
 }
