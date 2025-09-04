@@ -68,10 +68,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      #  PowerShell 실행 정책 해제 (Windows self-hosted runner에서 필요)
-      - name: Allow PowerShell scripts  
-        run: powershell -command "Set-ExecutionPolicy RemoteSigned -Scope Process -Force"
-
       #  GHCR에 로그인해야 이미지를 pull 받을 수 있습니다.
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -80,9 +76,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.PAT_FOR_ONPREM_RUNNER }} 
 
-
-
-      # Azure 액션 대신 docker compose 명령어를 직접 실행합니다.
       - name: Pull latest images and restart services
         run: |
           echo "Pulling latest images from GHCR..."
