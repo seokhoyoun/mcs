@@ -20,9 +20,11 @@
         @* <MudText Typo="Typo.h5" Class="ml-3">Application</MudText> *@
         <MudSpacer />
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
+        <MudIconButton Icon="@Icons.Material.Filled.Flag" Color="Color.Inherit" Href="https://op.gg/ko/lol/summoners/kr/%EC%84%9D%EC%9D%B4%EC%98%A8-KR1" />
         <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Href="https://github.com/seokhoyoun" />
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
     </MudAppBar>
+
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <NavMenu />
     </MudDrawer>
@@ -58,6 +60,7 @@
         DrawerBackground = "#ffffff",
         GrayLight = "#e8e8e8",
         GrayLighter = "#f9f9f9",
+        Primary = "#b39ddb",
     };
 
     private readonly PaletteDark _darkPalette = new PaletteDark()
