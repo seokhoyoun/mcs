@@ -1,9 +1,11 @@
 ﻿@page "/monitoring/realtime"
-@using Nexus.Core.Domain.Models.Stockers.Interfaces
 @using System.Linq
 @using MudBlazor
+@using Nexus.Core.Domain.Models.Areas.Interfaces
+@using Nexus.Core.Domain.Models.Stockers.Interfaces
 
-@inject IStockerService StockerService
+@inject IStockerRepository StockerRepository
+@inject IAreaRepository AreaRepository
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
     <MudText Typo="Typo.h4" Class="mb-4">Realtime Overview</MudText>
@@ -50,8 +52,7 @@
 </MudContainer>
 
 @code {
-    private int StockerPortCount { get; set; } = 8;
-    private int AreaPortCount { get; set; } = 6;
+  
 
     // 선언과 동시에 초기화하여 코드를 간결하게 만듭니다.
     private List<bool> StockerPorts { get; set; } = Enumerable.Repeat(false, 8).ToList();
@@ -59,11 +60,10 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // 1. StockerService에서 초기 상태 가져오기
-        var stockers = await StockerService.GetAllAsync();
-        // StockerPorts = stockerStatus.Ports.Select(p => p.IsOccupied).ToList();
-
-   
-
+        // Stocker 정보 가져오기
+        var stockers = await StockerRepository.GetAllAsync();
+        // Area 정보 가져오기
+        var areas = await AreaRepository.GetAllAsync();
+      
     }
 }

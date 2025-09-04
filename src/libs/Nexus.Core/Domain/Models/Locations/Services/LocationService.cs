@@ -36,6 +36,14 @@ namespace Nexus.Core.Domain.Models.Locations.Services
         public override async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
             var locations = await _locationRepository.GetAllAsync();
+
+            if (locations == null || locations.Count == 0)
+            {
+                _logger.LogWarning("초기화된 Location 데이터가 없습니다.");
+
+                return;
+            }
+
             foreach (var location in locations)
             {
                 _locations.Add(location.Id, location);

@@ -1,4 +1,4 @@
-using Nexus.Core.Domain.Models.Lots;
+ï»¿using Nexus.Core.Domain.Models.Lots;
 using Nexus.Core.Domain.Models.Lots.Enums;
 using Nexus.Core.Domain.Models.Lots.Interfaces;
 using Nexus.Core.Domain.Models.Plans;
@@ -80,7 +80,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
             await _database.HashSetAsync($"{LOT_KEY_PREFIX}{entity.Id}", hashEntries);
 
-            // °¢ LotStepÀ» °³º°ÀûÀ¸·Î ÀúÀå
+            // ê° LotStepì„ ê°œë³„ì ìœ¼ë¡œ ì €ì¥
             foreach (var lotStep in entity.LotSteps)
             {
                 await SaveLotStepAsync(lotStep, cancellationToken);
@@ -96,7 +96,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         public async Task<Lot> UpdateAsync(Lot entity, CancellationToken cancellationToken = default)
         {
-            return await AddAsync(entity, cancellationToken); // HSetÀº ¾÷µ¥ÀÌÆ®¿Í Ãß°¡°¡ µ¿ÀÏ
+            return await AddAsync(entity, cancellationToken); // HSetì€ ì—…ë°ì´íŠ¸ì™€ ì¶”ê°€ê°€ ë™ì¼
         }
 
         public async Task<bool> UpdateRangeAsync(IEnumerable<Lot> entities, CancellationToken cancellationToken = default)
@@ -108,7 +108,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
         {
-            // Lot¿¡¼­ lot_step_ids Á¶È¸
+            // Lotì—ì„œ lot_step_ids ì¡°íšŒ
             var lotHashEntries = await _database.HashGetAllAsync($"{LOT_KEY_PREFIX}{id}");
             if (lotHashEntries.Length > 0)
             {
@@ -117,7 +117,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 {
                     var lotStepIds = JsonSerializer.Deserialize<List<string>>(lotStepIdsJson) ?? new List<string>();
 
-                    // °¢ LotStep »èÁ¦
+                    // ê° LotStep ì‚­ì œ
                     foreach (string stepId in lotStepIds)
                     {
                         await _database.KeyDeleteAsync($"{LOT_STEP_KEY_PREFIX}{stepId}");
@@ -125,7 +125,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 }
             }
 
-            // Lot »èÁ¦
+            // Lot ì‚­ì œ
             return await _database.KeyDeleteAsync($"{LOT_KEY_PREFIX}{id}");
         }
 
@@ -160,7 +160,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
             return filteredLots.Count;
         }
 
-        // ILotRepository Æ¯È­ ¸Ş¼­µåµé
+        // ILotRepository íŠ¹í™” ë©”ì„œë“œë“¤
         public async Task<IReadOnlyList<Lot>> GetLotsByStatusAsync(ELotStatus status, CancellationToken cancellationToken = default)
         {
             var allLots = await GetAllAsync(cancellationToken);
@@ -185,13 +185,13 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         public async Task<bool> UpdateLotStepStatusAsync(string lotId, string stepId, ELotStepStatus status, CancellationToken cancellationToken = default)
         {
-            // LotStepÀº º°µµ ÀúÀå¼Ò¿¡¼­ °ü¸®µÇ¹Ç·Î LotStepRepository¿¡¼­ Ã³¸®
-            return true;
+            // LotStepì€ ë³„ë„ ì €ì¥ì†Œì—ì„œ ê´€ë¦¬ë˜ë¯€ë¡œ LotStepRepositoryì—ì„œ ì²˜ë¦¬
+            return await Task.FromResult(true);
         }
 
         public async Task<IReadOnlyList<LotStep>> GetLotStepsByLotIdAsync(string lotId, CancellationToken cancellationToken = default)
         {
-            // ¸ÕÀú Lot¿¡¼­ lot_step_ids Á¶È¸
+            // ë¨¼ì € Lotì—ì„œ lot_step_ids ì¡°íšŒ
             var lotHashEntries = await _database.HashGetAllAsync($"{LOT_KEY_PREFIX}{lotId}");
             if (lotHashEntries.Length == 0)
                 return new List<LotStep>();
@@ -235,7 +235,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 cassetteIds: cassetteIds
             );
 
-            // lot_step_ids¸¦ ÅëÇØ °ü·ÃµÈ LotStepµé Á¶È¸ ¹× ·Îµå
+            // lot_step_idsë¥¼ í†µí•´ ê´€ë ¨ëœ LotStepë“¤ ì¡°íšŒ ë° ë¡œë“œ
             var lotStepIdsJson = GetHashValue(hashEntries, "lot_step_ids");
             if (!string.IsNullOrEmpty(lotStepIdsJson))
             {
@@ -261,7 +261,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
             return await ConvertHashToLotStepAsync(stepId, stepHashEntries, cancellationToken);
         }
 
-        // LotStepÀ» ¿ÏÀüÇÑ °´Ã¼·Î º¯È¯
+        // LotStepì„ ì™„ì „í•œ ê°ì²´ë¡œ ë³€í™˜
         private async Task<LotStep> ConvertHashToLotStepAsync(string id, HashEntry[] hashEntries, CancellationToken cancellationToken = default)
         {
             var lotStep = new LotStep(
@@ -276,7 +276,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 status: Enum.Parse<ELotStatus>(GetHashValue(hashEntries, "status"))
             );
 
-            // Cassette °´Ã¼µé ·Îµå
+            // Cassette ê°ì²´ë“¤ ë¡œë“œ
             var cassetteIdsJson = GetHashValue(hashEntries, "cassette_ids");
             if (!string.IsNullOrEmpty(cassetteIdsJson))
             {
@@ -289,7 +289,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 }
             }
 
-            // PlanGroup °´Ã¼µé ·Îµå
+            // PlanGroup ê°ì²´ë“¤ ë¡œë“œ
             var planGroupIdsJson = GetHashValue(hashEntries, "plan_group_ids");
             if (!string.IsNullOrEmpty(planGroupIdsJson))
             {
@@ -305,7 +305,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
             return lotStep;
         }
 
-        // cassette:{cassetteId}¿¡¼­ Cassette °´Ã¼ Á¶È¸
+        // cassette:{cassetteId}ì—ì„œ Cassette ê°ì²´ ì¡°íšŒ
         private async Task<Cassette?> GetCassetteByIdAsync(string cassetteId, CancellationToken cancellationToken = default)
         {
             var hashEntries = await _database.HashGetAllAsync($"{CASSETTE_KEY_PREFIX}{cassetteId}");
@@ -314,7 +314,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
             var cassetteName = GetHashValue(hashEntries, "name");
 
-            // Tray ¸ñ·Ï ·Îµå
+            // Tray ëª©ë¡ ë¡œë“œ
             var trayIdsJson = GetHashValue(hashEntries, "tray_ids");
             var trays = new List<Tray>();
 
@@ -332,19 +332,19 @@ namespace Nexus.Infrastructure.Persistence.Redis
             return new Cassette(cassetteId, cassetteName, trays);
         }
 
-        // tray:{trayId}¿¡¼­ Tray °´Ã¼ Á¶È¸
+        // tray:{trayId}ì—ì„œ Tray ê°ì²´ ì¡°íšŒ
         private async Task<Tray?> GetTrayByIdAsync(string trayId, CancellationToken cancellationToken = default)
         {
             var hashEntries = await _database.HashGetAllAsync($"{TRAY_KEY_PREFIX}{trayId}");
             if (hashEntries.Length == 0)
                 return null;
 
-            // ½ÇÁ¦ Tray »ı¼ºÀÚ¿¡ ¸Â°Ô ¼öÁ¤ ÇÊ¿ä
-            // ÀÓ½Ã·Î ºó Tray °´Ã¼ ¹İÈ¯
+            // ì‹¤ì œ Tray ìƒì„±ìì— ë§ê²Œ ìˆ˜ì • í•„ìš”
+            // ì„ì‹œë¡œ ë¹ˆ Tray ê°ì²´ ë°˜í™˜
             return null;
         }
 
-        // plan_group:{planGroupId}¿¡¼­ PlanGroup °´Ã¼ Á¶È¸
+        // plan_group:{planGroupId}ì—ì„œ PlanGroup ê°ì²´ ì¡°íšŒ
         private async Task<PlanGroup?> GetPlanGroupByIdAsync(string planGroupId, CancellationToken cancellationToken = default)
         {
             var hashEntries = await _database.HashGetAllAsync($"{PLAN_GROUP_KEY_PREFIX}{planGroupId}");
@@ -362,7 +362,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
             return null;
         }
 
-        // ÇïÆÛ ¸Ş¼­µåµé
+        // í—¬í¼ ë©”ì„œë“œë“¤
         private async Task SaveLotStepAsync(LotStep lotStep, CancellationToken cancellationToken = default)
         {
             var stepHashEntries = new HashEntry[]
