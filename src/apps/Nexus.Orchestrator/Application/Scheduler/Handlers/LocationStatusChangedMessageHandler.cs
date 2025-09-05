@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+ï»¿using Microsoft.Extensions.Logging;
 using Nexus.Core.Domain.Models.Areas;
 using Nexus.Core.Domain.Models.Locations.Services;
 using Nexus.Core.Messaging;
@@ -11,7 +11,7 @@ public class LocationStatusChangedMessageHandler : IMessageHandler<string>
     private readonly LocationService _locationService;
     private readonly ILogger<LocationStatusChangedMessageHandler> _logger;
 
-    public LocationStatusChangedMessageHandler(LocationService locationService, ILogger<LocationStatusChangedMessageHandler> logger)
+    public LocationStatusChangedMessageHandler(ILogger<LocationStatusChangedMessageHandler> logger, LocationService locationService)
     {
         _locationService = locationService;
         _logger = logger;
@@ -19,8 +19,8 @@ public class LocationStatusChangedMessageHandler : IMessageHandler<string>
 
     public async Task HandleAsync(string id, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation($"Location »óÅÂ º¯°æ ¸Ş½ÃÁö ¼ö½Å: {id}");
-        await _locationService.RefreshLocationStateAsync(id);
+        _logger.LogInformation($"Location ìƒíƒœ ë³€ê²½ ë©”ì‹œì§€ ìˆ˜ì‹ : {id}");
+        //await _locationService.RefreshLocationStateAsync(id);
         await Task.CompletedTask;
     }
 }

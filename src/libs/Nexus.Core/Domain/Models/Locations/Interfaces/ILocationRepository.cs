@@ -12,13 +12,6 @@ namespace Nexus.Core.Domain.Models.Locations.Interfaces
     public interface ILocationRepository : IRepository<Location, string>
     {
         /// <summary>
-        /// 특정 위치의 상태를 조회합니다.
-        /// </summary>
-        /// <param name="locationId">위치 ID</param>
-        /// <returns>위치 상태 정보</returns>
-        Task<LocationState> GetStateAsync(string locationId);
-        
-        /// <summary>
         /// 특정 타입의 모든 위치를 조회합니다.
         /// </summary>
         /// <typeparam name="T">위치 타입</typeparam>

@@ -1,65 +1,178 @@
 ﻿@page "/production/cassettes"
+@using MudBlazor
+@using MudBlazor.Components
 @using Nexus.Core.Domain.Models.Locations.Interfaces
 @using Nexus.Core.Domain.Models.Transports
 @using Nexus.Core.Domain.Models.Transports.Interfaces
 @using Nexus.Core.Domain.Models.Locations
 @using Nexus.Core.Domain.Models.Locations.Services
-@inject ITransportsRepository TransportsRepo
-@* @inject ILocationService LocationService  *@
-
-<PageTitle>Cassettes</PageTitle>
+@inject ITransportRepository TransportRepository
 
 <MudPaper Class="pa-4">
-    <MudText Typo="Typo.h5">Cassette Explorer</MudText>
 
-    <MudTable Items="cassettes" Dense="true" Hover="true" Bordered="true" Striped="true">
-        <HeaderContent>
-            <MudTh>Id</MudTh>
-            <MudTh>Name</MudTh>
-            <MudTh>Transport Type</MudTh>
-            <MudTh>Tray Count</MudTh>
-            <MudTh>Location</MudTh>
-            <MudTh>Status</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd>@context.Id</MudTd>
-            <MudTd>@context.Name</MudTd>
-            <MudTd>@context.TransportType</MudTd>
-            <MudTd>@context.Trays.Count</MudTd>
-            <MudTd>@* @GetLocationName(context.Id) *@</MudTd>
-            <MudTd>@* @GetLocationStatus(context.Id) *@</MudTd>
-        </RowTemplate>
-      
-    </MudTable>
+    <MudGrid>
+        <MudItem xs="6">
+            <MudDataGrid 
+                T="Cassette"
+                Class="text-caption"
+                Items="_cassettes"
+                Dense="true"
+                Hover="true"
+                Bordered="true"
+                Striped="true"
+                Filterable="true"
+                SortMode="SortMode.Multiple"
+                MultiSelection="true"
+                QuickFilter="@QuickCassetteFilter"
+                Hideable="true"        
+                SelectedItemsChanged="OnSelectedCassettesChanged">
+
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Cassettes</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="_searchCassetteString"
+                                  Placeholder="Search..."
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  IconSize="Size.Medium"
+                                  Class="mx-2" />
+                </ToolBarContent>
+
+                <Columns>
+                    <SelectColumn T="Cassette" />
+                    <PropertyColumn Property="x => x.Id" Title="Id" />
+                    <PropertyColumn Property="x => x.Name" Title="Name" />
+                </Columns>
+
+                <PagerContent>
+                    <MudDataGridPager />
+                </PagerContent>
+            </MudDataGrid>
+        </MudItem>
+
+        <!-- Right: Tray Grid -->
+        <MudItem xs="6">
+            <MudDataGrid 
+                T="Tray"
+                Class="text-caption"
+                Items="_trays"
+                Dense="true"
+                Hover="true"
+                Bordered="true"
+                Striped="true"
+                Filterable="true"
+                SelectedItemsChanged="@OnSelectedTraysChanged"
+                SortMode="SortMode.Multiple">
+
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Trays</MudText>
+                  
+                </ToolBarContent>
+
+                <Columns>
+                    <SelectColumn T="Tray" />
+                    <PropertyColumn Property="x => x.Id" Title="Id" />
+                    <PropertyColumn Property="x => x.Name" Title="Name" />
+                   
+                </Columns>
+
+                <PagerContent>
+                    <MudDataGridPager />
+                </PagerContent>
+            </MudDataGrid>
+        </MudItem>
+    </MudGrid>
+
+    <MudDataGrid T="Memory"
+                 Items="_memories"
+                 Dense="true"
+                 Hover="true"
+                 Bordered="true"
+                 Striped="true"
+                 Filterable="true"
+                 SortMode="SortMode.Multiple">
+
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Memories</MudText>
+        
+        </ToolBarContent>
+
+        <Columns>
+            <PropertyColumn Property="x => x.Id" Title="Id" />
+            <PropertyColumn Property="x => x.Name" Title="Name" />
+            <PropertyColumn Property="x => x.DeviceId" Title="Device Id" />
+        </Columns>
+
+        <PagerContent>
+            <MudDataGridPager />
+        </PagerContent>
+    </MudDataGrid>
 </MudPaper>
 
+
+
 @code {
-    private List<Cassette> cassettes = new();
+    private List<Cassette> _cassettes = new();
+    private List<Cassette> _selectedCassettes = new();
+    private List<Tray> _trays = new();
+    private List<Memory> _memories = new();
+    private string _searchCassetteString = string.Empty;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var all = await TransportsRepo.GetAllAsync();
-        if (all.Count == 0)
+        if (firstRender)
         {
-            await TransportsRepo.AddAsync(new Cassette("CS-001", "Cassette 1", new List<Tray>())); 
-            all = await TransportsRepo.GetAllAsync();
+            _cassettes.Clear();
+
+            var cassettes = await TransportRepository.GetCassettesWithoutTraysAsync();
+
+            _cassettes.AddRange(cassettes);
+
+            StateHasChanged();
         }
-
-        cassettes = all.OfType<Cassette>().ToList();
-    
     }
 
-    private string GetLocationName(string cassetteId)
+    private Func<Cassette, bool> QuickCassetteFilter
     {
-        return null;
-        // var loc = LocationService.GetCassetteLocationById(cassetteId);
-        // return loc?.Name ?? "-";
+        get
+        {
+            return c =>
+            {
+                if (string.IsNullOrWhiteSpace(_searchCassetteString))
+                    return true;
+
+                if (c.Id.Contains(_searchCassetteString, StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+                if (c.Name.Contains(_searchCassetteString, StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+                return false;
+            };
+        }
     }
 
-    private string GetLocationStatus(string cassetteId)
+    private async void OnSelectedCassettesChanged(HashSet<Cassette> selected)
     {
-        return null;
-        // var loc = LocationService.GetCassetteLocationById(cassetteId);
-        // return loc?.Status.ToString() ?? "-";
+        _trays.Clear();
+
+        foreach(var cassette in selected)
+        {
+            var trays = await TransportRepository.GetTraysWithoutMemoriesAsync(cassette.Id);
+            _trays.AddRange(trays);
+        }
+        StateHasChanged();
+    }
+
+    private async void OnSelectedTraysChanged(HashSet<Tray> selected)
+    {
+        _memories.Clear();
+
+        foreach (var tray in selected)
+        {
+            var memories = await TransportRepository.GetMemoriesAsync(tray.Id);
+            _memories.AddRange(memories);
+        }
+        StateHasChanged();
     }
 }

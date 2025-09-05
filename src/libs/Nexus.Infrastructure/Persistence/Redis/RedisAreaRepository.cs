@@ -90,14 +90,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         public async Task InitializeAreasAsync(IEnumerable<Area> areas)
         {
-            var tasks = new List<Task>();
-            foreach (var area in areas)
-            {
-                string key = $"area:{area.Id}";
-                
-            }
-
-            await Task.CompletedTask;
+           
         }
 
         public Task<Area> UpdateAsync(Area entity, CancellationToken cancellationToken = default)

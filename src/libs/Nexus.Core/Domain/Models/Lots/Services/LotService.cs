@@ -2,13 +2,14 @@
 using Nexus.Core.Domain.Models.Lots.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Nexus.Core.Domain.Models.Lots.Services
 {
-    public class LotService
+    public class LotService 
     {
         private readonly ILogger _logger;
         private readonly ILotRepository _lotRepository;
@@ -32,6 +33,7 @@ namespace Nexus.Core.Domain.Models.Lots.Services
             if (step != null)
             {
                 // Cassette 추가 로직
+                Debug.Assert(lot != null);
                 await _lotRepository.UpdateAsync(lot);
                 return true;
             }

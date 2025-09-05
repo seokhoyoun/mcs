@@ -1,17 +1,20 @@
+ï»¿using Nexus.Core.Domain.Models.Areas;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
+using Nexus.Core.Domain.Shared.Bases;
 
 namespace Nexus.Core.Domain.Models.Transports.Interfaces
 {
     /// <summary>
-    /// ¿î¼Û ¾ÆÀÌÅÛ °ü¸®¸¦ À§ÇÑ ¼­ºñ½º ÀÎÅÍÆäÀÌ½º
+    /// ìš´ì†¡ ì•„ì´í…œ ê´€ë¦¬ë¥¼ ìœ„í•œ ì„œë¹„ìŠ¤ ì¸í„°í˜ì´ìŠ¤
     /// </summary>
-    public interface ITransportService
+    public interface ITransportService : IDataService<ITransportable, string>
     {
-        /// <summary>
-        /// ID·Î ¿î¼Û °¡´ÉÇÑ ¾ÆÀÌÅÛÀ» Á¶È¸ÇÕ´Ï´Ù.
-        /// </summary>
-        /// <param name="currentItemId">¾ÆÀÌÅÛ ID</param>
-        /// <returns>ÇØ´ç IDÀÇ ¿î¼Û °¡´ÉÇÑ ¾ÆÀÌÅÛ ¶Ç´Â null</returns>
-        ITransportable? GetItemById(string currentItemId);
+        IReadOnlyList<Cassette> GetAllCassettes();
+
+        IReadOnlyList<Tray> GetAllTrays();
+
+        IReadOnlyList<Memory> GetAllMemories();
+
+        IReadOnlyList<ITransportable> GetAllTransports();
     }
 }
