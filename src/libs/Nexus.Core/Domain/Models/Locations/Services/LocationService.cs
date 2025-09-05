@@ -15,7 +15,7 @@ namespace Nexus.Core.Domain.Models.Locations.Services
     public class LocationService : BaseDataService<Location, string>, ILocationService
     {
         private readonly ILocationRepository _locationRepository;
-        private readonly ITransportService _transportService; // TransportService 주입
+        private readonly ITransportRepository _transportRepository; 
 
         private Dictionary<string, Location> _locations = new();
 
@@ -27,10 +27,10 @@ namespace Nexus.Core.Domain.Models.Locations.Services
         public LocationService(
             ILogger<LocationService> logger,
             ILocationRepository locationRepository,
-            ITransportService transportService) : base(logger, locationRepository)
+            ITransportRepository transportRepository) : base(logger, locationRepository)
         {
             _locationRepository = locationRepository;
-            _transportService = transportService;
+            _transportRepository = transportRepository;
         }
 
         public override async Task InitializeAsync(CancellationToken cancellationToken = default)
@@ -142,35 +142,6 @@ namespace Nexus.Core.Domain.Models.Locations.Services
             }
             return null;
         }
-
-        /// <summary>
-        /// 저장소에서 LocationState를 조회하여 Location 객체의 상태를 동기화합니다.
-        /// </summary>
-        /// <param name="locationId">동기화할 Location의 ID</param>
-        public async Task RefreshLocationStateAsync(string locationId)
-        {
-            var state = await _locationRepository.GetStateAsync(locationId);
-            if (state == null) 
-            {
-                return;
-            }
-
-            var location = _locations[locationId];
-
-            location.Status = (ELocationStatus)state.Status;
-
-            // CurrentItemId가 있으면 TransportService에서 조회
-            if (!string.IsNullOrEmpty(state.CurrentItemId))
-            {
-                var item = _transportService.GetItemById(state.CurrentItemId);
-                location.CurrentItem = item;
-            }
-            else
-            {
-                location.CurrentItem = null;
-            }
-        }
-
 
     }
 }

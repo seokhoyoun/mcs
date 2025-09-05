@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+ï»¿using Microsoft.Extensions.Logging;
 using Nexus.Core.Domain.Models.Transports;
 using Nexus.Core.Domain.Models.Transports.Extensions;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
@@ -10,12 +10,12 @@ namespace Nexus.Gateway.Services
 {
     public class CassetteCreationService : ICassetteCreationService
     {
-        private readonly ITransportsRepository _transportsRepository;
+        private readonly ITransportRepository _transportsRepository;
         private readonly IEventPublisher _eventPublisher;
         private readonly ILogger<CassetteCreationService> _logger;
 
         public CassetteCreationService(
-            ITransportsRepository transportsRepository,
+            ITransportRepository transportsRepository,
             IEventPublisher eventPublisher,
             ILogger<CassetteCreationService> logger)
         {
@@ -31,18 +31,18 @@ namespace Nexus.Gateway.Services
                 _logger.LogInformation("Creating cassette with ID: {CassetteId} at location: {LocationId}", 
                     command.CassetteId, command.LocationId);
 
-                // Ä«¼¼Æ®°¡ ÀÌ¹Ì Á¸ÀçÇÏ´ÂÁö È®ÀÎ
+                // ì¹´ì„¸íŠ¸ê°€ ì´ë¯¸ ì¡´ì¬í•˜ëŠ”ì§€ í™•ì¸
                 var existingCassette = await _transportsRepository.GetByIdAsync(command.CassetteId, cancellationToken);
                 if (existingCassette != null)
                 {
                     throw new InvalidOperationException($"Cassette with ID '{command.CassetteId}' already exists.");
                 }
                
-                // Ä«¼¼Æ® »ı¼º
+                // ì¹´ì„¸íŠ¸ ìƒì„±
                 var cassette = new Cassette(command.CassetteId, command.CassetteName, new List<Tray>());
                 cassette.InitializeFullCassette();
 
-                // °¢ ¸Ş¸ğ¸®¸¦ °³º°ÀûÀ¸·Î ÀúÀå
+                // ê° ë©”ëª¨ë¦¬ë¥¼ ê°œë³„ì ìœ¼ë¡œ ì €ì¥
                 foreach (var tray in cassette.Trays)
                 {
                     foreach (var memory in tray.Memories)
@@ -51,13 +51,13 @@ namespace Nexus.Gateway.Services
                         _logger.LogDebug("Memory saved: {MemoryId}", memory.Id);
                     }
 
-                    // Æ®·¹ÀÌ ÀúÀå
+                    // íŠ¸ë ˆì´ ì €ì¥
                     await _transportsRepository.AddAsync(tray, cancellationToken);
                     _logger.LogDebug("Tray saved: {TrayId} with {MemoryCount} memories", 
                         tray.Id, tray.Memories.Count);
                 }
 
-                // Ä«¼¼Æ® ÀúÀå
+                // ì¹´ì„¸íŠ¸ ì €ì¥
                 await _transportsRepository.AddAsync(cassette, cancellationToken);
 
                 _logger.LogInformation("Cassette created successfully: {CassetteId} with {TrayCount} trays, " +

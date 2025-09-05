@@ -15,11 +15,10 @@ namespace Nexus.Core.Domain.Models.Transports
     {
         public string Id { get; }
         public string Name { get; }
-        public string? DeviceId { get; set; }
+        public string DeviceId { get; set; } = string.Empty;
 
         public ETransportType TransportType => ETransportType.Memory;
 
-        private MemoryLocation? _currentLocation;
         public Memory(string id, string name)
         {
             Id = id;

@@ -1,4 +1,4 @@
-using Nexus.Core.Domain.Models.Locations.Base;
+ï»¿using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Transports.Enums;
 using Nexus.Core.Domain.Shared.Bases;
 using System.Collections.Generic;
@@ -6,10 +6,10 @@ using System.Collections.Generic;
 namespace Nexus.Core.Domain.Models.Transports.Interfaces
 {
     /// <summary>
-    /// ¿î¹İÀÌ °¡´ÉÇÑ ¹°Ç°¿¡¸¸ ÇÊ¿äÇÑ ÀÎÅÍÆäÀÌ½ºÀÔ´Ï´Ù.
+    /// ìš´ë°˜ì´ ê°€ëŠ¥í•œ ë¬¼í’ˆì—ë§Œ í•„ìš”í•œ ì¸í„°í˜ì´ìŠ¤ì…ë‹ˆë‹¤.
     /// </summary>
     public interface ITransportable : IItem
     {
-        public ETransportType TransportType { get; }
+        ETransportType TransportType { get; }
     }
 }

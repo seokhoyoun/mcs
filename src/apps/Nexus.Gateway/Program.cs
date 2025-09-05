@@ -1,4 +1,4 @@
-using Nexus.Core.Domain.Models.Areas.Interfaces;
+Ôªøusing Nexus.Core.Domain.Models.Areas.Interfaces;
 using Nexus.Core.Domain.Models.Areas.Services;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Locations.Services;
@@ -30,7 +30,7 @@ namespace Nexus.Gateway
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            // JSON º≥¡§
+            // JSON ÏÑ§Ï†ï
             builder.Services.ConfigureHttpJsonOptions(options =>
             {
                 options.SerializerOptions.PropertyNameCaseInsensitive = true;
@@ -44,26 +44,26 @@ namespace Nexus.Gateway
                 options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             });
 
-            // Redis ø¨∞· º≥¡§
+            // Redis Ïó∞Í≤∞ ÏÑ§Ï†ï
 
             builder.Services.AddSingleton<IConnectionMultiplexer>(serviceProvider =>
             {
                 return ConnectionMultiplexer.Connect("redis:6379");
             });
 
-            // ∏ﬁΩ√¬° º≠∫ÒΩ∫ µÓ∑œ
+            // Î©îÏãúÏßï ÏÑúÎπÑÏä§ Îì±Î°ù
             builder.Services.AddSingleton<IMessagePublisher, RedisPublisher>();
             builder.Services.AddSingleton<IMessageSubscriber, RedisSubscriber>();
             builder.Services.AddSingleton<IEventPublisher, DomainEventPublisher>();
 
-            // Repository º≠∫ÒΩ∫ µÓ∑œ
+            // Repository ÏÑúÎπÑÏä§ Îì±Î°ù
             builder.Services.AddSingleton<ILotRepository, RedisLotRepository>();
 
     
             builder.Services.AddSingleton<ILocationRepository, RedisLocationRepository>();
             builder.Services.AddSingleton<ILocationService, LocationService>();
 
-            builder.Services.AddSingleton<ITransportsRepository, RedisTransportsRepository>();
+            builder.Services.AddSingleton<ITransportRepository, RedisTransportsRepository>();
             builder.Services.AddSingleton<ITransportService, TransportService>();
 
             builder.Services.AddSingleton<IAreaRepository, RedisAreaRepository>();
@@ -75,7 +75,7 @@ namespace Nexus.Gateway
       
             builder.Services.AddScoped<LotService>();
 
-            // Application º≠∫ÒΩ∫ µÓ∑œ
+            // Application ÏÑúÎπÑÏä§ Îì±Î°ù
             builder.Services.AddScoped<ILotCreationService, LotCreationService>();
             builder.Services.AddScoped<ICassetteCreationService, CassetteCreationService>();
             builder.Services.AddScoped<IAreaCreationService, AreaCreationService>();

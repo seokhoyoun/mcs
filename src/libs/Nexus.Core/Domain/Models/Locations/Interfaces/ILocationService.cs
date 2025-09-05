@@ -42,10 +42,6 @@ namespace Nexus.Core.Domain.Models.Locations.Interfaces
         /// <returns>해당 ID의 로봇 위치 또는 null</returns>
         RobotLocation? GetRobotLocationById(string id);
 
-        /// <summary>
-        /// 저장소에서 LocationState를 조회하여 Location 객체의 상태를 동기화합니다.
-        /// </summary>
-        /// <param name="locationId">동기화할 Location의 ID</param>
-        Task RefreshLocationStateAsync(string locationId);
+     
     }
 }

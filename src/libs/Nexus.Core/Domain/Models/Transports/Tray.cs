@@ -10,7 +10,6 @@ namespace Nexus.Core.Domain.Models.Transports
 {
     public class Tray : ITransportable
     {
-
         public string Id { get; }
         public string Name { get; }
         public ETransportType TransportType => ETransportType.Tray;
@@ -25,7 +24,6 @@ namespace Nexus.Core.Domain.Models.Transports
         public const int MAX_MEMORY_CAPACITY = 25;
 
         private readonly List<Memory> _memories = new List<Memory>();
-        private TrayLocation? _currentLocation;
 
         public Tray(string id, string name, List<Memory> memories)
         {
@@ -44,7 +42,6 @@ namespace Nexus.Core.Domain.Models.Transports
         {
             return MemoryCount < MAX_MEMORY_CAPACITY;
         }
-
         public void AddMemory(Memory memory)
         {
             if (!CanAddMemory())
@@ -54,7 +51,6 @@ namespace Nexus.Core.Domain.Models.Transports
 
             _memories.Add(memory);
         }
-
         public bool RemoveMemory(string memoryId)
         {
             var memory = _memories.FirstOrDefault(m => m.Id == memoryId);
@@ -70,7 +66,6 @@ namespace Nexus.Core.Domain.Models.Transports
             return _memories.FirstOrDefault(m => m.Id == memoryId);
         }
 
-        // 가득 찬 Tray 생성 팩토리 메서드
         public static Tray CreateFullTray(string trayId, string trayName = "")
         {
             var memories = new List<Memory>();

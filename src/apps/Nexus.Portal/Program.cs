@@ -25,15 +25,16 @@ namespace Nexus.Portal
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
-            builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("redis:6379,abortConnect=false"));
+            builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("localhost:6379"));
 
-            builder.Services.AddSingleton<ITransportsRepository, RedisTransportsRepository>();
-            builder.Services.AddSingleton<IStockerRepository, RedisStockerRepository>();
-            builder.Services.AddSingleton<IAreaRepository, RedisAreaRepository>();
-            builder.Services.AddSingleton<ILocationRepository, RedisLocationRepository>();
+            builder.Services.AddScoped<ITransportRepository, RedisTransportsRepository>();
+            builder.Services.AddScoped<IStockerRepository, RedisStockerRepository>();
+            builder.Services.AddScoped<IAreaRepository, RedisAreaRepository>();
+            builder.Services.AddScoped<ILocationRepository, RedisLocationRepository>();
 
-            builder.Services.AddSingleton<ILocationService, LocationService>();
-            builder.Services.AddSingleton<ITransportService, TransportService>();
+            builder.Services.AddScoped<ILocationService, LocationService>();
+            builder.Services.AddScoped<ITransportService, TransportService>();
+            
 
             builder.Services.AddMudServices();
 

@@ -1,28 +1,37 @@
-﻿using Nexus.Core.Domain.Models.Transports.Enums;
+﻿using Microsoft.Extensions.Logging;
+using Nexus.Core.Domain.Models.Locations.Base;
+using Nexus.Core.Domain.Models.Locations.Interfaces;
+using Nexus.Core.Domain.Models.Locations.Services;
+using Nexus.Core.Domain.Models.Transports.Enums;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
+using Nexus.Core.Domain.Shared.Bases;
 using Nexus.Shared.Application.DTO;
 using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Nexus.Core.Domain.Models.Transports.Services
 {
-    public class TransportService : ITransportService
+    public class TransportService : BaseDataService<ITransportable, string>, ITransportService
     {
+        ITransportRepository _transportRepository;
+
         private readonly List<Cassette> _cassettes = new();
         private readonly List<Tray> _trays = new();
         private readonly List<Memory> _memories = new();
 
         private readonly Dictionary<string, ITransportable> _transportMap = new();
 
-        public TransportService(ITransportsRepository repository)
+        public TransportService(
+            ILogger<LocationService> logger, 
+            ITransportRepository transportRepository) : base(logger, transportRepository)
         {
-            InitializeTransportDataAsync(repository).GetAwaiter().GetResult();
+            _transportRepository = transportRepository;
         }
 
-        private async Task InitializeTransportDataAsync(ITransportsRepository repository)
+        public override async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
             // 모든 Transport 데이터 조회
-            var allTransports = await repository.GetAllAsync();
+            var allTransports = await _transportRepository.GetAllAsync();
 
             // 타입별로 분류하여 초기화
             foreach (var transport in allTransports)
@@ -44,11 +53,6 @@ namespace Nexus.Core.Domain.Models.Transports.Services
                 }
                 _transportMap[transport.Id] = transport;
             }
-        }
-
-        public ITransportable? GetItemById(string currentItemId)
-        {
-            return _transportMap.TryGetValue(currentItemId, out var item) ? item : null;
         }
 
         public IReadOnlyList<Cassette> GetAllCassettes()
@@ -90,29 +94,6 @@ namespace Nexus.Core.Domain.Models.Transports.Services
             return _memories.FirstOrDefault(m => m.Id == id);
         }
 
-        public bool ContainsTransport(string id)
-        {
-            return _transportMap.ContainsKey(id);
-        }
-
-        public int GetTotalTransportCount()
-        {
-            return _transportMap.Count;
-        }
-
-        public int GetCassetteCount()
-        {
-            return _cassettes.Count;
-        }
-
-        public int GetTrayCount()
-        {
-            return _trays.Count;
-        }
-
-        public int GetMemoryCount()
-        {
-            return _memories.Count;
-        }
+  
     }
 }
