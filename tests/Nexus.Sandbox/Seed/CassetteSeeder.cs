@@ -11,9 +11,9 @@ namespace Nexus.Sandbox.Seed
 {
     public class CassetteSeeder : IDataSeeder
     {
-        private readonly RedisTransportsRepository _repo;
+        private readonly RedisTransportRepository _repo;
 
-        public CassetteSeeder(RedisTransportsRepository repo)
+        public CassetteSeeder(RedisTransportRepository repo)
         {
             _repo = repo;
         }

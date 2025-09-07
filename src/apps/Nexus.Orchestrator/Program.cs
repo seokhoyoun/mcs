@@ -33,7 +33,7 @@ namespace Nexus.Orchestrator
             builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("redis:6379,abortConnect=false"));
        
             builder.Services.AddSingleton<ILocationRepository, RedisLocationRepository>();
-            builder.Services.AddSingleton<ITransportRepository, RedisTransportsRepository>();
+            builder.Services.AddSingleton<ITransportRepository, RedisTransportRepository>();
             builder.Services.AddSingleton<IAreaRepository, RedisAreaRepository>();
             builder.Services.AddSingleton<IStockerRepository, RedisStockerRepository>();
             builder.Services.AddSingleton<ILotRepository, RedisLotRepository>();

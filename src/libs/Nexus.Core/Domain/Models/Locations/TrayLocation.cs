@@ -15,7 +15,7 @@ namespace Nexus.Core.Domain.Models.Locations
         public override ITransportable? CurrentItem
         {
             get => _currentItem;
-            internal set => _currentItem = (Tray?)value;
+            set => _currentItem = (Tray?)value;
         }
 
         private Tray? _currentItem;

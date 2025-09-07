@@ -1,20 +1,16 @@
-﻿using Microsoft.AspNetCore.Hosting.Server;
 using Nexus.Core.Domain.Models.Transports;
 using Nexus.Core.Domain.Models.Transports.Enums;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
-using Nexus.Shared.Application.DTO;
 using StackExchange.Redis;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text.Json;
 
 namespace Nexus.Infrastructure.Persistence.Redis
 {
-    public class RedisTransportsRepository : ITransportRepository
+    public class RedisTransportRepository : ITransportRepository
     {
-        private readonly IDatabase _database;
+        #region Fields
 
+        private readonly IDatabase _database;
 
         private const string CASSETTES_ALL_KEY = "cassettes:all";
         private const string TRAYS_ALL_KEY = "trays:all";
@@ -27,27 +23,33 @@ namespace Nexus.Infrastructure.Persistence.Redis
         private const string TRAY_ID_SEPARATOR = ",";
         private const string MEMORY_ID_SEPARATOR = ",";
 
-        public RedisTransportsRepository(IConnectionMultiplexer connectionMultiplexer)
+        #endregion
+
+        #region Constructor
+
+        public RedisTransportRepository(IConnectionMultiplexer connectionMultiplexer)
         {
             _database = connectionMultiplexer.GetDatabase();
         }
+
+        #endregion
 
         #region IRepository<ITransportable, string> Implementation
 
         public async Task<IReadOnlyList<ITransportable>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            var transportables = new List<ITransportable>();
+            List<ITransportable> transportables = new List<ITransportable>();
 
             // 모든 Cassette 조회
-            var cassettes = await GetAllCassettesAsync();
+            List<Cassette> cassettes = await GetAllCassettesAsync();
             transportables.AddRange(cassettes);
 
             // 모든 Tray 조회
-            var trays = await GetAllTraysAsync();
+            List<Tray> trays = await GetAllTraysAsync();
             transportables.AddRange(trays);
 
             // 모든 Memory 조회
-            var memories = await GetAllMemoriesAsync();
+            List<Memory> memories = await GetAllMemoriesAsync();
             transportables.AddRange(memories);
 
             return transportables.AsReadOnly();
@@ -55,27 +57,33 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         public async Task<IReadOnlyList<ITransportable>> GetAsync(Expression<Func<ITransportable, bool>> predicate, CancellationToken cancellationToken = default)
         {
-            var allTransportables = await GetAllAsync(cancellationToken);
-            var compiledPredicate = predicate.Compile();
+            IReadOnlyList<ITransportable> allTransportables = await GetAllAsync(cancellationToken);
+            Func<ITransportable, bool> compiledPredicate = predicate.Compile();
             return allTransportables.Where(compiledPredicate).ToList().AsReadOnly();
         }
 
         public async Task<ITransportable?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
         {
             // Cassette 먼저 확인
-            var cassette = await GetCassetteByIdAsync(id);
+            Cassette? cassette = await GetCassetteByIdAsync(id);
             if (cassette != null)
+            {
                 return cassette;
+            }
 
             // Tray 확인
-            var tray = await GetTrayByIdAsync(id);
+            Tray? tray = await GetTrayByIdAsync(id);
             if (tray != null)
+            {
                 return tray;
+            }
 
             // Memory 확인
-            var memory = await GetMemoryByIdAsync(id);
+            Memory? memory = await GetMemoryByIdAsync(id);
             if (memory != null)
+            {
                 return memory;
+            }
 
             return null;
         }
@@ -105,7 +113,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         public async Task<IEnumerable<ITransportable>> AddRangeAsync(IEnumerable<ITransportable> entities, CancellationToken cancellationToken = default)
         {
-            var tasks = entities.Select(entity => AddAsync(entity, cancellationToken));
+            Task<ITransportable>[] tasks = entities.Select(entity => AddAsync(entity, cancellationToken)).ToArray();
             return await Task.WhenAll(tasks);
         }
 
@@ -117,7 +125,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         public async Task<bool> UpdateRangeAsync(IEnumerable<ITransportable> entities, CancellationToken cancellationToken = default)
         {
-            var tasks = entities.Select(entity => UpdateAsync(entity, cancellationToken));
+            Task<ITransportable>[] tasks = entities.Select(entity => UpdateAsync(entity, cancellationToken)).ToArray();
             await Task.WhenAll(tasks);
             return true;
         }
@@ -125,19 +133,22 @@ namespace Nexus.Infrastructure.Persistence.Redis
         public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
         {
             // 어떤 타입인지 확인 후 삭제
-            if (await _database.KeyExistsAsync($"{CASSETTE_KEY_PREFIX}{id}"))
+            bool cassetteExists = await _database.KeyExistsAsync($"{CASSETTE_KEY_PREFIX}{id}");
+            if (cassetteExists)
             {
                 await DeleteCassetteAsync(id);
                 return true;
             }
 
-            if (await _database.KeyExistsAsync($"{TRAY_KEY_PREFIX}{id}"))
+            bool trayExists = await _database.KeyExistsAsync($"{TRAY_KEY_PREFIX}{id}");
+            if (trayExists)
             {
                 await DeleteTrayAsync(id);
                 return true;
             }
 
-            if (await _database.KeyExistsAsync($"{MEMORY_KEY_PREFIX}{id}"))
+            bool memoryExists = await _database.KeyExistsAsync($"{MEMORY_KEY_PREFIX}{id}");
+            if (memoryExists)
             {
                 await DeleteMemoryAsync(id);
                 return true;
@@ -153,14 +164,14 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         public async Task<bool> DeleteRangeAsync(IEnumerable<ITransportable> entities, CancellationToken cancellationToken = default)
         {
-            var tasks = entities.Select(entity => DeleteAsync(entity, cancellationToken));
-            var results = await Task.WhenAll(tasks);
+            Task<bool>[] tasks = entities.Select(entity => DeleteAsync(entity, cancellationToken)).ToArray();
+            bool[] results = await Task.WhenAll(tasks);
             return results.All(result => result);
         }
 
         public async Task<bool> ExistsAsync(Expression<Func<ITransportable, bool>> predicate, CancellationToken cancellationToken = default)
         {
-            var transportables = await GetAsync(predicate, cancellationToken);
+            IReadOnlyList<ITransportable> transportables = await GetAsync(predicate, cancellationToken);
             return transportables.Any();
         }
 
@@ -168,14 +179,13 @@ namespace Nexus.Infrastructure.Persistence.Redis
         {
             if (predicate == null)
             {
-                //var cassetteCount = await _database.SetLengthAsync(CASSETTES_SET_KEY);
-                //var trayCount = await _database.SetLengthAsync(TRAYS_SET_KEY);
-                //var memoryCount = await _database.SetLengthAsync(MEMORIES_SET_KEY);
-                //return (int)(cassetteCount + trayCount + memoryCount);
-                return 0;
+                long cassetteCount = await _database.SetLengthAsync(CASSETTES_ALL_KEY);
+                long trayCount = await _database.SetLengthAsync(TRAYS_ALL_KEY);
+                long memoryCount = await _database.SetLengthAsync(MEMORIES_ALL_KEY);
+                return (int)(cassetteCount + trayCount + memoryCount);
             }
 
-            var filteredTransportables = await GetAsync(predicate, cancellationToken);
+            IReadOnlyList<ITransportable> filteredTransportables = await GetAsync(predicate, cancellationToken);
             return filteredTransportables.Count;
         }
 
@@ -205,80 +215,84 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         public async Task<IReadOnlyList<Cassette>> GetCassettesWithoutTraysAsync()
         {
-            var ids = await _database.SetMembersAsync(CASSETTES_ALL_KEY);
-            var cassettes = new List<Cassette>();
+            RedisValue[] ids = await _database.SetMembersAsync(CASSETTES_ALL_KEY);
+            List<Cassette> cassettes = new List<Cassette>();
             foreach (RedisValue id in ids)
             {
-                var hashEntries = await _database.HashGetAllAsync($"{CASSETTE_KEY_PREFIX}{id}");
+                HashEntry[] hashEntries = await _database.HashGetAllAsync($"{CASSETTE_KEY_PREFIX}{id}");
                 if (hashEntries.Length == 0)
                 {
                     continue;
                 }
 
-                var cassetteName = GetHashValue(hashEntries, "name");
+                string cassetteName = Helper.GetHashValue(hashEntries, "name");
 
-                var cassette = new Cassette(id.ToString(), cassetteName, new List<Tray>()); 
+                Cassette cassette = new Cassette(id.ToString(), cassetteName, new List<Tray>());
                 cassettes.Add(cassette);
             }
 
             return cassettes;
         }
+
         public async Task<IReadOnlyList<Tray>> GetTraysWithoutMemoriesAsync(string cassetteId)
         {
-            var trays = new List<Tray>();
+            List<Tray> trays = new List<Tray>();
 
-            var hashEntries = await _database.HashGetAllAsync($"{CASSETTE_KEY_PREFIX}{cassetteId}");
+            HashEntry[] hashEntries = await _database.HashGetAllAsync($"{CASSETTE_KEY_PREFIX}{cassetteId}");
             if (hashEntries.Length == 0)
+            {
                 return trays;
+            }
 
             // tray_ids 필드에서 Tray Id 목록 파싱
-            var trayIdsValue = GetHashValue(hashEntries, "tray_ids");
+            string trayIdsValue = Helper.GetHashValue(hashEntries, "tray_ids");
             string[] trayIds = trayIdsValue.Split(TRAY_ID_SEPARATOR, StringSplitOptions.RemoveEmptyEntries);
 
-
-            foreach (var trayId in trayIds)
+            foreach (string trayId in trayIds)
             {
-                var trayHash = await _database.HashGetAllAsync($"{TRAY_KEY_PREFIX}{trayId}");
+                HashEntry[] trayHash = await _database.HashGetAllAsync($"{TRAY_KEY_PREFIX}{trayId}");
                 if (trayHash.Length == 0)
+                {
                     continue;
+                }
 
-                string id = GetHashValue(trayHash, "id");
-                string name = GetHashValue(trayHash, "name");
+                string id = Helper.GetHashValue(trayHash, "id");
+                string name = Helper.GetHashValue(trayHash, "name");
 
-                var tray = new Tray(id, name, memories: new List<Memory>());
-
+                Tray tray = new Tray(id, name, new List<Memory>());
                 trays.Add(tray);
             }
 
             return trays;
         }
+
         public async Task<IReadOnlyList<Memory>> GetMemoriesAsync(string trayId)
         {
-            var trayHash = await _database.HashGetAllAsync($"{TRAY_KEY_PREFIX}{trayId}");
+            HashEntry[] trayHash = await _database.HashGetAllAsync($"{TRAY_KEY_PREFIX}{trayId}");
             if (trayHash.Length == 0)
+            {
                 return Array.Empty<Memory>();
+            }
 
-            var memoryIdsValue = GetHashValue(trayHash, "memory_ids");
+            string memoryIdsValue = Helper.GetHashValue(trayHash, "memory_ids");
             string[] memoryIds = memoryIdsValue.Split(TRAY_ID_SEPARATOR, StringSplitOptions.RemoveEmptyEntries);
 
-            var memories = new List<Memory>();
+            List<Memory> memories = new List<Memory>();
 
-            foreach (var memoryId in memoryIds)
+            foreach (string memoryId in memoryIds)
             {
-                var memoryHash = await _database.HashGetAllAsync($"{MEMORY_KEY_PREFIX}{memoryId}");
+                HashEntry[] memoryHash = await _database.HashGetAllAsync($"{MEMORY_KEY_PREFIX}{memoryId}");
                 if (memoryHash.Length == 0)
+                {
                     continue;
+                }
 
-                string id = GetHashValue(memoryHash, "id");
-                string name = GetHashValue(memoryHash, "name");
-                string deviceId = GetHashValue(memoryHash, "device_id");
-                string locationId = GetHashValue(memoryHash, "location_id");
+                string id = Helper.GetHashValue(memoryHash, "id");
+                string name = Helper.GetHashValue(memoryHash, "name");
+                string deviceId = Helper.GetHashValue(memoryHash, "device_id");
+                string locationId = Helper.GetHashValue(memoryHash, "location_id");
 
-                var memory = new Memory(
-                    id: id,
-                    name: name
-                );
-
+                Memory memory = new Memory(id, name);
                 memory.DeviceId = deviceId;
                 memories.Add(memory);
             }
@@ -286,21 +300,22 @@ namespace Nexus.Infrastructure.Persistence.Redis
             return memories;
         }
 
-
         #endregion
 
         #region Private Cassette Operations
 
         private async Task<List<Cassette>> GetAllCassettesAsync()
         {
-            var ids = await _database.SetMembersAsync(CASSETTES_ALL_KEY);
+            RedisValue[] ids = await _database.SetMembersAsync(CASSETTES_ALL_KEY);
 
-            var cassettes = new List<Cassette>();
+            List<Cassette> cassettes = new List<Cassette>();
             foreach (RedisValue id in ids)
             {
-                var cassette = await GetCassetteByIdAsync(id.ToString());
+                Cassette? cassette = await GetCassetteByIdAsync(id.ToString());
                 if (cassette != null)
+                {
                     cassettes.Add(cassette);
+                }
             }
 
             return cassettes;
@@ -308,22 +323,22 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         private async Task<Cassette?> GetCassetteByIdAsync(string id)
         {
-            var hashEntries = await _database.HashGetAllAsync($"{CASSETTE_KEY_PREFIX}{id}");
+            HashEntry[] hashEntries = await _database.HashGetAllAsync($"{CASSETTE_KEY_PREFIX}{id}");
             if (hashEntries.Length == 0)
             {
                 return null;
             }
 
-            var cassetteName = GetHashValue(hashEntries, "name");
-            var trayIdsValue = GetHashValue(hashEntries, "tray_ids");
+            string cassetteName = Helper.GetHashValue(hashEntries, "name");
+            string trayIdsValue = Helper.GetHashValue(hashEntries, "tray_ids");
 
             string[] trayIds = trayIdsValue.Split(TRAY_ID_SEPARATOR, StringSplitOptions.RemoveEmptyEntries);
 
-            var trays = new List<Tray>();
+            List<Tray> trays = new List<Tray>();
 
-            foreach (var trayId in trayIds)
+            foreach (string trayId in trayIds)
             {
-                var tray = await GetTrayByIdAsync(trayId);
+                Tray? tray = await GetTrayByIdAsync(trayId);
                 if (tray == null)
                 {
                     continue;
@@ -336,9 +351,9 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         private async Task SaveCassetteAsync(Cassette cassette)
         {
-            var trayIds = string.Join(TRAY_ID_SEPARATOR, cassette.Trays.Select(t => t.Id));
+            string trayIds = string.Join(TRAY_ID_SEPARATOR, cassette.Trays.Select(t => t.Id));
 
-            var hashEntries = new HashEntry[]
+            HashEntry[] hashEntries = new HashEntry[]
             {
                 new HashEntry("id", cassette.Id),
                 new HashEntry("name", cassette.Name),
@@ -346,7 +361,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("tray_ids", trayIds)
             };
 
-            foreach (var tray in cassette.Trays)
+            foreach (Tray tray in cassette.Trays)
             {
                 await SaveTrayAsync(tray);
             }
@@ -367,14 +382,16 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         private async Task<List<Tray>> GetAllTraysAsync()
         {
-            var ids = await _database.SetMembersAsync(TRAYS_ALL_KEY);
+            RedisValue[] ids = await _database.SetMembersAsync(TRAYS_ALL_KEY);
 
-            var trays = new List<Tray>();
+            List<Tray> trays = new List<Tray>();
             foreach (RedisValue id in ids)
             {
-                var tray = await GetTrayByIdAsync(id.ToString());
+                Tray? tray = await GetTrayByIdAsync(id.ToString());
                 if (tray != null)
+                {
                     trays.Add(tray);
+                }
             }
 
             return trays;
@@ -382,21 +399,23 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         private async Task<Tray?> GetTrayByIdAsync(string id)
         {
-            var hashEntries = await _database.HashGetAllAsync($"{TRAY_KEY_PREFIX}{id}");
+            HashEntry[] hashEntries = await _database.HashGetAllAsync($"{TRAY_KEY_PREFIX}{id}");
             if (hashEntries.Length == 0)
+            {
                 return null;
+            }
 
-            string trayId = GetHashValue(hashEntries, "id");
-            string trayName = GetHashValue(hashEntries, "name");
-            string memoryIdsValue = GetHashValue(hashEntries, "memory_ids");
+            string trayId = Helper.GetHashValue(hashEntries, "id");
+            string trayName = Helper.GetHashValue(hashEntries, "name");
+            string memoryIdsValue = Helper.GetHashValue(hashEntries, "memory_ids");
 
             string[] memoryIds = memoryIdsValue.Split(TRAY_ID_SEPARATOR, StringSplitOptions.RemoveEmptyEntries);
 
-            var memories = new List<Memory>();
+            List<Memory> memories = new List<Memory>();
 
-            foreach (var memoryId in memoryIds)
+            foreach (string memoryId in memoryIds)
             {
-                var memory = await GetMemoryByIdAsync(memoryId);
+                Memory? memory = await GetMemoryByIdAsync(memoryId);
                 if (memory == null)
                 {
                     continue;
@@ -404,16 +423,14 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 memories.Add(memory);
             }
 
-            return new Tray(id: trayId,
-                            name: trayName,
-                            memories: memories);
+            return new Tray(trayId, trayName, memories);
         }
 
         private async Task SaveTrayAsync(Tray tray)
         {
-            var memoryIds = string.Join(MEMORY_ID_SEPARATOR, tray.Memories.Select(m => m.Id));
+            string memoryIds = string.Join(MEMORY_ID_SEPARATOR, tray.Memories.Select(m => m.Id));
 
-            var hashEntries = new HashEntry[]
+            HashEntry[] hashEntries = new HashEntry[]
             {
                 new HashEntry("id", tray.Id),
                 new HashEntry("name", tray.Name),
@@ -421,7 +438,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("memory_ids", memoryIds)
             };
 
-            foreach (var memory in tray.Memories)
+            foreach (Memory memory in tray.Memories)
             {
                 await SaveMemoryAsync(memory);
             }
@@ -442,14 +459,16 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         private async Task<List<Memory>> GetAllMemoriesAsync()
         {
-            var ids = await _database.SetMembersAsync(MEMORIES_ALL_KEY);
+            RedisValue[] ids = await _database.SetMembersAsync(MEMORIES_ALL_KEY);
 
-            var memories = new List<Memory>();
+            List<Memory> memories = new List<Memory>();
             foreach (RedisValue id in ids)
             {
-                var memory = await GetMemoryByIdAsync(id.ToString());
+                Memory? memory = await GetMemoryByIdAsync(id.ToString());
                 if (memory != null)
+                {
                     memories.Add(memory);
+                }
             }
 
             return memories;
@@ -457,17 +476,17 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         private async Task<Memory?> GetMemoryByIdAsync(string id)
         {
-            var hashEntries = await _database.HashGetAllAsync($"{MEMORY_KEY_PREFIX}{id}");
+            HashEntry[] hashEntries = await _database.HashGetAllAsync($"{MEMORY_KEY_PREFIX}{id}");
             if (hashEntries.Length == 0)
             {
                 return null;
             }
 
-            string memoryId = GetHashValue(hashEntries, "id");
-            string memoryName = GetHashValue(hashEntries, "name");
-            string deviceId = GetHashValue(hashEntries, "device_id");
+            string memoryId = Helper.GetHashValue(hashEntries, "id");
+            string memoryName = Helper.GetHashValue(hashEntries, "name");
+            string deviceId = Helper.GetHashValue(hashEntries, "device_id");
 
-            var memory = new Memory(id: memoryId, name: memoryName);
+            Memory memory = new Memory(memoryId, memoryName);
             memory.DeviceId = deviceId;
 
             return memory;
@@ -475,7 +494,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         private async Task SaveMemoryAsync(Memory memory)
         {
-            var hashEntries = new HashEntry[]
+            HashEntry[] hashEntries = new HashEntry[]
             {
                 new HashEntry("id", memory.Id),
                 new HashEntry("name", memory.Name),
@@ -492,23 +511,6 @@ namespace Nexus.Infrastructure.Persistence.Redis
             await _database.KeyDeleteAsync($"{MEMORY_KEY_PREFIX}{id}");
             await _database.SetRemoveAsync(MEMORIES_ALL_KEY, id);
         }
-
-        #endregion
-
-        #region Helper Methods
-
-        private static string GetHashValue(HashEntry[] hashEntries, string fieldName)
-        {
-            return hashEntries.FirstOrDefault(e => e.Name == fieldName).Value.ToString();
-        }
-
-        private static int GetHashValueAsInt(HashEntry[] hashEntries, string fieldName)
-        {
-            var value = GetHashValue(hashEntries, fieldName);
-            return int.TryParse(value, out var result) ? result : 0;
-        }
-
- 
 
         #endregion
     }
