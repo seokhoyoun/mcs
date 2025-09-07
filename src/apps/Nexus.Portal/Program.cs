@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting;
 using MudBlazor.Services;
 using Nexus.Core.Domain.Models.Areas.Interfaces;
 using Nexus.Core.Domain.Models.Areas.Services;
@@ -27,7 +27,7 @@ namespace Nexus.Portal
 
             builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("localhost:6379"));
 
-            builder.Services.AddScoped<ITransportRepository, RedisTransportsRepository>();
+            builder.Services.AddScoped<ITransportRepository, RedisTransportRepository>();
             builder.Services.AddScoped<IStockerRepository, RedisStockerRepository>();
             builder.Services.AddScoped<IAreaRepository, RedisAreaRepository>();
             builder.Services.AddScoped<ILocationRepository, RedisLocationRepository>();

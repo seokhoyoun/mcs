@@ -10,8 +10,8 @@ namespace Nexus.Core.Domain.Models.Locations.Base
         public string Id { get; protected set; }
         public string Name { get; protected set; }
         public ELocationType LocationType { get; protected set; }
-        public ELocationStatus Status { get; internal set; }
-        public abstract ITransportable? CurrentItem { get; internal set; }
+        public ELocationStatus Status { get; set; }
+        public abstract ITransportable? CurrentItem { get; set; }
 
         protected Location(string id, string name, ELocationType locationType) 
         {

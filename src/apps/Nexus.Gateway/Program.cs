@@ -63,7 +63,7 @@ namespace Nexus.Gateway
             builder.Services.AddSingleton<ILocationRepository, RedisLocationRepository>();
             builder.Services.AddSingleton<ILocationService, LocationService>();
 
-            builder.Services.AddSingleton<ITransportRepository, RedisTransportsRepository>();
+            builder.Services.AddSingleton<ITransportRepository, RedisTransportRepository>();
             builder.Services.AddSingleton<ITransportService, TransportService>();
 
             builder.Services.AddSingleton<IAreaRepository, RedisAreaRepository>();

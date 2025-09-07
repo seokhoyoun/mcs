@@ -10,7 +10,7 @@ namespace Nexus.Core.Domain.Models.Locations
         public override ITransportable? CurrentItem
         {
             get => _currentItem;
-            internal set => _currentItem = (Memory?)value;
+            set => _currentItem = (Memory?)value;
         }
 
         private Memory? _currentItem;

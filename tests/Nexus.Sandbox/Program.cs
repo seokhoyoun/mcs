@@ -1,4 +1,4 @@
-﻿using Nexus.Core.Domain.Models.Areas;
+using Nexus.Core.Domain.Models.Areas;
 using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Enums;
 using Nexus.Infrastructure.Persistence.Redis;
@@ -14,19 +14,23 @@ namespace Nexus.Sandbox
     {
         static async Task Main(string[] args)
         {
-            var redis = ConnectionMultiplexer.Connect("localhost:6379");
-            var repo = new RedisTransportsRepository(redis);
 
-            var seeders = new List<IDataSeeder>
+            ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost:6379");
+            RedisTransportRepository transportRepo = new RedisTransportRepository(redis);
+            RedisAreaRepository areaRepo = new RedisAreaRepository(redis);
+            RedisStockerRepository stockerRepo = new RedisStockerRepository(redis);
+
+            List<IDataSeeder> seeders = new List<IDataSeeder>
             {
-                new CassetteSeeder(repo)
+                new CassetteSeeder(transportRepo),
+                new AreaSeeder(areaRepo),
             };
 
-            foreach (var seeder in seeders)
+            foreach (IDataSeeder seeder in seeders)
             {
                 await seeder.SeedAsync();
+                
             }
-
 
 
             Console.WriteLine("Seeding completed.");

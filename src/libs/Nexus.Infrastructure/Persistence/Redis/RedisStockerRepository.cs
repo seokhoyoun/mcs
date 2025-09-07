@@ -1,5 +1,6 @@
 ﻿using Nexus.Core.Domain.Models.Stockers;
 using Nexus.Core.Domain.Models.Stockers.Interfaces;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,11 @@ namespace Nexus.Infrastructure.Persistence.Redis
 {
     public class RedisStockerRepository : IStockerRepository
     {
+        public RedisStockerRepository(IConnectionMultiplexer connection)
+        {
+                
+        }
+
         public Task<Stocker> AddAsync(Stocker entity, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
