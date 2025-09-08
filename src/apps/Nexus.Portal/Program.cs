@@ -25,7 +25,7 @@ namespace Nexus.Portal
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
-            builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("localhost:6379"));
+            builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("redis:6379"));
 
             builder.Services.AddScoped<ITransportRepository, RedisTransportRepository>();
             builder.Services.AddScoped<IStockerRepository, RedisStockerRepository>();
