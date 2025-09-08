@@ -52,8 +52,8 @@
     ports:
       - "8081:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - Redis__ConnectionString=redis:6379
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - Redis__ConnectionString=${REDIS__CONNECTIONSTRING}
     volumes:
       # './src/' 경로 추가
       - ./src/data:/app/data
@@ -70,8 +70,8 @@
     ports:
       - "8082:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - Redis__ConnectionString=redis:6379
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - Redis__ConnectionString=${REDIS__CONNECTIONSTRING}
 
   nexus.portal:
     image: ghcr.io/seokhoyoun/nexus-portal:latest
@@ -81,9 +81,9 @@
     ports:
       - "8080:8080" # 포털은 대표 포트인 8080을 사용하도록 설정
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:8080
-      - Redis__ConnectionString=redis:6379
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - ASPNETCORE_URLS=${ASPNETCORE_URLS}
+      - Redis__ConnectionString=${REDIS__CONNECTIONSTRING}
   # ------------------------------
 
   prometheus:

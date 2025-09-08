@@ -24,6 +24,10 @@
 - Projects/folders use PascalCase; namespaces mirror folder structure.
 - Formatting: prefer `dotnet format` before PRs.
 
+ - Do not use `var` for local declarations; always use explicit types.
+ - Do not use the null-coalescing operators `??` or `??=`; prefer explicit null checks or conditional expressions.
+ - Avoid ternary (`?:`) conditional operator in favor of clear `if/else` statements unless it materially improves readability.
+
 ## Testing Guidelines
 - Framework: xUnit (`Fact`/`Theory`); coverage via Coverlet collector.
 - Test naming: `ClassName_MethodUnderTest_ExpectedBehavior`.

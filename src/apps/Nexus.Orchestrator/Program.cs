@@ -1,4 +1,4 @@
-﻿using Nexus.Core.Domain.Models.Areas.Interfaces;
+using Nexus.Core.Domain.Models.Areas.Interfaces;
 using Nexus.Core.Domain.Models.Areas.Services;
 using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
@@ -28,9 +28,28 @@ namespace Nexus.Orchestrator
     {
         public static void Main(string[] args)
         {
-            var builder = Host.CreateApplicationBuilder(args);
+            HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 
-            builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("redis:6379,abortConnect=false"));
+            builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+            {
+                IConfiguration configuration = sp.GetRequiredService<IConfiguration>();
+                string? fromSection = configuration["Redis:ConnectionString"];
+                string? fromEnv = configuration["Redis__ConnectionString"];
+                string connStr;
+                if (fromSection != null)
+                {
+                    connStr = fromSection;
+                }
+                else if (fromEnv != null)
+                {
+                    connStr = fromEnv;
+                }
+                else
+                {
+                    connStr = "redis:6379";
+                }
+                return ConnectionMultiplexer.Connect(connStr);
+            });
        
             builder.Services.AddSingleton<ILocationRepository, RedisLocationRepository>();
             builder.Services.AddSingleton<ITransportRepository, RedisTransportRepository>();
@@ -61,7 +80,7 @@ namespace Nexus.Orchestrator
                 options.Port = 9091;
             });
 
-            var host = builder.Build();
+            IHost host = builder.Build();
             host.Run();
         }
     }

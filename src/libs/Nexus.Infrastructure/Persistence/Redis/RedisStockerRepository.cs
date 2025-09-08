@@ -1,85 +1,218 @@
-﻿using Nexus.Core.Domain.Models.Stockers;
+﻿using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Locations.Enums;
+using Nexus.Core.Domain.Models.Stockers;
 using Nexus.Core.Domain.Models.Stockers.Interfaces;
 using StackExchange.Redis;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Nexus.Infrastructure.Persistence.Redis
 {
     public class RedisStockerRepository : IStockerRepository
     {
+        #region Fields
+
+        private readonly IDatabase _database;
+
+        private const string STOCKERS_ALL_KEY = "stockers:all";
+
+        private const string STOCKER_KEY_PREFIX = "stocker:";
+        private const string CASSETTE_LOCATION_KEY_PREFIX = "cassette_location:";
+
+        private const string ID_SEPARATOR = ",";
+
+        #endregion
+
+        #region Constructor
+
         public RedisStockerRepository(IConnectionMultiplexer connection)
         {
-                
+            _database = connection.GetDatabase();
         }
 
-        public Task<Stocker> AddAsync(Stocker entity, CancellationToken cancellationToken = default)
+        #endregion
+
+        #region IRepository<Stocker,string> Implementation
+
+        public async Task<IReadOnlyList<Stocker>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            RedisValue[] ids = await _database.SetMembersAsync(STOCKERS_ALL_KEY);
+            List<Stocker> stockers = new List<Stocker>();
+
+            foreach (RedisValue id in ids)
+            {
+                Stocker? stocker = await GetByIdAsync(id.ToString(), cancellationToken);
+                if (stocker != null)
+                {
+                    stockers.Add(stocker);
+                }
+            }
+
+            return stockers.AsReadOnly();
         }
 
-        public Task<IEnumerable<Stocker>> AddRangeAsync(IEnumerable<Stocker> entities, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<Stocker>> GetAsync(Expression<Func<Stocker, bool>> predicate, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            IReadOnlyList<Stocker> all = await GetAllAsync(cancellationToken);
+            Func<Stocker, bool> compiled = predicate.Compile();
+            return all.Where(compiled).ToList().AsReadOnly();
         }
 
-        public Task<int> CountAsync(Expression<Func<Stocker, bool>>? predicate = null, CancellationToken cancellationToken = default)
+        public async Task<Stocker?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            HashEntry[] hashEntries = await _database.HashGetAllAsync($"{STOCKER_KEY_PREFIX}{id}");
+            if (hashEntries.Length == 0)
+            {
+                return null;
+            }
+
+            string name = Helper.GetHashValue(hashEntries, "name");
+            string cassettePortIdsValue = Helper.GetHashValue(hashEntries, "cassette_port_ids");
+            string[] cassettePortIds = cassettePortIdsValue.Split(ID_SEPARATOR, StringSplitOptions.RemoveEmptyEntries);
+
+            List<CassetteLocation> cassettePorts = new List<CassetteLocation>();
+            foreach (string portId in cassettePortIds)
+            {
+                CassetteLocation? port = await GetCassetteLocationByIdAsync(portId);
+                if (port != null)
+                {
+                    cassettePorts.Add(port);
+                }
+            }
+
+            return new Stocker(id, name, cassettePorts.AsReadOnly());
         }
 
-        public Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<Stocker> AddAsync(Stocker entity, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            await SaveStockerAsync(entity);
+            return entity;
+        }
+
+        public async Task<IEnumerable<Stocker>> AddRangeAsync(IEnumerable<Stocker> entities, CancellationToken cancellationToken = default)
+        {
+            Task<Stocker>[] tasks = entities.Select(e => AddAsync(e, cancellationToken)).ToArray();
+            return await Task.WhenAll(tasks);
+        }
+
+        public async Task<Stocker> UpdateAsync(Stocker entity, CancellationToken cancellationToken = default)
+        {
+            // HSET behaves as upsert
+            return await AddAsync(entity, cancellationToken);
+        }
+
+        public async Task<bool> UpdateRangeAsync(IEnumerable<Stocker> entities, CancellationToken cancellationToken = default)
+        {
+            Task<Stocker>[] tasks = entities.Select(e => UpdateAsync(e, cancellationToken)).ToArray();
+            await Task.WhenAll(tasks);
+            return true;
+        }
+
+        public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+        {
+            bool exists = await _database.KeyExistsAsync($"{STOCKER_KEY_PREFIX}{id}");
+            if (!exists)
+            {
+                return false;
+            }
+
+            await _database.KeyDeleteAsync($"{STOCKER_KEY_PREFIX}{id}");
+            await _database.SetRemoveAsync(STOCKERS_ALL_KEY, id);
+            return true;
         }
 
         public Task<bool> DeleteAsync(Stocker entity, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            return DeleteAsync(entity.Id, cancellationToken);
         }
 
-        public Task<bool> DeleteRangeAsync(IEnumerable<Stocker> entities, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteRangeAsync(IEnumerable<Stocker> entities, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            Task<bool>[] tasks = entities.Select(e => DeleteAsync(e, cancellationToken)).ToArray();
+            bool[] results = await Task.WhenAll(tasks);
+            return results.All(r => r);
         }
 
-        public Task<bool> ExistsAsync(Expression<Func<Stocker, bool>> predicate, CancellationToken cancellationToken = default)
+        public async Task<bool> ExistsAsync(Expression<Func<Stocker, bool>> predicate, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            IReadOnlyList<Stocker> filtered = await GetAsync(predicate, cancellationToken);
+            return filtered.Any();
         }
 
-        public Task<IReadOnlyList<Stocker>> GetAllAsync(CancellationToken cancellationToken = default)
+        public async Task<int> CountAsync(Expression<Func<Stocker, bool>>? predicate = null, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            if (predicate == null)
+            {
+                long count = await _database.SetLengthAsync(STOCKERS_ALL_KEY);
+                return (int)count;
+            }
+
+            IReadOnlyList<Stocker> filtered = await GetAsync(predicate, cancellationToken);
+            return filtered.Count;
         }
 
         public Task<IReadOnlyList<Stocker>> GetAllStockersAsync()
         {
-            throw new NotImplementedException();
+            // Convenience wrapper if used by callers not via interface
+            return GetAllAsync();
         }
 
-        public Task<IReadOnlyList<Stocker>> GetAsync(Expression<Func<Stocker, bool>> predicate, CancellationToken cancellationToken = default)
+        #endregion
+
+        #region Private Helpers
+
+        private async Task SaveStockerAsync(Stocker stocker)
         {
-            throw new NotImplementedException();
+            string cassettePortIds = string.Join(ID_SEPARATOR, stocker.CassettePorts.Select(cp => cp.Id));
+
+            HashEntry[] entries = new HashEntry[]
+            {
+                new HashEntry("id", stocker.Id),
+                new HashEntry("name", stocker.Name),
+                new HashEntry("cassette_port_ids", cassettePortIds)
+            };
+
+            // Save child cassette ports first (without registering to global location sets, matching Area behavior)
+            foreach (CassetteLocation port in stocker.CassettePorts)
+            {
+                await SaveCassetteLocationAsync(port);
+            }
+
+            await _database.HashSetAsync($"{STOCKER_KEY_PREFIX}{stocker.Id}", entries);
+            await _database.SetAddAsync(STOCKERS_ALL_KEY, stocker.Id);
         }
 
-        public Task<Stocker?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
+        private async Task<CassetteLocation?> GetCassetteLocationByIdAsync(string id)
         {
-            throw new NotImplementedException();
+            HashEntry[] hashEntries = await _database.HashGetAllAsync($"{CASSETTE_LOCATION_KEY_PREFIX}{id}");
+            if (hashEntries.Length == 0)
+            {
+                return null;
+            }
+
+            string name = Helper.GetHashValue(hashEntries, "name");
+            ELocationType locationType = Helper.GetHashValueAsEnum<ELocationType>(hashEntries, "location_type");
+            ELocationStatus status = Helper.GetHashValueAsEnum<ELocationStatus>(hashEntries, "status");
+
+            CassetteLocation loc = new CassetteLocation(id, name, locationType)
+            {
+                Status = status
+            };
+            return loc;
         }
 
-        public Task<Stocker> UpdateAsync(Stocker entity, CancellationToken cancellationToken = default)
+        private async Task SaveCassetteLocationAsync(CassetteLocation cassetteLocation)
         {
-            throw new NotImplementedException();
+            HashEntry[] entries = new HashEntry[]
+            {
+                new HashEntry("id", cassetteLocation.Id),
+                new HashEntry("name", cassetteLocation.Name),
+                new HashEntry("location_type", cassetteLocation.LocationType.ToString()),
+                new HashEntry("status", cassetteLocation.Status.ToString())
+            };
+
+            await _database.HashSetAsync($"{CASSETTE_LOCATION_KEY_PREFIX}{cassetteLocation.Id}", entries);
         }
 
-        public Task<bool> UpdateRangeAsync(IEnumerable<Stocker> entities, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
+        #endregion
     }
 }

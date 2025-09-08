@@ -13,10 +13,11 @@ insert_final_newline = true
 csharp_prefer_braces = true:suggestion
 dotnet_diagnostic.IDE0011.severity = error
 
-# 'var' usage: avoid except when type is obvious
-csharp_style_var_for_built_in_types = false:warning
-csharp_style_var_when_type_is_apparent = false:warning
-csharp_style_var_elsewhere = false:warning
+# 'var' usage: disallow (use explicit types)
+csharp_style_var_for_built_in_types = false:error
+csharp_style_var_when_type_is_apparent = false:error
+csharp_style_var_elsewhere = false:error
+dotnet_diagnostic.IDE0008.severity = error
 
 # Readonly fields when possible
 dotnet_style_readonly_field = true:suggestion
@@ -140,7 +141,13 @@ dotnet_style_parentheses_in_other_operators = never_if_unnecessary:silent
 dotnet_code_quality_unused_parameters = all:suggestion
 dotnet_style_allow_multiple_blank_lines_experimental = true:silent
 dotnet_style_allow_statement_immediately_after_block_experimental = true:silent
-dotnet_style_coalesce_expression = true:suggestion
+# Disallow null-coalescing preference (prefer explicit null checks)
+dotnet_style_coalesce_expression = false:error
+
+# Prefer if/else over ternary conditional operator
+# (discourage using ?: by not preferring conditional expressions)
+dotnet_style_prefer_conditional_expression_over_assignment = false:suggestion
+dotnet_style_prefer_conditional_expression_over_return = false:suggestion
 dotnet_style_null_propagation = true:suggestion
 dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggestion
 dotnet_style_prefer_auto_properties = true:silent
