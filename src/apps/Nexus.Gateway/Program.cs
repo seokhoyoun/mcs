@@ -1,4 +1,4 @@
-﻿using Nexus.Core.Domain.Models.Areas.Interfaces;
+using Nexus.Core.Domain.Models.Areas.Interfaces;
 using Nexus.Core.Domain.Models.Areas.Services;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Locations.Services;
@@ -24,7 +24,7 @@ namespace Nexus.Gateway
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
             builder.Services.AddEndpointsApiExplorer();
@@ -44,11 +44,26 @@ namespace Nexus.Gateway
                 options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             });
 
-            // Redis 연결 설정
-
-            builder.Services.AddSingleton<IConnectionMultiplexer>(serviceProvider =>
+            // Redis 연결 설정 (환경변수/설정파일에서 로드)
+            builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
             {
-                return ConnectionMultiplexer.Connect("redis:6379");
+                IConfiguration configuration = sp.GetRequiredService<IConfiguration>();
+                string? fromSection = configuration["Redis:ConnectionString"];
+                string? fromEnv = configuration["Redis__ConnectionString"];
+                string connStr;
+                if (fromSection != null)
+                {
+                    connStr = fromSection;
+                }
+                else if (fromEnv != null)
+                {
+                    connStr = fromEnv;
+                }
+                else
+                {
+                    connStr = "redis:6379";
+                }
+                return ConnectionMultiplexer.Connect(connStr);
             });
 
             // 메시징 서비스 등록
@@ -80,7 +95,7 @@ namespace Nexus.Gateway
             builder.Services.AddScoped<ICassetteCreationService, CassetteCreationService>();
             builder.Services.AddScoped<IAreaCreationService, AreaCreationService>();
 
-            var app = builder.Build();
+            WebApplication app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

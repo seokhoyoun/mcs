@@ -19,13 +19,32 @@ namespace Nexus.Portal
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
-            builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect("redis:6379"));
+            builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+            {
+                IConfiguration configuration = sp.GetRequiredService<IConfiguration>();
+                string? fromSection = configuration["Redis:ConnectionString"];
+                string? fromEnv = configuration["Redis__ConnectionString"];
+                string connStr;
+                if (fromSection != null)
+                {
+                    connStr = fromSection;
+                }
+                else if (fromEnv != null)
+                {
+                    connStr = fromEnv;
+                }
+                else
+                {
+                    connStr = "redis:6379";
+                }
+                return ConnectionMultiplexer.Connect(connStr);
+            });
 
             builder.Services.AddScoped<ITransportRepository, RedisTransportRepository>();
             builder.Services.AddScoped<IStockerRepository, RedisStockerRepository>();
@@ -38,7 +57,7 @@ namespace Nexus.Portal
 
             builder.Services.AddMudServices();
 
-            var app = builder.Build();
+            WebApplication app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())

@@ -53,7 +53,7 @@ namespace Nexus.Sandbox.Seed
                 stockers.Add(stocker);
 
                 // JSON 파일로 저장
-                Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+                //Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
                 string baseJson = JsonSerializer.Serialize(stockers, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(filePath, baseJson);
 
