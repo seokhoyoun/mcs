@@ -15,4 +15,7 @@ public interface ITransportRepository : IRepository<ITransportable, string>
     Task<IReadOnlyList<Cassette>> GetCassettesWithoutTraysAsync();
     Task<IReadOnlyList<Tray>> GetTraysWithoutMemoriesAsync(string cassetteId);
     Task<IReadOnlyList<Memory>> GetMemoriesAsync(string trayId);
+
+    // Convenience accessor for UI mapping without altering models
+    Task<string?> GetMemoryLocationIdAsync(string memoryId);
 }

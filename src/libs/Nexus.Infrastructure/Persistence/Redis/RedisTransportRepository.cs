@@ -290,7 +290,6 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 string id = Helper.GetHashValue(memoryHash, "id");
                 string name = Helper.GetHashValue(memoryHash, "name");
                 string deviceId = Helper.GetHashValue(memoryHash, "device_id");
-                string locationId = Helper.GetHashValue(memoryHash, "location_id");
 
                 Memory memory = new Memory(id, name);
                 memory.DeviceId = deviceId;
@@ -298,6 +297,22 @@ namespace Nexus.Infrastructure.Persistence.Redis
             }
 
             return memories;
+        }
+
+        public async Task<string?> GetMemoryLocationIdAsync(string memoryId)
+        {
+            HashEntry[] memoryHash = await _database.HashGetAllAsync($"{MEMORY_KEY_PREFIX}{memoryId}");
+            if (memoryHash.Length == 0)
+            {
+                return null;
+            }
+
+            string locationId = Helper.GetHashValue(memoryHash, "location_id");
+            if (string.IsNullOrWhiteSpace(locationId))
+            {
+                return null;
+            }
+            return locationId;
         }
 
         #endregion

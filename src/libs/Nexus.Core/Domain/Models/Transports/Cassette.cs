@@ -1,4 +1,4 @@
-﻿using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Transports.Enums;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
@@ -64,7 +64,7 @@ namespace Nexus.Core.Domain.Models.Transports
 
         public bool RemoveTray(string trayId)
         {
-            var tray = _trays.FirstOrDefault(t => t.Id == trayId);
+            Tray? tray = _trays.FirstOrDefault(t => t.Id == trayId);
             if (tray != null)
             {
                 return _trays.Remove(tray);

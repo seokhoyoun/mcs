@@ -1,4 +1,4 @@
-﻿using Nexus.Core.Domain.Models.Areas;
+using Nexus.Core.Domain.Models.Areas;
 using Nexus.Core.Domain.Models.Areas.Enums;
 using Nexus.Core.Domain.Models.Areas.Interfaces;
 using Nexus.Core.Domain.Models.Locations;
@@ -11,6 +11,7 @@ using Nexus.Core.Domain.Models.Lots.Events;
 using Nexus.Core.Domain.Models.Lots.Interfaces;
 using Nexus.Core.Domain.Models.Plans;
 using Nexus.Core.Domain.Models.Plans.Enums;
+using Nexus.Core.Domain.Models.Transports;
 using Nexus.Core.Messaging;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -54,8 +55,8 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
 
         public async Task StartAsync(CancellationToken stoppingToken)
         {
-            var subscriptionTask = SubscribeToLotCreatedEventsAsync(stoppingToken);
-            var processingTask = ProcessPendingLotsAsync(stoppingToken);
+            Task subscriptionTask = SubscribeToLotCreatedEventsAsync(stoppingToken);
+            Task processingTask = ProcessPendingLotsAsync(stoppingToken);
 
             await Task.WhenAll(subscriptionTask, processingTask);
         }
@@ -80,7 +81,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
         {
             try
             {
-                var lotCreatedEvent = JsonSerializer.Deserialize<LotCreatedEvent>(message);
+                LotCreatedEvent? lotCreatedEvent = JsonSerializer.Deserialize<LotCreatedEvent>(message);
                 if (lotCreatedEvent == null)
                 {
                     _logger.LogWarning("Failed to deserialize LotCreatedEvent from message: {Message}", message);
@@ -111,7 +112,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                 try
                 {
                     // 대기열에서 Lot 처리
-                    while (_pendingLotIds.TryDequeue(out var lotId))
+                    while (_pendingLotIds.TryDequeue(out string? lotId))
                     {
                         await ProcessLotAsync(lotId, stoppingToken);
                     }
@@ -132,7 +133,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             try
             {
                 // Lot 정보 조회
-                var lot = await _lotRepository.GetByIdAsync(lotId, cancellationToken);
+                Lot? lot = await _lotRepository.GetByIdAsync(lotId, cancellationToken);
                 if (lot == null)
                 {
                     _logger.LogWarning("Lot not found with ID: {LotId}", lotId);
@@ -159,24 +160,24 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
 
         private void CreatePlanGroups(Lot lot)
         {
-            foreach (var lotStep in lot.LotSteps)
+            foreach (LotStep lotStep in lot.LotSteps)
             {
                 _logger.LogInformation("Creating plan groups for LotStep: {LotStepId}", lotStep.Id);
 
                 // 1. StockerToArea PlanGroup 생성 (우선적으로 비어있는 Area 찾기)
-                var stockerToAreaPlanGroup = CreateStockerToAreaPlanGroup(lotStep);
+                PlanGroup stockerToAreaPlanGroup = CreateStockerToAreaPlanGroup(lotStep);
                 lotStep.PlanGroups.Add(stockerToAreaPlanGroup);
 
                 // 2. AreaToSet PlanGroup 생성
-                var areaToSetPlanGroup = CreateAreaToSetPlanGroup(lotStep);
+                PlanGroup areaToSetPlanGroup = CreateAreaToSetPlanGroup(lotStep);
                 lotStep.PlanGroups.Add(areaToSetPlanGroup);
 
                 // 3. SetToArea PlanGroup 생성
-                var setToAreaPlanGroup = CreateSetToAreaPlanGroup(lotStep);
+                PlanGroup setToAreaPlanGroup = CreateSetToAreaPlanGroup(lotStep);
                 lotStep.PlanGroups.Add(setToAreaPlanGroup);
 
                 // 4. AreaToStocker PlanGroup 생성
-                var areaToStockerPlanGroup = CreateAreaToStockerPlanGroup(lotStep);
+                PlanGroup areaToStockerPlanGroup = CreateAreaToStockerPlanGroup(lotStep);
                 lotStep.PlanGroups.Add(areaToStockerPlanGroup);
 
                 _logger.LogInformation("Created {PlanGroupCount} plan groups for LotStep: {LotStepId}",
@@ -190,13 +191,13 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
 
         private PlanGroup CreateStockerToAreaPlanGroup(LotStep lotStep)
         {
-            var planGroupId = Guid.NewGuid().ToString();
-            var planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_StockerToArea", EPlanGroupType.StockerToArea);
+            string planGroupId = Guid.NewGuid().ToString();
+            PlanGroup planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_StockerToArea", EPlanGroupType.StockerToArea);
 
             _logger.LogInformation("Creating StockerToArea plan group for {CassetteCount} cassettes", lotStep.Cassettes.Count);
 
             // 비어있는 Area를 우선적으로 찾기
-            var emptyArea = GetEmptyAreaForCassettes(lotStep.Cassettes.Count);
+            Area? emptyArea = GetEmptyAreaForCassettes(lotStep.Cassettes.Count);
             if (emptyArea == null)
             {
                 _logger.LogWarning("No empty area available for {CassetteCount} cassettes. Using available area instead", lotStep.Cassettes.Count);
@@ -213,14 +214,14 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                 emptyArea.Id, emptyArea.Status);
 
             // AMR 로봇 Location 생성/조회 (물류로봇용)
-            var amrLocation = GetOrCreateAMRLocation("AMR.CP01", "물류로봇 카세트 포트 1");
+            RobotLocation amrLocation = GetOrCreateAMRLocation("AMR.CP01", "물류로봇 카세트 포트 1");
 
-            foreach (var cassette in lotStep.Cassettes)
+            foreach (Cassette cassette in lotStep.Cassettes)
             {
                 try
                 {
                     // 1. 카세트의 현재 위치 조회 (스토커)
-                    var stockerLocation = _locationService.GetCassetteLocationById(cassette.Id);
+                    CassetteLocation? stockerLocation = _locationService.GetCassetteLocationById(cassette.Id);
                     if (stockerLocation == null)
                     {
                         _logger.LogWarning("Cassette location not found for CassetteId: {CassetteId}", cassette.Id);
@@ -228,7 +229,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                     }
 
                     // 2. Area에서 사용 가능한 카세트 포트 찾기 (목표 위치)
-                    var targetCassettePort = _areaService.GetAvailableCassettePort(emptyArea);
+                    CassetteLocation? targetCassettePort = _areaService.GetAvailableCassettePort(emptyArea);
                     if (targetCassettePort == null)
                     {
                         _logger.LogWarning("No available cassette port found in area {AreaId} for cassette {CassetteId}",
@@ -237,10 +238,10 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                     }
 
                     // 3. Plan 생성
-                    var plan = new Plan(Guid.NewGuid().ToString(), $"StockerToArea_{cassette.Id}");
+                    Plan plan = new Plan(Guid.NewGuid().ToString(), $"StockerToArea_{cassette.Id}");
 
                     // PlanStep 1: CassetteLoad (스토커 → AMR)
-                    var cassetteLoadStep = new PlanStep(
+                    PlanStep cassetteLoadStep = new PlanStep(
                         Guid.NewGuid().ToString(),
                         $"1. Load_from_Stocker",
                         1,
@@ -248,7 +249,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                         stockerLocation.Id);
 
                     // Job 1: 스토커에서 물류로봇으로 카세트 로드
-                    var loadJob = new Job(
+                    Job loadJob = new Job(
                         Guid.NewGuid().ToString(),
                         $"1. Load_{cassette.Id}_from_{stockerLocation.Id}",
                         1,
@@ -261,7 +262,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                     plan.PlanSteps.Add(cassetteLoadStep);
 
                     // PlanStep 2: CassetteUnload (AMR → Area)
-                    var cassetteUnloadStep = new PlanStep(
+                    PlanStep cassetteUnloadStep = new PlanStep(
                         Guid.NewGuid().ToString(),
                         "2. Unload_to_Area",
                         2,
@@ -269,7 +270,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                         targetCassettePort.Id);
 
                     // Job 1: 물류로봇에서 Area로 카세트 언로드
-                    var unloadJob = new Job(
+                    Job unloadJob = new Job(
                         Guid.NewGuid().ToString(),
                         $"1. Unload_{cassette.Id}_to_Area",
                         1,
@@ -298,31 +299,31 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
 
         private PlanGroup CreateAreaToSetPlanGroup(LotStep lotStep)
         {
-            var planGroupId = Guid.NewGuid().ToString();
-            var planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_AreaToSet", EPlanGroupType.AreaToSet);
+            string planGroupId = Guid.NewGuid().ToString();
+            PlanGroup planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_AreaToSet", EPlanGroupType.AreaToSet);
 
-            foreach (var cassette in lotStep.Cassettes)
+            foreach (Cassette cassette in lotStep.Cassettes)
             {
                 try
                 {
-                    var availableArea = _areaService.GetAvailableAreaForCassette();
+                    Area? availableArea = _areaService.GetAvailableAreaForCassette();
                     if (availableArea == null)
                     {
                         _logger.LogWarning("No available area found for AreaToSet plan");
                         continue;
                     }
 
-                    var plan = new Plan(Guid.NewGuid().ToString(), $"AreaToSet_{cassette.Id}");
+                    Plan plan = new Plan(Guid.NewGuid().ToString(), $"AreaToSet_{cassette.Id}");
 
                     // 트레이 로드 및 메모리 픽앤플레이스 작업
-                    var trayLoadStep = new PlanStep(
+                    PlanStep trayLoadStep = new PlanStep(
                         Guid.NewGuid().ToString(),
                         "TrayLoad_from_Area",
                         1,
                         EPlanStepAction.TrayLoad,
                         $"{availableArea.Id}.CP01.TP01"); // 구체적인 위치 명시
 
-                    var memoryPickPlaceStep = new PlanStep(
+                    PlanStep memoryPickPlaceStep = new PlanStep(
                         Guid.NewGuid().ToString(),
                         "MemoryPickAndPlace_to_Set",
                         2,
@@ -346,31 +347,31 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
 
         private PlanGroup CreateSetToAreaPlanGroup(LotStep lotStep)
         {
-            var planGroupId = Guid.NewGuid().ToString();
-            var planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_SetToArea", EPlanGroupType.SetToArea);
+            string planGroupId = Guid.NewGuid().ToString();
+            PlanGroup planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_SetToArea", EPlanGroupType.SetToArea);
 
-            foreach (var cassette in lotStep.Cassettes)
+            foreach (Cassette cassette in lotStep.Cassettes)
             {
                 try
                 {
-                    var availableArea = _areaService.GetAvailableAreaForCassette();
+                    Area? availableArea = _areaService.GetAvailableAreaForCassette();
                     if (availableArea == null)
                     {
                         _logger.LogWarning("No available area found for SetToArea plan");
                         continue;
                     }
 
-                    var plan = new Plan(Guid.NewGuid().ToString(), $"SetToArea_{cassette.Id}");
+                    Plan plan = new Plan(Guid.NewGuid().ToString(), $"SetToArea_{cassette.Id}");
 
                     // 메모리 회수 및 트레이 언로드 작업
-                    var memoryPickPlaceStep = new PlanStep(
+                    PlanStep memoryPickPlaceStep = new PlanStep(
                         Guid.NewGuid().ToString(),
                         "MemoryPickAndPlace_from_Set",
                         1,
                         EPlanStepAction.MemoryPickAndPlace,
                         $"{availableArea.Id}.SET01.MP01"); // from 위치
 
-                    var trayUnloadStep = new PlanStep(
+                    PlanStep trayUnloadStep = new PlanStep(
                         Guid.NewGuid().ToString(),
                         "TrayUnload_to_Area",
                         2,
@@ -394,27 +395,27 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
 
         private PlanGroup CreateAreaToStockerPlanGroup(LotStep lotStep)
         {
-            var planGroupId = Guid.NewGuid().ToString();
-            var planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_AreaToStocker", EPlanGroupType.AreaToStocker);
+            string planGroupId = Guid.NewGuid().ToString();
+            PlanGroup planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_AreaToStocker", EPlanGroupType.AreaToStocker);
 
             // AMR 로봇 Location 조회
-            var amrLocation = GetOrCreateAMRLocation("AMR.CP01", "물류로봇 카세트 포트 1");
+            RobotLocation amrLocation = GetOrCreateAMRLocation("AMR.CP01", "물류로봇 카세트 포트 1");
 
             const string stockerPrefix = "ST01.CP";
             int stockerPortIndex = 1;
 
-            foreach (var cassette in lotStep.Cassettes)
+            foreach (Cassette cassette in lotStep.Cassettes)
             {
                 try
                 {
-                    var availableArea = _areaService.GetAvailableAreaForCassette();
+                    Area? availableArea = _areaService.GetAvailableAreaForCassette();
                     if (availableArea == null)
                     {
                         _logger.LogWarning("No available area found for AreaToStocker plan");
                         continue;
                     }
 
-                    var availableCassettePort = _areaService.GetAvailableCassettePort(availableArea);
+                    CassetteLocation? availableCassettePort = _areaService.GetAvailableCassettePort(availableArea);
                     if (availableCassettePort == null)
                     {
                         _logger.LogWarning("No available cassette port found for AreaToStocker plan");
@@ -422,11 +423,11 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                     }
 
                     // 스토커 반납 위치 생성
-                    var stockerPortLocation = CreateOrGetStockerLocation($"{stockerPrefix}{stockerPortIndex:D2}");
-                    var plan = new Plan(Guid.NewGuid().ToString(), $"AreaToStocker_{cassette.Id}");
+                    CassetteLocation stockerPortLocation = CreateOrGetStockerLocation($"{stockerPrefix}{stockerPortIndex:D2}");
+                    Plan plan = new Plan(Guid.NewGuid().ToString(), $"AreaToStocker_{cassette.Id}");
 
                     // Job 1: Area에서 AMR로 카세트 로드
-                    var loadJob = new Job(
+                    Job loadJob = new Job(
                         Guid.NewGuid().ToString(),
                         $"Load_{cassette.Id}_from_Area",
                         1,
@@ -435,7 +436,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                     );
 
                     // Job 2: AMR에서 스토커로 카세트 언로드
-                    var unloadJob = new Job(
+                    Job unloadJob = new Job(
                         Guid.NewGuid().ToString(),
                         $"Unload_{cassette.Id}_to_Stocker",
                         1,
@@ -444,7 +445,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                     );
 
                     // PlanStep 1: CassetteLoad (Area → AMR)
-                    var cassetteLoadStep = new PlanStep(
+                    PlanStep cassetteLoadStep = new PlanStep(
                         Guid.NewGuid().ToString(),
                         "Load_from_Area",
                         1,
@@ -455,7 +456,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                     cassetteLoadStep.CarrierIds.Add(cassette.Id);
 
                     // PlanStep 2: CassetteUnload (AMR → Stocker)
-                    var cassetteUnloadStep = new PlanStep(
+                    PlanStep cassetteUnloadStep = new PlanStep(
                         Guid.NewGuid().ToString(),
                         "Unload_to_Stocker",
                         2,
@@ -495,7 +496,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
         /// <returns>AMR RobotLocation</returns>
         private RobotLocation GetOrCreateAMRLocation(string locationId, string locationName)
         {
-            var amrLocation = _locationService.GetRobotLocationById(locationId);
+            RobotLocation? amrLocation = _locationService.GetRobotLocationById(locationId);
             if (amrLocation == null)
             {
                 // AMR Location이 없으면 생성
@@ -517,7 +518,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
         /// <returns>스토커 CassetteLocation</returns>
         private CassetteLocation CreateOrGetStockerLocation(string locationId)
         {
-            var stockerLocation = _locationService.GetCassetteLocationById(locationId);
+            CassetteLocation? stockerLocation = _locationService.GetCassetteLocationById(locationId);
             if (stockerLocation == null)
             {
                 // 스토커 Location이 없으면 생성
@@ -542,7 +543,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             try
             {
                 // 모든 Area 중에서 Idle 상태인 것을 우선적으로 선택
-                var emptyAreas = _areaService.Areas
+                List<Area> emptyAreas = _areaService.Areas
                     .Where(area => area.Status == EAreaStatus.Idle)
                     .Where(area => GetAvailableCassettePortCount(area) >= requiredCassetteSlots)
                     .OrderBy(area => GetCassetteOccupancy(area)) // 가장 비어있는 것부터
@@ -550,7 +551,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
 
                 if (emptyAreas.Any())
                 {
-                    var selectedArea = emptyAreas.First();
+                    Area selectedArea = emptyAreas.First();
                     _logger.LogInformation("Found empty area {AreaId} with {AvailableSlots} available cassette slots",
                         selectedArea.Id, GetAvailableCassettePortCount(selectedArea));
                     return selectedArea;
@@ -571,7 +572,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
         /// </summary>
         private int GetAvailableCassettePortCount(Area area)
         {
-            return area.CassetteLocations.Count(cp => cp.CurrentItem == null);
+            return area.CassetteLocations.Count(cp => cp.CurrentItemId == null);
         }
 
         /// <summary>
@@ -580,9 +581,11 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
         private double GetCassetteOccupancy(Area area)
         {
             if (area.CassetteLocations.Count == 0)
+            {
                 return 1.0; // 포트가 없으면 가득 찬 것으로 간주
+            }
 
-            var occupiedPorts = area.CassetteLocations.Count(cp => cp.CurrentItem != null);
+            int occupiedPorts = area.CassetteLocations.Count(cp => cp.CurrentItemId != null);
             return (double)occupiedPorts / area.CassetteLocations.Count;
         }
 

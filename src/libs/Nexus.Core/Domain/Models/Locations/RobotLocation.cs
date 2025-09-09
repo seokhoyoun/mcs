@@ -5,18 +5,11 @@ using Nexus.Core.Domain.Models.Transports.Interfaces;
 namespace Nexus.Core.Domain.Models.Locations
 {
     /// <summary>
-    /// ·Îº¿(AMR)ÀÇ Ä«¼¼Æ®/Æ®·¹ÀÌ Æ÷Æ®¸¦ ³ªÅ¸³»´Â Location Å¬·¡½º
+    /// ë¡œë´‡(AMR)ì˜ ì¹´ì„¸íŠ¸/íŠ¸ë ˆì´ í¬íŠ¸ë¥¼ ë‚˜íƒ€ë‚´ëŠ” Location í´ë˜ìŠ¤
     /// </summary>
     public class RobotLocation : Location
     {
-        public override ITransportable? CurrentItem
-        {
-            get => _currentItem;
-            set => _currentItem = value;
-        }
-
-        private ITransportable? _currentItem;
-
+       
         public RobotLocation(string id, string name, ELocationType locationType) : base(id, name, locationType)
         {
         }

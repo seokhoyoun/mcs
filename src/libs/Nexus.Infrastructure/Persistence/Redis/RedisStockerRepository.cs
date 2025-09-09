@@ -1,4 +1,4 @@
-﻿using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Enums;
 using Nexus.Core.Domain.Models.Stockers;
 using Nexus.Core.Domain.Models.Stockers.Interfaces;
@@ -207,7 +207,8 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("id", cassetteLocation.Id),
                 new HashEntry("name", cassetteLocation.Name),
                 new HashEntry("location_type", cassetteLocation.LocationType.ToString()),
-                new HashEntry("status", cassetteLocation.Status.ToString())
+                new HashEntry("status", cassetteLocation.Status.ToString()),
+                new HashEntry("current_item_id", cassetteLocation.CurrentItemId)
             };
 
             await _database.HashSetAsync($"{CASSETTE_LOCATION_KEY_PREFIX}{cassetteLocation.Id}", entries);

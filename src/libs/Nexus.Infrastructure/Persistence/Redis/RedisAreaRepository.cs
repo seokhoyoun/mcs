@@ -398,7 +398,8 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("id", cassetteLocation.Id),
                 new HashEntry("name", cassetteLocation.Name),
                 new HashEntry("location_type", cassetteLocation.LocationType.ToString()),
-                new HashEntry("status", cassetteLocation.Status.ToString())
+                new HashEntry("status", cassetteLocation.Status.ToString()),
+                new HashEntry("current_item_id", cassetteLocation.CurrentItemId)
             };
 
             await _database.HashSetAsync($"{CASSETTE_LOCATION_KEY_PREFIX}{cassetteLocation.Id}", hashEntries);
@@ -411,7 +412,8 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("id", trayLocation.Id),
                 new HashEntry("name", trayLocation.Name),
                 new HashEntry("location_type", trayLocation.LocationType.ToString()),
-                new HashEntry("status", trayLocation.Status.ToString())
+                new HashEntry("status", trayLocation.Status.ToString()),
+                new HashEntry("current_item_id", trayLocation.CurrentItemId)
             };
 
             await _database.HashSetAsync($"{TRAY_LOCATION_KEY_PREFIX}{trayLocation.Id}", hashEntries);
@@ -424,7 +426,8 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("id", memoryLocation.Id),
                 new HashEntry("name", memoryLocation.Name),
                 new HashEntry("location_type", memoryLocation.LocationType.ToString()),
-                new HashEntry("status", memoryLocation.Status.ToString())
+                new HashEntry("status", memoryLocation.Status.ToString()),
+                new HashEntry("current_item_id", memoryLocation.CurrentItemId)
             };
 
             await _database.HashSetAsync($"{MEMORY_LOCATION_KEY_PREFIX}{memoryLocation.Id}", hashEntries);

@@ -9,6 +9,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Nexus.Infrastructure.Persistence.Redis
 {
@@ -364,6 +365,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
         #endregion
 
         #region Private Helpers
+     
 
         private async Task<CassetteLocation?> GetCassetteLocationByIdAsync(string id)
         {
@@ -376,8 +378,11 @@ namespace Nexus.Infrastructure.Persistence.Redis
             string name = Helper.GetHashValue(hashEntries, "name");
             ELocationType locationType = Helper.GetHashValueAsEnum<ELocationType>(hashEntries, "location_type");
             ELocationStatus status = Helper.GetHashValueAsEnum<ELocationStatus>(hashEntries, "status");
+            string currentItemId = Helper.GetHashValue(hashEntries, "current_item_id");
 
             CassetteLocation loc = new CassetteLocation(id, name, locationType) { Status = status };
+            loc.CurrentItemId = currentItemId;
+
             return loc;
         }
 
@@ -392,8 +397,11 @@ namespace Nexus.Infrastructure.Persistence.Redis
             string name = Helper.GetHashValue(hashEntries, "name");
             ELocationType locationType = Helper.GetHashValueAsEnum<ELocationType>(hashEntries, "location_type");
             ELocationStatus status = Helper.GetHashValueAsEnum<ELocationStatus>(hashEntries, "status");
+            string currentItemId = Helper.GetHashValue(hashEntries, "current_item_id");
 
             TrayLocation loc = new TrayLocation(id, name, locationType) { Status = status };
+            loc.CurrentItemId = currentItemId;
+
             return loc;
         }
 
@@ -408,8 +416,11 @@ namespace Nexus.Infrastructure.Persistence.Redis
             string name = Helper.GetHashValue(hashEntries, "name");
             ELocationType locationType = Helper.GetHashValueAsEnum<ELocationType>(hashEntries, "location_type");
             ELocationStatus status = Helper.GetHashValueAsEnum<ELocationStatus>(hashEntries, "status");
+            string currentItemId = Helper.GetHashValue(hashEntries, "current_item_id");
 
             MemoryLocation loc = new MemoryLocation(id, name, locationType) { Status = status };
+            loc.CurrentItemId = currentItemId;
+
             return loc;
         }
 
@@ -424,19 +435,28 @@ namespace Nexus.Infrastructure.Persistence.Redis
             string name = Helper.GetHashValue(hashEntries, "name");
             ELocationType locationType = Helper.GetHashValueAsEnum<ELocationType>(hashEntries, "location_type");
             ELocationStatus status = Helper.GetHashValueAsEnum<ELocationStatus>(hashEntries, "status");
+            string currentItemId = Helper.GetHashValue(hashEntries, "current_item_id");
 
             RobotLocation loc = new RobotLocation(id, name, locationType) { Status = status };
+            loc.CurrentItemId = currentItemId;
+
             return loc;
         }
 
         private async Task SaveCassetteLocationAsync(CassetteLocation loc)
         {
+            string currentItemId = string.Empty;
+            if (loc.CurrentItemId != null)
+            {
+                currentItemId = loc.CurrentItemId;
+            }
             HashEntry[] entries = new HashEntry[]
             {
                 new HashEntry("id", loc.Id),
                 new HashEntry("name", loc.Name),
                 new HashEntry("location_type", loc.LocationType.ToString()),
-                new HashEntry("status", loc.Status.ToString())
+                new HashEntry("status", loc.Status.ToString()),
+                new HashEntry("current_item_id", currentItemId)
             };
             await _database.HashSetAsync($"{CASSETTE_LOCATION_KEY_PREFIX}{loc.Id}", entries);
             await _database.SetAddAsync(CASSETTE_LOCATIONS_ALL_KEY, loc.Id);
@@ -444,12 +464,18 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         private async Task SaveTrayLocationAsync(TrayLocation loc)
         {
+            string currentItemId = string.Empty;
+            if (loc.CurrentItemId != null)
+            {
+                currentItemId = loc.CurrentItemId;
+            }
             HashEntry[] entries = new HashEntry[]
             {
                 new HashEntry("id", loc.Id),
                 new HashEntry("name", loc.Name),
                 new HashEntry("location_type", loc.LocationType.ToString()),
-                new HashEntry("status", loc.Status.ToString())
+                new HashEntry("status", loc.Status.ToString()),
+                new HashEntry("current_item_id", currentItemId)
             };
             await _database.HashSetAsync($"{TRAY_LOCATION_KEY_PREFIX}{loc.Id}", entries);
             await _database.SetAddAsync(TRAY_LOCATIONS_ALL_KEY, loc.Id);
@@ -457,12 +483,19 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         private async Task SaveMemoryLocationAsync(MemoryLocation loc)
         {
+            string currentItemId = string.Empty;
+            if (loc.CurrentItemId != null)
+            {
+                currentItemId = loc.CurrentItemId;
+            }
+
             HashEntry[] entries = new HashEntry[]
             {
                 new HashEntry("id", loc.Id),
                 new HashEntry("name", loc.Name),
                 new HashEntry("location_type", loc.LocationType.ToString()),
-                new HashEntry("status", loc.Status.ToString())
+                new HashEntry("status", loc.Status.ToString()),
+                new HashEntry("current_item_id", currentItemId)
             };
             await _database.HashSetAsync($"{MEMORY_LOCATION_KEY_PREFIX}{loc.Id}", entries);
             await _database.SetAddAsync(MEMORY_LOCATIONS_ALL_KEY, loc.Id);
@@ -470,12 +503,19 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         private async Task SaveRobotLocationAsync(RobotLocation loc)
         {
+            string currentItemId = string.Empty;
+            if (loc.CurrentItemId != null)
+            {
+                currentItemId = loc.CurrentItemId;
+            }
+
             HashEntry[] entries = new HashEntry[]
             {
                 new HashEntry("id", loc.Id),
                 new HashEntry("name", loc.Name),
                 new HashEntry("location_type", loc.LocationType.ToString()),
-                new HashEntry("status", loc.Status.ToString())
+                new HashEntry("status", loc.Status.ToString()),
+                new HashEntry("current_item_id", currentItemId)
             };
             await _database.HashSetAsync($"{ROBOT_LOCATION_KEY_PREFIX}{loc.Id}", entries);
             await _database.SetAddAsync(ROBOT_LOCATIONS_ALL_KEY, loc.Id);
