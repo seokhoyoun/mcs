@@ -7,14 +7,7 @@ namespace Nexus.Core.Domain.Models.Locations
 {
     public class MemoryLocation : Location
     {
-        public override ITransportable? CurrentItem
-        {
-            get => _currentItem;
-            set => _currentItem = (Memory?)value;
-        }
-
-        private Memory? _currentItem;
-
+ 
         public MemoryLocation(string id, string name, ELocationType locationType) : base(id, name, locationType)
         {
         }

@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Nexus.Core.Domain.Models.Areas.Interfaces;
 using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Base;
@@ -61,7 +61,7 @@ namespace Nexus.Core.Domain.Models.Areas.Services
         public CassetteLocation? GetAvailableCassettePort(Area area)
         {
             return area.CassetteLocations
-                .FirstOrDefault(cp => cp.CurrentItem == null); // 비어있는 카세트 포트
+                .FirstOrDefault(cp => cp.CurrentItemId == null); // 비어있는 카세트 포트
         }
 
    

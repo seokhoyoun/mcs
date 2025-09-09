@@ -41,7 +41,7 @@ namespace Nexus.Portal
                 }
                 else
                 {
-                    connStr = "redis:6379";
+                    connStr = "localhost:6379";
                 }
                 return ConnectionMultiplexer.Connect(connStr);
             });

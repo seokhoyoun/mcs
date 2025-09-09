@@ -1,0 +1,53 @@
+﻿@using MudBlazor
+@using Microsoft.AspNetCore.Components
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.subtitle1">@Title</MudText>
+            <MudSelect T="string" Label="Location" @bind-Value="_selected" Dense="true" Required="true">
+                @foreach (string id in Locations)
+                {
+                    <MudSelectItem T="string" Value="@id">@id</MudSelectItem>
+                }
+            </MudSelect>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="OnConfirm">확인</MudButton>
+        <MudButton Color="Color.Default" Variant="Variant.Outlined" OnClick="OnCancel">취소</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance Dialog { get; set; } = default!;
+
+    [Parameter] public string Title { get; set; } = "위치 선택";
+    [Parameter] public List<string> Locations { get; set; } = new List<string>();
+    [Parameter] public string CurrentLocationId { get; set; } = string.Empty;
+
+    private string _selected = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        if (!string.IsNullOrEmpty(CurrentLocationId))
+        {
+            _selected = CurrentLocationId;
+        }
+        else if (Locations.Count > 0)
+        {
+            _selected = Locations[0];
+        }
+    }
+
+    private void OnConfirm()
+    {
+		Dialog.Close(DialogResult.Ok(_selected));
+    }
+
+    private void OnCancel()
+    {
+        Dialog.Cancel();
+    }
+}
