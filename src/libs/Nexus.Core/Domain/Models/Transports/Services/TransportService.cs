@@ -1,11 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Locations.Services;
 using Nexus.Core.Domain.Models.Transports.Enums;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using Nexus.Core.Domain.Shared.Bases;
-using Nexus.Shared.Application.DTO;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -31,10 +30,10 @@ namespace Nexus.Core.Domain.Models.Transports.Services
         public override async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
             // 모든 Transport 데이터 조회
-            var allTransports = await _transportRepository.GetAllAsync();
+            IReadOnlyList<ITransportable> allTransports = await _transportRepository.GetAllAsync();
 
             // 타입별로 분류하여 초기화
-            foreach (var transport in allTransports)
+            foreach (ITransportable transport in allTransports)
             {
                 switch (transport.TransportType)
                 {
@@ -72,7 +71,7 @@ namespace Nexus.Core.Domain.Models.Transports.Services
 
         public IReadOnlyList<ITransportable> GetAllTransports()
         {
-            var allTransports = new List<ITransportable>();
+            List<ITransportable> allTransports = new List<ITransportable>();
             allTransports.AddRange(_cassettes);
             allTransports.AddRange(_trays);
             allTransports.AddRange(_memories);

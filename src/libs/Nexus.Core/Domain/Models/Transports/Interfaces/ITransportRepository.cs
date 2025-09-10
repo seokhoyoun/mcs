@@ -1,7 +1,7 @@
-﻿using Nexus.Core.Domain.Models.Transports;
+using Nexus.Core.Domain.Models.Transports;
+using Nexus.Core.Domain.Models.Transports.DTO;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using Nexus.Core.Domain.Shared.Bases;
-using Nexus.Shared.Application.DTO;
 using System.Collections.Generic;
 
 public interface ITransportRepository : IRepository<ITransportable, string>
@@ -18,4 +18,6 @@ public interface ITransportRepository : IRepository<ITransportable, string>
 
     // Convenience accessor for UI mapping without altering models
     Task<string?> GetMemoryLocationIdAsync(string memoryId);
+
+    Task<CassetteHierarchyDto> GetCassetteHierarchyAsync();
 }

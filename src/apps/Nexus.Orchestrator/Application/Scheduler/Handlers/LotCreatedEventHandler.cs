@@ -1,7 +1,7 @@
 using Nexus.Core.Domain.Models.Lots;
 using Nexus.Core.Domain.Models.Lots.Events;
-using Nexus.Shared.Application.Interfaces;
 using Nexus.Orchestrator.Application.Scheduler.Services;
+using Nexus.Core.Domain.Shared.Events;
 
 namespace Nexus.Orchestrator.Application.Scheduler.Handlers
 {
@@ -16,25 +16,27 @@ namespace Nexus.Orchestrator.Application.Scheduler.Handlers
 
         public async Task HandleAsync(LotCreatedEvent @event, CancellationToken cancellationToken = default)
         {
-            // Lot Á¤º¸¸¦ Á¶È¸ÇÏ´Â ·ÎÁ÷ ÇÊ¿ä (¿¹: LotRepository µî)
-            // ¾Æ·¡´Â ¿¹½Ã·Î Lot °´Ã¼¸¦ Á÷Á¢ »ı¼º/Á¶È¸Çß´Ù°í °¡Á¤
-            // ½ÇÁ¦·Î´Â DI·Î ILotRepository¸¦ ¹Ş¾Æ¼­ Á¶È¸ÇØ¾ß ÇÔ
+            // Lot ì •ë³´ë¥¼ ì¡°íšŒí•˜ëŠ” ë¡œì§ í•„ìš” (ì˜ˆ: LotRepository ë“±)
+            // ì•„ë˜ëŠ” ì˜ˆì‹œë¡œ Lot ê°ì²´ë¥¼ ì§ì ‘ ìƒì„±/ì¡°íšŒí–ˆë‹¤ê³  ê°€ì •
+            // ì‹¤ì œë¡œëŠ” DIë¡œ ILotRepositoryë¥¼ ë°›ì•„ì„œ ì¡°íšŒí•´ì•¼ í•¨
 
-            // ¿¹½Ã: Lot lot = await _lotRepository.GetByIdAsync(@event.LotId, cancellationToken);
+            // ì˜ˆì‹œ: Lot lot = await _lotRepository.GetByIdAsync(@event.LotId, cancellationToken);
 
-            // ½ÇÁ¦ Lot Á¶È¸ ·ÎÁ÷À¸·Î ´ëÃ¼ ÇÊ¿ä
+            // ì‹¤ì œ Lot ì¡°íšŒ ë¡œì§ìœ¼ë¡œ ëŒ€ì²´ í•„ìš”
             Lot? lot = await GetLotByIdAsync(@event.LotId, cancellationToken);
             if (lot == null)
+            {
                 return;
+            }
 
-            // PlanGroup »ı¼º
+            // PlanGroup ìƒì„±
             //_schedulerService.CreatePlanGroup(lot);
         }
 
-        // ½ÇÁ¦ È¯°æ¿¡¼­´Â Repository¿¡¼­ LotÀ» Á¶È¸ÇØ¾ß ÇÔ
+        // ì‹¤ì œ í™˜ê²½ì—ì„œëŠ” Repositoryì—ì„œ Lotì„ ì¡°íšŒí•´ì•¼ í•¨
         private async Task<Lot?> GetLotByIdAsync(string lotId, CancellationToken cancellationToken)
         {
-            // TODO: DI·Î ILotRepository ¹Ş¾Æ¼­ Á¶È¸ÇÏµµ·Ï °³¼±
+            // TODO: DIë¡œ ILotRepository ë°›ì•„ì„œ ì¡°íšŒí•˜ë„ë¡ ê°œì„ 
             await Task.CompletedTask;
             return null;
         }

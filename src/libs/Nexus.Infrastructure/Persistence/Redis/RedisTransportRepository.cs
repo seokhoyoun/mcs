@@ -1,7 +1,9 @@
 using Nexus.Core.Domain.Models.Transports;
+using Nexus.Core.Domain.Models.Transports.DTO;
 using Nexus.Core.Domain.Models.Transports.Enums;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using StackExchange.Redis;
+using System.Diagnostics;
 using System.Linq.Expressions;
 
 namespace Nexus.Infrastructure.Persistence.Redis
@@ -313,6 +315,186 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 return null;
             }
             return locationId;
+        }
+
+        public async Task<CassetteHierarchyDto> GetCassetteHierarchyAsync()
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+
+            CassetteHierarchyDto hierarchyDto = new CassetteHierarchyDto();
+
+            // 1. 모든 Cassette IDs를 한 번에 가져오기
+            RedisValue[] cassetteIds = await _database.SetMembersAsync(CASSETTES_ALL_KEY);
+
+            if (cassetteIds.Length == 0)
+            {
+                return hierarchyDto;
+            }
+
+            // 2. Redis Pipeline을 사용하여 모든 Cassette 데이터를 병렬로 가져오기
+            IBatch batch = _database.CreateBatch();
+            Task<HashEntry[]>[] cassetteTasks = cassetteIds.Select(id =>
+                batch.HashGetAllAsync($"{CASSETTE_KEY_PREFIX}{id}")
+            ).ToArray();
+
+            batch.Execute();
+            HashEntry[][] cassetteHashes = await Task.WhenAll(cassetteTasks);
+
+            // 3. Cassette 객체들과 Tray ID 수집
+            List<Cassette> cassettes = new List<Cassette>();
+            HashSet<string> allTrayIds = new HashSet<string>();
+            Dictionary<string, string[]> cassetteTrayMap = new Dictionary<string, string[]>();
+
+            for (int i = 0; i < cassetteIds.Length; i++)
+            {
+                HashEntry[] hash = cassetteHashes[i];
+                if (hash.Length == 0)
+                {
+                    continue;
+                }
+
+                string cassetteId = cassetteIds[i].ToString();
+                string cassetteName = Helper.GetHashValue(hash, "name");
+                string trayIdsValue = Helper.GetHashValue(hash, "tray_ids");
+
+                string[] trayIds = trayIdsValue.Split(TRAY_ID_SEPARATOR, StringSplitOptions.RemoveEmptyEntries);
+                cassetteTrayMap[cassetteId] = trayIds;
+
+                foreach (string trayId in trayIds)
+                {
+                    allTrayIds.Add(trayId);
+                }
+
+                cassettes.Add(new Cassette(cassetteId, cassetteName, new List<Tray>()));
+            }
+
+            // 4. 모든 Tray 데이터를 병렬로 가져오기
+            if (allTrayIds.Count > 0)
+            {
+                IBatch trayBatch = _database.CreateBatch();
+                Task<HashEntry[]>[] trayTasks = allTrayIds.Select(trayId =>
+                    trayBatch.HashGetAllAsync($"{TRAY_KEY_PREFIX}{trayId}")
+                ).ToArray();
+
+                trayBatch.Execute();
+                HashEntry[][] trayHashes = await Task.WhenAll(trayTasks);
+
+                // 5. Tray 객체들과 Memory ID 수집
+                HashSet<string> allMemoryIds = new HashSet<string>();
+                Dictionary<string, string[]> trayMemoryMap = new Dictionary<string, string[]>();
+                Dictionary<string, HashEntry[]> trayIdToHash = new Dictionary<string, HashEntry[]>();
+
+                string[] trayIdArray = allTrayIds.ToArray();
+                for (int i = 0; i < trayIdArray.Length; i++)
+                {
+                    HashEntry[] hash = trayHashes[i];
+                    if (hash.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    string trayId = trayIdArray[i];
+                    trayIdToHash[trayId] = hash;
+
+                    string memoryIdsValue = Helper.GetHashValue(hash, "memory_ids");
+                    string[] memoryIds = memoryIdsValue.Split(MEMORY_ID_SEPARATOR, StringSplitOptions.RemoveEmptyEntries);
+                    trayMemoryMap[trayId] = memoryIds;
+
+                    foreach (string memoryId in memoryIds)
+                    {
+                        allMemoryIds.Add(memoryId);
+                    }
+                }
+
+                // 6. 모든 Memory 데이터를 병렬로 가져오기
+                Dictionary<string, Memory> memoryMap = new Dictionary<string, Memory>();
+                if (allMemoryIds.Count > 0)
+                {
+                    IBatch memoryBatch = _database.CreateBatch();
+                    Task<HashEntry[]>[] memoryTasks = allMemoryIds.Select(memoryId =>
+                        memoryBatch.HashGetAllAsync($"{MEMORY_KEY_PREFIX}{memoryId}")
+                    ).ToArray();
+
+                    memoryBatch.Execute();
+                    HashEntry[][] memoryHashes = await Task.WhenAll(memoryTasks);
+
+                    string[] memoryIdArray = allMemoryIds.ToArray();
+                    for (int i = 0; i < memoryIdArray.Length; i++)
+                    {
+                        HashEntry[] hash = memoryHashes[i];
+                        if (hash.Length == 0)
+                        {
+                            continue;
+                        }
+
+                        string memoryId = memoryIdArray[i];
+                        string memoryName = Helper.GetHashValue(hash, "name");
+                        string deviceId = Helper.GetHashValue(hash, "device_id");
+
+                        Memory memory = new Memory(memoryId, memoryName);
+                        memory.DeviceId = deviceId;
+                        memoryMap[memoryId] = memory;
+                    }
+                }
+
+                // 7. Tray 객체 생성 및 Memory 매핑
+                Dictionary<string, IReadOnlyList<Tray>> cassetteTraysDict = new Dictionary<string, IReadOnlyList<Tray>>();
+                Dictionary<string, IReadOnlyList<Memory>> trayMemoriesDict = new Dictionary<string, IReadOnlyList<Memory>>();
+
+                foreach (Cassette cassette in cassettes)
+                {
+                    if (!cassetteTrayMap.TryGetValue(cassette.Id, out string[]? trayIds))
+                    {
+                        cassetteTraysDict[cassette.Id] = new List<Tray>();
+                        continue;
+                    }
+
+                    List<Tray> trays = new List<Tray>();
+
+                    foreach (string trayId in trayIds)
+                    {
+                        if (!trayIdToHash.TryGetValue(trayId, out HashEntry[]? trayHash))
+                        {
+                            continue;
+                        }
+
+                        string trayName = Helper.GetHashValue(trayHash, "name");
+                        Tray tray = new Tray(trayId, trayName, new List<Memory>());
+                        trays.Add(tray);
+
+                        // Tray의 Memory들 매핑
+                        if (trayMemoryMap.TryGetValue(trayId, out string[]? memoryIds))
+                        {
+                            List<Memory> memories = new List<Memory>();
+                            foreach (string memoryId in memoryIds)
+                            {
+                                if (memoryMap.TryGetValue(memoryId, out Memory? memory))
+                                {
+                                    memories.Add(memory);
+                                }
+                            }
+                            trayMemoriesDict[trayId] = memories.AsReadOnly();
+                        }
+                        else
+                        {
+                            trayMemoriesDict[trayId] = new List<Memory>();
+                        }
+                    }
+
+                    cassetteTraysDict[cassette.Id] = trays.AsReadOnly();
+                }
+
+                hierarchyDto.CassetteTrays = cassetteTraysDict;
+                hierarchyDto.TrayMemories = trayMemoriesDict;
+            }
+
+            hierarchyDto.Cassettes = cassettes.AsReadOnly();
+
+            stopwatch.Stop();
+            System.Diagnostics.Debug.WriteLine($"GetCassetteHierarchyAsync 완료: {stopwatch.ElapsedMilliseconds}ms");
+
+            return hierarchyDto;
+
         }
 
         #endregion

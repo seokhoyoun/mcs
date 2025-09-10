@@ -1,5 +1,7 @@
 using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Locations.Enums;
+using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Stockers;
 using Nexus.Core.Domain.Models.Stockers.Interfaces;
 using StackExchange.Redis;
@@ -12,11 +14,11 @@ namespace Nexus.Infrastructure.Persistence.Redis
         #region Fields
 
         private readonly IDatabase _database;
+        private readonly ILocationRepository _locationRepository;
 
         private const string STOCKERS_ALL_KEY = "stockers:all";
 
         private const string STOCKER_KEY_PREFIX = "stocker:";
-        private const string CASSETTE_LOCATION_KEY_PREFIX = "cassette_location:";
 
         private const string ID_SEPARATOR = ",";
 
@@ -24,9 +26,10 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         #region Constructor
 
-        public RedisStockerRepository(IConnectionMultiplexer connection)
+        public RedisStockerRepository(IConnectionMultiplexer connection, ILocationRepository locationRepository)
         {
             _database = connection.GetDatabase();
+            _locationRepository = locationRepository;
         }
 
         #endregion
@@ -70,12 +73,13 @@ namespace Nexus.Infrastructure.Persistence.Redis
             string[] cassettePortIds = cassettePortIdsValue.Split(ID_SEPARATOR, StringSplitOptions.RemoveEmptyEntries);
 
             List<CassetteLocation> cassettePorts = new List<CassetteLocation>();
+
             foreach (string portId in cassettePortIds)
             {
-                CassetteLocation? port = await GetCassetteLocationByIdAsync(portId);
-                if (port != null)
+                Location? location = await _locationRepository.GetByIdAsync(portId, cancellationToken);
+                if (location is CassetteLocation cassetteLocation)
                 {
-                    cassettePorts.Add(port);
+                    cassettePorts.Add(cassetteLocation);
                 }
             }
 
@@ -84,7 +88,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         public async Task<Stocker> AddAsync(Stocker entity, CancellationToken cancellationToken = default)
         {
-            await SaveStockerAsync(entity);
+            await SaveStockerAsync(entity, cancellationToken);
             return entity;
         }
 
@@ -160,7 +164,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         #region Private Helpers
 
-        private async Task SaveStockerAsync(Stocker stocker)
+        private async Task SaveStockerAsync(Stocker stocker, CancellationToken cancellationToken = default)
         {
             string cassettePortIds = string.Join(ID_SEPARATOR, stocker.CassettePorts.Select(cp => cp.Id));
 
@@ -171,47 +175,14 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("cassette_port_ids", cassettePortIds)
             };
 
-            // Save child cassette ports first (without registering to global location sets, matching Area behavior)
+            // locationRepository를 통해 cassette location 저장
             foreach (CassetteLocation port in stocker.CassettePorts)
             {
-                await SaveCassetteLocationAsync(port);
+                await _locationRepository.AddAsync(port, cancellationToken);
             }
 
             await _database.HashSetAsync($"{STOCKER_KEY_PREFIX}{stocker.Id}", entries);
             await _database.SetAddAsync(STOCKERS_ALL_KEY, stocker.Id);
-        }
-
-        private async Task<CassetteLocation?> GetCassetteLocationByIdAsync(string id)
-        {
-            HashEntry[] hashEntries = await _database.HashGetAllAsync($"{CASSETTE_LOCATION_KEY_PREFIX}{id}");
-            if (hashEntries.Length == 0)
-            {
-                return null;
-            }
-
-            string name = Helper.GetHashValue(hashEntries, "name");
-            ELocationType locationType = Helper.GetHashValueAsEnum<ELocationType>(hashEntries, "location_type");
-            ELocationStatus status = Helper.GetHashValueAsEnum<ELocationStatus>(hashEntries, "status");
-
-            CassetteLocation loc = new CassetteLocation(id, name, locationType)
-            {
-                Status = status
-            };
-            return loc;
-        }
-
-        private async Task SaveCassetteLocationAsync(CassetteLocation cassetteLocation)
-        {
-            HashEntry[] entries = new HashEntry[]
-            {
-                new HashEntry("id", cassetteLocation.Id),
-                new HashEntry("name", cassetteLocation.Name),
-                new HashEntry("location_type", cassetteLocation.LocationType.ToString()),
-                new HashEntry("status", cassetteLocation.Status.ToString()),
-                new HashEntry("current_item_id", cassetteLocation.CurrentItemId)
-            };
-
-            await _database.HashSetAsync($"{CASSETTE_LOCATION_KEY_PREFIX}{cassetteLocation.Id}", entries);
         }
 
         #endregion

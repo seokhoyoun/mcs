@@ -16,9 +16,10 @@ namespace Nexus.Sandbox
         {
 
             ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost:6379");
+            RedisLocationRepository locationRepo = new RedisLocationRepository(redis);
             RedisTransportRepository transportRepo = new RedisTransportRepository(redis);
-            RedisAreaRepository areaRepo = new RedisAreaRepository(redis);
-            RedisStockerRepository stockerRepo = new RedisStockerRepository(redis);
+            RedisAreaRepository areaRepo = new RedisAreaRepository(redis, locationRepo);
+            RedisStockerRepository stockerRepo = new RedisStockerRepository(redis, locationRepo);
 
             List<IDataSeeder> seeders = new List<IDataSeeder>
             {

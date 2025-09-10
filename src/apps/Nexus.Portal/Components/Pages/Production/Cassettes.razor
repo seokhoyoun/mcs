@@ -1,30 +1,42 @@
 ﻿@page "/production/cassettes"
+@using System.Diagnostics
+@using Microsoft.AspNetCore.Components.Web
 @using MudBlazor
 @using MudBlazor.Components
-@using Nexus.Core.Domain.Models.Locations.Base
-@using Nexus.Core.Domain.Models.Locations.Interfaces
-@using Nexus.Core.Domain.Models.Locations.Enums
-@using Nexus.Core.Domain.Models.Transports
-@using Nexus.Core.Domain.Models.Transports.Interfaces
-@using Nexus.Shared.Application.DTO
 @using Nexus.Core.Domain.Models.Locations
+@using Nexus.Core.Domain.Models.Locations.Base
+@using Nexus.Core.Domain.Models.Locations.Enums
+@using Nexus.Core.Domain.Models.Locations.Interfaces
 @using Nexus.Core.Domain.Models.Locations.Services
-@using Microsoft.AspNetCore.Components.Web
+@using Nexus.Core.Domain.Models.Transports
+@using Nexus.Core.Domain.Models.Transports.DTO
+@using Nexus.Core.Domain.Models.Transports.Interfaces
 @inject ITransportRepository TransportRepository
 @inject ILocationRepository LocationRepository
 @inject IDialogService DialogService
+@inject ILogger<Cassettes> Logger
 
 <MudPaper Class="pa-4">
-
-    <MudDataGrid T="CassetteGridItem"
+    @if (_isLoading)
+    {
+        <div class="d-flex justify-center align-center" style="height: 600px;">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+            <MudText Class="ml-2">데이터 로딩 중...</MudText>
+        </div>
+    }
+    else
+    {
+        <MudDataGrid T="CassetteGridItem"
                  Class="text-caption"
                  Items="_gridItems"
+                 @bind-SelectedItems="_selectedItems"
                  Dense="true"
                  Hover="true"
                  Bordered="true"
                  Striped="true"
                  Filterable="true"
                  SortMode="SortMode.Multiple"
+                 MultiSelection="true"
                  QuickFilter="@QuickFilter"
                  Hideable="true"
                  RowsPerPage="25"
@@ -40,9 +52,17 @@
                           AdornmentIcon="@Icons.Material.Filled.Search"
                           IconSize="Size.Medium"
                           Class="mx-2" />
+                <MudButton StartIcon="@Icons.Material.Filled.Clear"
+                           Color="Color.Default"
+                           Variant="Variant.Outlined"
+                           OnClick="@OnClearLocations"
+                           Disabled="@(_selectedItems?.Count == 0)">
+                    Clear Locations (@(_selectedItems?.Count ?? 0))
+                </MudButton>
         </ToolBarContent>
 
         <Columns>
+            <SelectColumn></SelectColumn>
             <TemplateColumn Title="TYPE" Sortable="true">
                 <CellTemplate>
                     <div class="d-flex align-center">
@@ -75,93 +95,124 @@
             <MudDataGridPager />
         </PagerContent>
     </MudDataGrid>
+    }
 
 </MudPaper>
 
 @code {
-    private List<CassetteGridItem> _gridItems = new();
+    private bool _isLoading = true; // 로딩 상태 변수 추가
+
     private string _searchString = string.Empty;
-    private CassetteGridItem? _selectedItem;
+    private List<TransportDto> _gridItems = new();
+    private HashSet<TransportDto> _selectedItems = new();
+    private TransportDto? _selectedItem;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+
             _gridItems.Clear();
 
-            Dictionary<string, Location> locationMap = new();
-            IReadOnlyList<Location> locations = await LocationRepository.GetAllAsync();
-            foreach (var location in locations)
+            try
             {
-                if (!string.IsNullOrEmpty(location.CurrentItemId))
-                {
-                    locationMap[location.CurrentItemId] = location;
-                }
-            }
+                // 병렬로 데이터 로드
+                Task<IReadOnlyList<Location>> locationTask = LocationRepository.GetAllAsync();
+                Task<CassetteHierarchyDto> hierarchyTask = TransportRepository.GetCassetteHierarchyAsync();
 
-            IReadOnlyList<Cassette> cassettes = await TransportRepository.GetCassettesWithoutTraysAsync();
-            foreach (Cassette cassette in cassettes)
-            {
-                string locationId = string.Empty;
-                if (locationMap.ContainsKey(cassette.Id))
-                {
-                    locationId = locationMap[cassette.Id].Id;
-                }
+                await Task.WhenAll(locationTask, hierarchyTask);
 
-                CassetteGridItem cassetteItem = new CassetteGridItem
-                {
-                    Type = "Cassette",
-                    Id = cassette.Id,
-                    DeviceId = string.Empty,
-                    LocationId = locationId
-                };
-                _gridItems.Add(cassetteItem);
+                IReadOnlyList<Location> locations = await locationTask;
+                CassetteHierarchyDto hierarchy = await hierarchyTask;
 
-                IReadOnlyList<Tray> trays = await TransportRepository.GetTraysWithoutMemoriesAsync(cassette.Id);
-                foreach (Tray tray in trays)
+                // 위치 맵 생성 최적화
+                Dictionary<string, Location> locationMap = locations
+                    .Where(location => !string.IsNullOrEmpty(location.CurrentItemId))
+                    .ToDictionary(location => location.CurrentItemId, location => location);
+
+                // 계층 구조 데이터를 평면화하여 그리드 아이템 생성
+                foreach (Cassette cassette in hierarchy.Cassettes)
                 {
-                    string trayLocationId = string.Empty;
-                    if (locationMap.ContainsKey(tray.Id))
+                    // Cassette 아이템 추가
+                    string cassetteLocationId = string.Empty;
+                    if (locationMap.TryGetValue(cassette.Id, out Location? cassetteLocation))
                     {
-                        trayLocationId = locationMap[tray.Id].Id;
+                        cassetteLocationId = cassetteLocation.Id;
                     }
 
-                    CassetteGridItem trayItem = new CassetteGridItem
+                    TransportDto cassetteItem = new TransportDto
                     {
-                        Type = "Tray",
-                        Id = tray.Id,
-                        Parent = cassette.Id,
+                        Type = "Cassette",
+                        Id = cassette.Id,
                         DeviceId = string.Empty,
-                        LocationId = trayLocationId
+                        LocationId = cassetteLocationId
                     };
-                    _gridItems.Add(trayItem);
+                    _gridItems.Add(cassetteItem);
 
-                    IReadOnlyList<Memory> memories = await TransportRepository.GetMemoriesAsync(tray.Id);
-                    foreach (var memory in memories)
+                    // 해당 Cassette의 Tray들 처리
+                    if (hierarchy.CassetteTrays.TryGetValue(cassette.Id, out IReadOnlyList<Tray>? trays))
                     {
-                        string memoryLocationId = string.Empty;
-                        if (locationMap.ContainsKey(tray.Id))
+                        foreach (Tray tray in trays)
                         {
-                            memoryLocationId = locationMap[memory.Id].Id;
+                            string trayLocationId = string.Empty;
+                            if (locationMap.TryGetValue(tray.Id, out Location? trayLocation))
+                            {
+                                trayLocationId = trayLocation.Id;
+                            }
+
+                            TransportDto trayItem = new TransportDto
+                            {
+                                Type = "Tray",
+                                Id = tray.Id,
+                                Parent = cassette.Id,
+                                DeviceId = string.Empty,
+                                LocationId = trayLocationId
+                            };
+                            _gridItems.Add(trayItem);
+
+                            // 해당 Tray의 Memory들 처리
+                            if (hierarchy.TrayMemories.TryGetValue(tray.Id, out IReadOnlyList<Memory>? memories))
+                            {
+                                foreach (Memory memory in memories)
+                                {
+                                    string memoryLocationId = string.Empty;
+                                    if (locationMap.TryGetValue(memory.Id, out Location? memoryLocation))
+                                    {
+                                        memoryLocationId = memoryLocation.Id;
+                                    }
+
+                                    TransportDto memoryItem = new TransportDto
+                                    {
+                                        Type = "Memory",
+                                        Id = memory.Id,
+                                        Parent = tray.Id,
+                                        DeviceId = memory.DeviceId,
+                                        LocationId = memoryLocationId
+                                    };
+                                    _gridItems.Add(memoryItem);
+                                }
+                            }
                         }
-                        CassetteGridItem memoryItem = new CassetteGridItem
-                        {
-                            Type = "Memory",
-                            Id = memory.Id,
-                            Parent = tray.Id,
-                            DeviceId = memory.DeviceId,
-                            LocationId = memoryLocationId
-                        };
-                        _gridItems.Add(memoryItem);
                     }
                 }
-            }
 
-            StateHasChanged();
+                stopwatch.Stop();
+                Logger.LogInformation($"UI 데이터 로딩 완료: {stopwatch.ElapsedMilliseconds}ms, 총 {_gridItems.Count}개 아이템");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"데이터 로딩 중 오류: {ex.Message}");
+            }
+            finally
+            {
+                _isLoading = false;
+                StateHasChanged();
+            }
         }
     }
 
-    private Func<CassetteGridItem, bool> QuickFilter
+    private Func<TransportDto, bool> QuickFilter
     {
         get
         {
@@ -214,19 +265,67 @@
 
     private string GetTypeIcon(string type)
     {
-        return type switch
+		string icon = string.Empty;
+
+        switch (type)
         {
-            "Cassette" => Icons.Material.Filled.Inbox,
-            "Tray" => Icons.Material.Filled.TableRows,
-            "Memory" => Icons.Material.Filled.Memory,
-            _ => Icons.Material.Filled.Circle
-        };
+            case "Cassette":
+                icon = Icons.Material.Filled.Inbox;
+                break;
+            case "Tray":
+                icon = Icons.Material.Filled.TableRows;
+                break;
+            case "Memory":
+                icon = Icons.Material.Filled.Memory;
+                break;
+            default:
+                icon = Icons.Material.Filled.Circle;
+                break;
+        }
+
+		return icon;
     }
 
-    private async void OnRowContextMenu(MouseEventArgs e, CassetteGridItem item)
+    private async void OnRowContextMenu(MouseEventArgs e, TransportDto item)
     {
         _selectedItem = item;
         await OpenChangeLocationDialog();
+    }
+
+    private async void OnClearLocations()
+    {
+        if (_selectedItems == null || _selectedItems.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            foreach (var selectedItem in _selectedItems.ToList())
+            {
+                if (string.IsNullOrEmpty(selectedItem.LocationId))
+                {
+                    continue;
+				}
+
+				Location? oldLocation = await LocationRepository.GetByIdAsync(selectedItem.LocationId);
+				if (oldLocation != null)
+				{
+					oldLocation.CurrentItemId = string.Empty;
+					await LocationRepository.UpdateAsync(oldLocation);
+				}
+
+				selectedItem.LocationId = string.Empty;
+            }
+
+            _selectedItems.Clear();
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Debug.Assert(false, $"위치 정보 지우기 중 오류 발생: {ex.Message}");
+        }
     }
 
     private async Task OpenChangeLocationDialog()
@@ -286,7 +385,7 @@
         }
     }
 
-    private async Task ApplyLocationChangeAsync(CassetteGridItem item, string newLocationId)
+    private async Task ApplyLocationChangeAsync(TransportDto item, string newLocationId)
     {
         if (!string.IsNullOrEmpty(item.LocationId))
         {

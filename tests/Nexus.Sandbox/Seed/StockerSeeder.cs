@@ -38,18 +38,18 @@ namespace Nexus.Sandbox.Seed
                 string stockerId = "ST01";
                 string stockerName = "Main Stocker";
 
-                List<CassetteLocation> cassettePorts = new List<CassetteLocation>();
-                for (int portIdx = 1; portIdx <= 12; portIdx++)
+                List<CassetteLocation> cassetteLocations = new List<CassetteLocation>();
+                for (int i = 1; i <= 12; i++)
                 {
-                    string portId = $"{stockerId}.CP{portIdx:00}";
-                    cassettePorts.Add(new CassetteLocation(
+                    string portId = $"{stockerId}.CP{i:00}";
+                    cassetteLocations.Add(new CassetteLocation(
                         id: portId,
-                        name: $"{stockerName}_CASSETTEPORT{portIdx:00}",
+                        name: $"{stockerName}_cp{i:00}",
                         locationType: ELocationType.Cassette
                     ));
                 }
 
-                Stocker stocker = new Stocker(stockerId, stockerName, cassettePorts);
+                Stocker stocker = new Stocker(stockerId, stockerName, cassetteLocations);
                 stockers.Add(stocker);
 
                 // JSON 파일로 저장

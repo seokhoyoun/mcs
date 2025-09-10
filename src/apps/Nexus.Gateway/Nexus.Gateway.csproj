@@ -16,7 +16,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\libs\Nexus.Core\Nexus.Core.csproj" />
     <ProjectReference Include="..\..\libs\Nexus.Infrastructure\Nexus.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\libs\Nexus.Shared\Nexus.Shared.csproj" />
   </ItemGroup>
 
 </Project>
