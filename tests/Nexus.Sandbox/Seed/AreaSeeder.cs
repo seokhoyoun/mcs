@@ -37,7 +37,7 @@ namespace Nexus.Sandbox.Seed
                 for (int areaIdx = 1; areaIdx <= 2; areaIdx++)
                 {
                     string areaId = $"A{areaIdx:00}";
-                    string areaName = $"AREA{areaIdx:00}";
+                    string areaName = $"area{areaIdx:00}";
 
                     List<CassetteLocation> cassetteLocations = new List<CassetteLocation>();
                     List<TrayLocation> trayLocations = new List<TrayLocation>();
@@ -47,7 +47,7 @@ namespace Nexus.Sandbox.Seed
                         string cassetteLocationId = $"{areaId}.CP{cassetteIdx:00}";
                         cassetteLocations.Add(new CassetteLocation(
                             id: cassetteLocationId,
-                            name: $"{areaName}_CASSETTEPORT{cassetteIdx:00}",
+                            name: $"{areaName}_cp{cassetteIdx:00}",
                             locationType: ELocationType.Cassette));
 
                         for (int trayIdx = 1; trayIdx <= 6; trayIdx++)
@@ -55,7 +55,7 @@ namespace Nexus.Sandbox.Seed
                             string trayLocationId = $"{areaId}.CP{cassetteIdx:00}.TP{trayIdx:00}";
                             trayLocations.Add(new TrayLocation(
                                 id: trayLocationId,
-                                name: $"{areaName}_CASSETTEPORT{cassetteIdx:00}_TRAYPORT{trayIdx:00}",
+                                name: $"{areaName}_cp{cassetteIdx:00}_tp{trayIdx:00}",
                                 locationType: ELocationType.Tray));
                         }
                     }
@@ -68,14 +68,14 @@ namespace Nexus.Sandbox.Seed
                         {
                             memoryLocations.Add(new MemoryLocation(
                                 id: $"{areaId}.SET{i:00}.MP{m:00}",
-                                name: $"{areaName}_SET{i:00}_MEMORYPORT{m:00}",
+                                name: $"{areaName}_set{i:00}_mp{m:00}",
                                 locationType: ELocationType.Memory));
                         }
 
                         sets.Add(new Set(
                             id: $"{areaId}.SET{i:00}",
-                            name: $"{areaName}_SET{i:00}",
-                            memoryPorts: memoryLocations));
+                            name: $"{areaName}_set{i:00}",
+                            memoryLocations: memoryLocations));
                     }
 
                     Area area = new Area(areaId, areaName, cassetteLocations, trayLocations, sets);

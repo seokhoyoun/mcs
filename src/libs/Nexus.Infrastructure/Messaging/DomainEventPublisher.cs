@@ -1,5 +1,5 @@
-﻿using Nexus.Core.Messaging;
-using Nexus.Shared.Application.Interfaces;
+using Nexus.Core.Domain.Shared.Events;
+using Nexus.Core.Messaging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,8 +20,8 @@ namespace Nexus.Infrastructure.Messaging
 
         public async Task PublishAsync<TEvent>(TEvent @event, CancellationToken cancellationToken = default)
         {
-            var eventType = typeof(TEvent).Name;
-            var message = JsonSerializer.Serialize(@event);
+            string eventType = typeof(TEvent).Name;
+            string message = JsonSerializer.Serialize(@event);
             await _messagePublisher.PublishAsync(eventType, message, cancellationToken);
         }
     }

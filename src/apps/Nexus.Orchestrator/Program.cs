@@ -9,6 +9,7 @@ using Nexus.Core.Domain.Models.Stockers.Interfaces;
 using Nexus.Core.Domain.Models.Stockers.Services;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using Nexus.Core.Domain.Models.Transports.Services;
+using Nexus.Core.Domain.Shared.Events;
 using Nexus.Core.Messaging;
 using Nexus.Infrastructure.Messaging;
 using Nexus.Infrastructure.Messaging.Redis;
@@ -18,7 +19,6 @@ using Nexus.Orchestrator.Application.Acs.Services;
 using Nexus.Orchestrator.Application.Scheduler;
 using Nexus.Orchestrator.Application.Scheduler.Services;
 using Nexus.Orchestrator.Application.Scheduler.Services.EventHandlers;
-using Nexus.Shared.Application.Interfaces;
 using Prometheus;
 using StackExchange.Redis;
 
@@ -46,7 +46,7 @@ namespace Nexus.Orchestrator
                 }
                 else
                 {
-                    connStr = "redis:6379";
+                    connStr = "localhost:6379";
                 }
                 return ConnectionMultiplexer.Connect(connStr);
             });

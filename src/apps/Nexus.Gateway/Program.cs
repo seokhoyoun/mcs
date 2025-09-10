@@ -8,13 +8,13 @@ using Nexus.Core.Domain.Models.Stockers.Interfaces;
 using Nexus.Core.Domain.Models.Stockers.Services;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using Nexus.Core.Domain.Models.Transports.Services;
+using Nexus.Core.Domain.Shared.Events;
 using Nexus.Core.Messaging;
 using Nexus.Gateway.Services;
 using Nexus.Gateway.Services.Interfaces;
 using Nexus.Infrastructure.Messaging;
 using Nexus.Infrastructure.Messaging.Redis;
 using Nexus.Infrastructure.Persistence.Redis;
-using Nexus.Shared.Application.Interfaces;
 using StackExchange.Redis;
 using System.Text.Json;
 

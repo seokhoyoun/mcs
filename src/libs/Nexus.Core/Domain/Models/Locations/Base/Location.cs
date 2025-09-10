@@ -19,6 +19,7 @@ namespace Nexus.Core.Domain.Models.Locations.Base
             Name = name;
             LocationType = locationType;
         }
- 
+
+
     }
 }

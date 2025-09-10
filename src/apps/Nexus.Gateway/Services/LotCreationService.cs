@@ -3,9 +3,9 @@ using Nexus.Core.Domain.Models.Lots.Enums;
 using Nexus.Core.Domain.Models.Lots.Events;
 using Nexus.Core.Domain.Models.Lots.Interfaces;
 using Nexus.Core.Domain.Models.Transports;
+using Nexus.Core.Domain.Shared.Events;
 using Nexus.Gateway.Services.Commands;
 using Nexus.Gateway.Services.Interfaces;
-using Nexus.Shared.Application.Interfaces;
 
 namespace Nexus.Gateway.Services
 {
@@ -24,8 +24,8 @@ namespace Nexus.Gateway.Services
 
         public async Task<string> CreateLotAsync(CreateLotCommand command, CancellationToken cancellationToken = default)
         {
-            // Lot »ı¼º
-            var lot = new Lot(
+            // Lot ìƒì„±
+            Lot lot = new Lot(
                 id: command.Id,
                 name: command.Name,
                 status: ELotStatus.Waiting,
@@ -40,14 +40,14 @@ namespace Nexus.Gateway.Services
                 cassetteIds: command.CassetteIds
             );
 
-            // LotStep »ı¼º (¿äÃ»¿¡ Æ÷ÇÔµÈ °æ¿ì)
+            // LotStep ìƒì„± (ìš”ì²­ì— í¬í•¨ëœ ê²½ìš°)
             if (command.Steps != null && command.Steps.Any())
             {
                 foreach (CreateLotStepCommand stepCommand in command.Steps)
                 {
                     string stepId = $"{lot.Id}_{stepCommand.No:D2}";
 
-                    var lotStep = new LotStep(
+                    LotStep lotStep = new LotStep(
                         id: stepId,
                         lotId: lot.Id,
                         name: stepId,
@@ -59,18 +59,18 @@ namespace Nexus.Gateway.Services
                         status: ELotStatus.Waiting
                     );
 
-                    // LotStepÀ» Lot¿¡ Ãß°¡
+                    // LotStepì„ Lotì— ì¶”ê°€
                     lot.LotSteps.Add(lotStep);
 
                     //await _lotRepository.AddLotStepAsync(lot.Id, lotStep, cancellationToken);
                 }
             }
 
-            // Lot ÀúÀå (Redis lot:{lotId})
+            // Lot ì €ì¥ (Redis lot:{lotId})
             await _lotRepository.AddAsync(lot, cancellationToken);
 
-            // LotCreatedEvent¸¦ ¹ßÇàÇÏ¿© Orchestrator·Î ¸Ş½ÃÁö Àü´Ş
-            var lotCreatedEvent = new LotCreatedEvent(lot.Id);
+            // LotCreatedEventë¥¼ ë°œí–‰í•˜ì—¬ Orchestratorë¡œ ë©”ì‹œì§€ ì „ë‹¬
+            LotCreatedEvent lotCreatedEvent = new LotCreatedEvent(lot.Id);
             await _eventPublisher.PublishAsync(lotCreatedEvent, cancellationToken);
 
             return lot.Id;

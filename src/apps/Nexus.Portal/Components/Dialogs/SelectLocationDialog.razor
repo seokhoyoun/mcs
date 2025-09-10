@@ -6,10 +6,12 @@
     <DialogContent>
         <MudStack Spacing="2">
             <MudText Typo="Typo.subtitle1">@Title</MudText>
-            <MudSelect T="string" Label="Location" @bind-Value="_selected" Dense="true" Required="true">
+            <MudSelect T="string" Label="Location" @bind-Value="_selected" Dense="true" >
                 @foreach (string id in Locations)
                 {
-                    <MudSelectItem T="string" Value="@id">@id</MudSelectItem>
+                    <MudSelectItem T="string" Value="@id">
+                        @id
+                    </MudSelectItem>
                 }
             </MudSelect>
         </MudStack>
@@ -40,6 +42,7 @@
             _selected = Locations[0];
         }
     }
+
 
     private void OnConfirm()
     {

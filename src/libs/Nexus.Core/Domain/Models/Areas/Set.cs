@@ -1,4 +1,4 @@
-﻿using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Transports;
 using Nexus.Core.Domain.Shared.Bases;
 using System;
@@ -14,16 +14,16 @@ namespace Nexus.Core.Domain.Models.Areas
     {
         public string Id { get; }
         public string Name { get; }
-        public IReadOnlyList<MemoryLocation> MemoryPorts => _memoryPorts.AsReadOnly();
+        public IReadOnlyList<MemoryLocation> MemoryLocations => _memoryLocations.AsReadOnly();
 
-        private readonly List<MemoryLocation> _memoryPorts = new List<MemoryLocation>();
+        private readonly List<MemoryLocation> _memoryLocations = new List<MemoryLocation>();
 
-        public Set(string id, string name, IReadOnlyList<MemoryLocation> memoryPorts)
+        public Set(string id, string name, IReadOnlyList<MemoryLocation> memoryLocations)
         {
             Id = id;
             Name = name;
 
-            _memoryPorts.AddRange(memoryPorts);
+            _memoryLocations.AddRange(memoryLocations);
         }
     }
 }

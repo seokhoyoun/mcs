@@ -3,7 +3,9 @@ using Nexus.Core.Domain.Models.Areas;
 using Nexus.Core.Domain.Models.Areas.Enums;
 using Nexus.Core.Domain.Models.Areas.Interfaces;
 using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Locations.Enums;
+using Nexus.Core.Domain.Models.Locations.Interfaces;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -18,15 +20,13 @@ namespace Nexus.Infrastructure.Persistence.Redis
         #region Fields
 
         private readonly IDatabase _database;
+        private readonly ILocationRepository _locationRepository;
 
         private const string AREAS_ALL_KEY = "areas:all";
         private const string SETS_ALL_KEY = "sets:all";
 
         private const string AREA_KEY_PREFIX = "area:";
         private const string SET_KEY_PREFIX = "set:";
-        private const string CASSETTE_LOCATION_KEY_PREFIX = "cassette_location:";
-        private const string TRAY_LOCATION_KEY_PREFIX = "tray_location:";
-        private const string MEMORY_LOCATION_KEY_PREFIX = "memory_location:";
 
         private const string ID_SEPARATOR = ",";
 
@@ -34,9 +34,10 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         #region Constructor
 
-        public RedisAreaRepository(IConnectionMultiplexer connection)
+        public RedisAreaRepository(IConnectionMultiplexer connection, ILocationRepository locationRepository)
         {
             _database = connection.GetDatabase();
+            _locationRepository = locationRepository;
         }
 
         #endregion
@@ -74,7 +75,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         public async Task<Area> AddAsync(Area entity, CancellationToken cancellationToken = default)
         {
-            await SaveAreaAsync(entity);
+            await SaveAreaAsync(entity, cancellationToken);
             return entity;
         }
 
@@ -168,7 +169,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         public async Task InitializeAreasAsync(IEnumerable<Area> areas, CancellationToken cancellationToken = default)
         {
-            Task[] tasks = areas.Select(area => SaveAreaAsync(area)).ToArray();
+            Task[] tasks = areas.Select(area => SaveAreaAsync(area, cancellationToken)).ToArray();
             await Task.WhenAll(tasks);
         }
 
@@ -199,10 +200,11 @@ namespace Nexus.Infrastructure.Persistence.Redis
             List<TrayLocation> trayLocations = new List<TrayLocation>();
             List<Set> sets = new List<Set>();
 
+            // locationRepository를 통해 location 조회
             foreach (string cassetteLocationId in cassetteLocationIds)
             {
-                CassetteLocation? cassetteLocation = await GetCassetteLocationByIdAsync(cassetteLocationId);
-                if (cassetteLocation != null)
+                Location? location = await _locationRepository.GetByIdAsync(cassetteLocationId);
+                if (location is CassetteLocation cassetteLocation)
                 {
                     cassetteLocations.Add(cassetteLocation);
                 }
@@ -210,8 +212,8 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
             foreach (string trayLocationId in trayLocationIds)
             {
-                TrayLocation? trayLocation = await GetTrayLocationByIdAsync(trayLocationId);
-                if (trayLocation != null)
+                Location? location = await _locationRepository.GetByIdAsync(trayLocationId);
+                if (location is TrayLocation trayLocation)
                 {
                     trayLocations.Add(trayLocation);
                 }
@@ -234,7 +236,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
             return area;
         }
 
-        private async Task SaveAreaAsync(Area area)
+        private async Task SaveAreaAsync(Area area, CancellationToken cancellationToken = default)
         {
             string cassetteLocationIds = string.Join(ID_SEPARATOR, area.CassetteLocations.Select(cl => cl.Id));
             string trayLocationIds = string.Join(ID_SEPARATOR, area.TrayLocations.Select(tl => tl.Id));
@@ -250,20 +252,20 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("set_ids", setIds)
             };
 
-            // Save child entities first
+            // locationRepository를 통해 location 저장
             foreach (CassetteLocation cassetteLocation in area.CassetteLocations)
             {
-                await SaveCassetteLocationAsync(cassetteLocation);
+                await _locationRepository.AddAsync(cassetteLocation, cancellationToken);
             }
 
             foreach (TrayLocation trayLocation in area.TrayLocations)
             {
-                await SaveTrayLocationAsync(trayLocation);
+                await _locationRepository.AddAsync(trayLocation, cancellationToken);
             }
 
             foreach (Set set in area.Sets)
             {
-                await SaveSetAsync(set);
+                await SaveSetAsync(set, cancellationToken);
             }
 
             await _database.HashSetAsync($"{AREA_KEY_PREFIX}{area.Id}", hashEntries);
@@ -297,19 +299,19 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
             foreach (string memoryLocationId in memoryLocationIds)
             {
-                MemoryLocation? memoryLocation = await GetMemoryLocationByIdAsync(memoryLocationId);
-                if (memoryLocation != null)
+                Location? location = await _locationRepository.GetByIdAsync(memoryLocationId);
+                if (location != null && location.LocationType == ELocationType.Memory)
                 {
-                    memoryLocations.Add(memoryLocation);
+                    memoryLocations.Add((MemoryLocation)location);
                 }
             }
 
             return new Set(id, setName, memoryLocations.AsReadOnly());
         }
 
-        private async Task SaveSetAsync(Set set)
+        private async Task SaveSetAsync(Set set, CancellationToken cancellationToken = default)
         {
-            string memoryLocationIds = string.Join(ID_SEPARATOR, set.MemoryPorts.Select(mp => mp.Id));
+            string memoryLocationIds = string.Join(ID_SEPARATOR, set.MemoryLocations.Select(mp => mp.Id));
 
             HashEntry[] hashEntries = new HashEntry[]
             {
@@ -318,119 +320,14 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("memory_location_ids", memoryLocationIds)
             };
 
-            foreach (MemoryLocation memoryLocation in set.MemoryPorts)
+            // locationRepository를 통해 memory location 저장
+            foreach (MemoryLocation memoryLocation in set.MemoryLocations)
             {
-                await SaveMemoryLocationAsync(memoryLocation);
+                await _locationRepository.AddAsync(memoryLocation, cancellationToken);
             }
 
             await _database.HashSetAsync($"{SET_KEY_PREFIX}{set.Id}", hashEntries);
             await _database.SetAddAsync(SETS_ALL_KEY, set.Id);
-        }
-
-        #endregion
-
-        #region Private Location Operations
-
-        private async Task<CassetteLocation?> GetCassetteLocationByIdAsync(string id)
-        {
-            HashEntry[] hashEntries = await _database.HashGetAllAsync($"{CASSETTE_LOCATION_KEY_PREFIX}{id}");
-            if (hashEntries.Length == 0)
-            {
-                return null;
-            }
-
-            string name = Helper.GetHashValue(hashEntries, "name");
-            ELocationType locationType = Helper.GetHashValueAsEnum<ELocationType>(hashEntries, "location_type");
-            ELocationStatus status = Helper.GetHashValueAsEnum<ELocationStatus>(hashEntries, "status");
-
-            CassetteLocation cassetteLocation = new CassetteLocation(id, name, locationType)
-            {
-                Status = status
-            };
-
-            return cassetteLocation;
-        }
-
-        private async Task<TrayLocation?> GetTrayLocationByIdAsync(string id)
-        {
-            HashEntry[] hashEntries = await _database.HashGetAllAsync($"{TRAY_LOCATION_KEY_PREFIX}{id}");
-            if (hashEntries.Length == 0)
-            {
-                return null;
-            }
-
-            string name = Helper.GetHashValue(hashEntries, "name");
-            ELocationType locationType = Helper.GetHashValueAsEnum<ELocationType>(hashEntries, "location_type");
-            ELocationStatus status = Helper.GetHashValueAsEnum<ELocationStatus>(hashEntries, "status");
-
-            TrayLocation trayLocation = new TrayLocation(id, name, locationType)
-            {
-                Status = status
-            };
-
-            return trayLocation;
-        }
-
-        private async Task<MemoryLocation?> GetMemoryLocationByIdAsync(string id)
-        {
-            HashEntry[] hashEntries = await _database.HashGetAllAsync($"{MEMORY_LOCATION_KEY_PREFIX}{id}");
-            if (hashEntries.Length == 0)
-            {
-                return null;
-            }
-
-            string name = Helper.GetHashValue(hashEntries, "name");
-            ELocationType locationType = Helper.GetHashValueAsEnum<ELocationType>(hashEntries, "location_type");
-            ELocationStatus status = Helper.GetHashValueAsEnum<ELocationStatus>(hashEntries, "status");
-
-            MemoryLocation memoryLocation = new MemoryLocation(id, name, locationType)
-            {
-                Status = status
-            };
-
-            return memoryLocation;
-        }
-
-        private async Task SaveCassetteLocationAsync(CassetteLocation cassetteLocation)
-        {
-            HashEntry[] hashEntries = new HashEntry[]
-            {
-                new HashEntry("id", cassetteLocation.Id),
-                new HashEntry("name", cassetteLocation.Name),
-                new HashEntry("location_type", cassetteLocation.LocationType.ToString()),
-                new HashEntry("status", cassetteLocation.Status.ToString()),
-                new HashEntry("current_item_id", cassetteLocation.CurrentItemId)
-            };
-
-            await _database.HashSetAsync($"{CASSETTE_LOCATION_KEY_PREFIX}{cassetteLocation.Id}", hashEntries);
-        }
-
-        private async Task SaveTrayLocationAsync(TrayLocation trayLocation)
-        {
-            HashEntry[] hashEntries = new HashEntry[]
-            {
-                new HashEntry("id", trayLocation.Id),
-                new HashEntry("name", trayLocation.Name),
-                new HashEntry("location_type", trayLocation.LocationType.ToString()),
-                new HashEntry("status", trayLocation.Status.ToString()),
-                new HashEntry("current_item_id", trayLocation.CurrentItemId)
-            };
-
-            await _database.HashSetAsync($"{TRAY_LOCATION_KEY_PREFIX}{trayLocation.Id}", hashEntries);
-        }
-
-        private async Task SaveMemoryLocationAsync(MemoryLocation memoryLocation)
-        {
-            HashEntry[] hashEntries = new HashEntry[]
-            {
-                new HashEntry("id", memoryLocation.Id),
-                new HashEntry("name", memoryLocation.Name),
-                new HashEntry("location_type", memoryLocation.LocationType.ToString()),
-                new HashEntry("status", memoryLocation.Status.ToString()),
-                new HashEntry("current_item_id", memoryLocation.CurrentItemId)
-            };
-
-            await _database.HashSetAsync($"{MEMORY_LOCATION_KEY_PREFIX}{memoryLocation.Id}", hashEntries);
         }
 
         #endregion

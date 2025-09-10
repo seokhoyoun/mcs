@@ -1,7 +1,7 @@
-﻿using Nexus.Core.Domain.Models.Lots.Events;
+using Nexus.Core.Domain.Models.Lots.Events;
 using Nexus.Core.Domain.Models.Plans.Events;
+using Nexus.Core.Domain.Shared.Events;
 using Nexus.Orchestrator.Application.Scheduler.Services;
-using Nexus.Shared.Application.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,9 +26,9 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services.EventHandlers
         public async Task HandleAsync(LotCreatedEvent @event, CancellationToken cancellationToken = default)
         {
             // 이 예시에서는 가상의 Lot 객체를 사용합니다.
-       
 
-            var lotPlanAssignedEvent = new LotPlanAssignedEvent(@event.LotId);
+
+            LotPlanAssignedEvent lotPlanAssignedEvent = new LotPlanAssignedEvent(@event.LotId);
             await _eventPublisher.PublishAsync(lotPlanAssignedEvent, cancellationToken);
         }
     }

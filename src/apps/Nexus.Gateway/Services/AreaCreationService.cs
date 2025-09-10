@@ -3,9 +3,9 @@ using Nexus.Core.Domain.Models.Areas;
 using Nexus.Core.Domain.Models.Areas.Interfaces;
 using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
+using Nexus.Core.Domain.Shared.Events;
 using Nexus.Gateway.Services.Commands;
 using Nexus.Gateway.Services.Interfaces;
-using Nexus.Shared.Application.Interfaces;
 using System.Text.Json;
 
 namespace Nexus.Gateway.Services
@@ -38,16 +38,16 @@ namespace Nexus.Gateway.Services
             {
                 _logger.LogInformation("Starting area creation process...");
 
-                // JSON¿ª ¡˜¡¢ ∆ƒΩÃ
-                using var document = JsonDocument.Parse(jsonPayload);
-                var root = document.RootElement;
+                // JSONÏùÑ ÏßÅÏ†ë ÌååÏã±
+                using JsonDocument document = JsonDocument.Parse(jsonPayload);
+                JsonElement root = document.RootElement;
 
-                if (!root.TryGetProperty("areas", out var areasElement))
+                if (!root.TryGetProperty("areas", out JsonElement areasElement))
                 {
                     throw new ArgumentException("Missing 'areas' property in JSON payload");
                 }
 
-                var areas = new List<Area>();
+                List<Area> areas = new List<Area>();
 
                 //foreach (var areaElement in areasElement.EnumerateArray())
                 //{
@@ -55,24 +55,22 @@ namespace Nexus.Gateway.Services
                 //    areas.Add(area);
                 //}
 
-                // ∞¢ Area¿« ¿ßƒ° ¡§∫∏ µÓ∑œ
-                var totalLocations = 0;
-                foreach (var area in areas)
+                // Í∞Å AreaÏùò ÏúÑÏπò Ï†ïÎ≥¥ Îì±Î°ù
+                int totalLocations = 0;
+                foreach (Area area in areas)
                 {
                     _logger.LogInformation("Processing area: {AreaId} - {AreaName}", area.Id, area.Name);
 
-                    var locations = new List<Location>();
+                    List<Location> locations = new List<Location>();
 
-                    // Cassette ¿ßƒ° √ﬂ∞°
                     locations.AddRange(area.CassetteLocations);
 
-                    // Tray ¿ßƒ° √ﬂ∞°
                     locations.AddRange(area.TrayLocations);
 
-                    // Memory ¿ßƒ° √ﬂ∞° (Setø°º≠ √ﬂ√‚)
-                    foreach (var set in area.Sets)
+                    // Memory ÏúÑÏπò Ï∂îÍ∞Ä (SetÏóêÏÑú Ï∂îÏ∂ú)
+                    foreach (Set set in area.Sets)
                     {
-                        locations.AddRange(set.MemoryPorts);
+                        locations.AddRange(set.MemoryLocations);
                     }
 
                     _locationService.AddLocations(locations);
@@ -82,7 +80,7 @@ namespace Nexus.Gateway.Services
                         locations.Count, area.Id);
                 }
 
-                // Redisø° Area µ•¿Ã≈Õ ¿˙¿Â
+                // RedisÏóê Area Îç∞Ïù¥ÌÑ∞ Ï†ÄÏû•
                 await _areaRepository.InitializeAreasAsync(areas);
 
                 _logger.LogInformation("Area creation completed successfully. " +

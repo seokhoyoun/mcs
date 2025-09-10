@@ -5,10 +5,10 @@ using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Locations.Enums;
 using Nexus.Core.Domain.Models.Locations.Services;
 using Nexus.Core.Domain.Shared.Bases;
-using Nexus.Shared.Application.Interfaces;
 using System.Text.Json;
 using Nexus.Core.Domain.Models.Areas.Enums;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
+using Nexus.Core.Domain.Shared.Events;
 
 namespace Nexus.Core.Domain.Models.Areas.Services
 {
@@ -29,7 +29,7 @@ namespace Nexus.Core.Domain.Models.Areas.Services
 
         public override async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
-            var areas = await _areaRepository.GetAllAsync();
+            IReadOnlyList<Area> areas = await _areaRepository.GetAllAsync();
             _areas.AddRange(areas);
         }
 
@@ -38,14 +38,14 @@ namespace Nexus.Core.Domain.Models.Areas.Services
         /// </summary>
         public Area? GetAvailableAreaForCassette()
         {
-            var availableAreas = _areas
+            List<Area> availableAreas = _areas
                 .Where(area => area.Status == EAreaStatus.Idle) // 유휴 상태인 Area만 선택
                 .ToList();
 
             // 사용 가능한 카세트 포트가 있는 Area 반환
-            foreach (var area in availableAreas)
+            foreach (Area area in availableAreas)
             {
-                var availablePort = GetAvailableCassettePort(area);
+                CassetteLocation? availablePort = GetAvailableCassettePort(area);
                 if (availablePort != null)
                 {
                     return area;

@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Nexus.Core.Domain.Models.Areas.Services;
 using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Locations.Enums;
@@ -6,7 +6,6 @@ using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using Nexus.Core.Domain.Models.Transports.Services; // TransportService using 추가
 using Nexus.Core.Domain.Shared.Bases;
-using Nexus.Shared.Application.Interfaces;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
@@ -35,7 +34,7 @@ namespace Nexus.Core.Domain.Models.Locations.Services
 
         public override async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
-            var locations = await _locationRepository.GetAllAsync();
+            IReadOnlyList<Location> locations = await _locationRepository.GetAllAsync();
 
             if (locations == null || locations.Count == 0)
             {
@@ -44,7 +43,7 @@ namespace Nexus.Core.Domain.Models.Locations.Services
                 return;
             }
 
-            foreach (var location in locations)
+            foreach (Location location in locations)
             {
                 _locations.Add(location.Id, location);
 
@@ -72,7 +71,7 @@ namespace Nexus.Core.Domain.Models.Locations.Services
 
         public void AddLocations(IEnumerable<Location> locations)
         {
-            foreach (var location in locations)
+            foreach (Location location in locations)
             {
                 if (_locations.ContainsKey(location.Id))
                 {
@@ -106,7 +105,7 @@ namespace Nexus.Core.Domain.Models.Locations.Services
  
         public CassetteLocation? GetCassetteLocationById(string id)
         {
-            if (_locations.TryGetValue(id, out var location))
+            if (_locations.TryGetValue(id, out Location? location))
             {
                 return location as CassetteLocation;
             }
@@ -116,7 +115,7 @@ namespace Nexus.Core.Domain.Models.Locations.Services
     
         public TrayLocation? GetTrayLocationById(string id)
         {
-            if (_locations.TryGetValue(id, out var location))
+            if (_locations.TryGetValue(id, out Location? location))
             {
                 return location as TrayLocation;
             }
@@ -126,7 +125,7 @@ namespace Nexus.Core.Domain.Models.Locations.Services
       
         public MemoryLocation? GetMemoryLocationById(string id)
         {
-            if (_locations.TryGetValue(id, out var location))
+            if (_locations.TryGetValue(id, out Location? location))
             {
                 return location as MemoryLocation;
             }
@@ -136,7 +135,7 @@ namespace Nexus.Core.Domain.Models.Locations.Services
      
         public RobotLocation? GetRobotLocationById(string id)
         {
-            if (_locations.TryGetValue(id, out var location))
+            if (_locations.TryGetValue(id, out Location? location))
             {
                 return location as RobotLocation;
             }

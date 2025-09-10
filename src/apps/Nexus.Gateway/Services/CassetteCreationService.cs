@@ -1,10 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Nexus.Core.Domain.Models.Transports;
 using Nexus.Core.Domain.Models.Transports.Extensions;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
+using Nexus.Core.Domain.Shared.Events;
 using Nexus.Gateway.Services.Commands;
 using Nexus.Gateway.Services.Interfaces;
-using Nexus.Shared.Application.Interfaces;
 
 namespace Nexus.Gateway.Services
 {
@@ -32,20 +32,20 @@ namespace Nexus.Gateway.Services
                     command.CassetteId, command.LocationId);
 
                 // 카세트가 이미 존재하는지 확인
-                var existingCassette = await _transportsRepository.GetByIdAsync(command.CassetteId, cancellationToken);
+                ITransportable? existingCassette = await _transportsRepository.GetByIdAsync(command.CassetteId, cancellationToken);
                 if (existingCassette != null)
                 {
                     throw new InvalidOperationException($"Cassette with ID '{command.CassetteId}' already exists.");
                 }
-               
+
                 // 카세트 생성
-                var cassette = new Cassette(command.CassetteId, command.CassetteName, new List<Tray>());
+                Cassette cassette = new Cassette(command.CassetteId, command.CassetteName, new List<Tray>());
                 cassette.InitializeFullCassette();
 
                 // 각 메모리를 개별적으로 저장
-                foreach (var tray in cassette.Trays)
+                foreach (Tray tray in cassette.Trays)
                 {
-                    foreach (var memory in tray.Memories)
+                    foreach (Memory memory in tray.Memories)
                     {
                         await _transportsRepository.AddAsync(memory, cancellationToken);
                         _logger.LogDebug("Memory saved: {MemoryId}", memory.Id);
