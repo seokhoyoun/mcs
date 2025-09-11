@@ -4,7 +4,8 @@
 ## Introduction
 The **mcs** project (code: Nexus) is designed to manage real-time operations in automated environments such as semiconductor or warehouse systems.  
 It leverages **Redis** for in-memory event-driven communication, **PostgreSQL (via Supabase)** for relational persistence, and **Blazor Server** for UI.  
-The system follows an **event-driven architecture (EDA)** and is containerized using **Docker Compose** for easy deployment.
+The system follows an **event-driven architecture (EDA)** and is containerized using **Docker Compose** for easy deployment. [(https://portal.stone2on.cloud)](https://portal.stone2on.cloud)
+
 
 Current active modules include:
 - **Nexus.Core** – Domain models and services (areas, locations, lots, transports, stockers, etc.) with Redis-backed persistence.  
@@ -82,4 +83,3 @@ This will start:
 
 This project is released under the [Unlicense](LICENSE), making it free for public and private use.
 
-[(https://portal.stone2on.cloud)](https://portal.stone2on.cloud)
