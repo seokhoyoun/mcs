@@ -45,7 +45,6 @@ namespace Nexus.Sandbox.Seed
 
                 await _repo.AddAsync(cassette);
 
-                Console.WriteLine($"Seeded cassette: {cassette.Name}");
             }
         }
     }

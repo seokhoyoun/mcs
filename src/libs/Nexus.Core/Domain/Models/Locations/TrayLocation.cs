@@ -1,5 +1,6 @@
 using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Locations.Enums;
+using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Transports;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using System;
@@ -10,9 +11,9 @@ using System.Threading.Tasks;
 
 namespace Nexus.Core.Domain.Models.Locations
 {
-    public class TrayLocation : Location
+    public class TrayLocation : Location, IItemStorage
     {
-        public TrayLocation(string id, string name, ELocationType locationType) : base(id, name, locationType)
+        public TrayLocation(string id, string name) : base(id, name, ELocationType.Tray)
         {
         }
     }

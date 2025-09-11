@@ -62,7 +62,7 @@ namespace Nexus.Orchestrator
             builder.Services.AddSingleton<IAreaService, AreaService>();
             builder.Services.AddSingleton<IStockerService, StockerService>();
 
-            builder.Services.AddSingleton<AcsService>();
+            //builder.Services.AddSingleton<IAcsService, AcsSimulationService>();
             builder.Services.AddSingleton<SchedulerService>();
 
             builder.Services.AddSingleton<IMessagePublisher, RedisPublisher>();

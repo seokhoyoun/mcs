@@ -213,8 +213,8 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             _logger.LogInformation("Selected Area {AreaId} (Status: {AreaStatus}) for cassette placement",
                 emptyArea.Id, emptyArea.Status);
 
-            // AMR 로봇 Location 생성/조회 (물류로봇용)
-            RobotLocation amrLocation = GetOrCreateAMRLocation("AMR.CP01", "물류로봇 카세트 포트 1");
+            // AMR 마커 Location 생성/조회 (경유지)
+            MarkerLocation amrLocation = GetOrCreateAMRLocation("AMR.CP01", "물류로봇 카세트 포트 1");
 
             foreach (Cassette cassette in lotStep.Cassettes)
             {
@@ -398,8 +398,8 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             string planGroupId = Guid.NewGuid().ToString();
             PlanGroup planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_AreaToStocker", EPlanGroupType.AreaToStocker);
 
-            // AMR 로봇 Location 조회
-            RobotLocation amrLocation = GetOrCreateAMRLocation("AMR.CP01", "물류로봇 카세트 포트 1");
+            // AMR 마커 Location 조회
+            MarkerLocation amrLocation = GetOrCreateAMRLocation("AMR.CP01", "물류로봇 카세트 포트 1");
 
             const string stockerPrefix = "ST01.CP";
             int stockerPortIndex = 1;
@@ -493,14 +493,14 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
         /// </summary>
         /// <param name="locationId">AMR Location ID (예: AMR.CP01)</param>
         /// <param name="locationName">AMR Location 이름</param>
-        /// <returns>AMR RobotLocation</returns>
-        private RobotLocation GetOrCreateAMRLocation(string locationId, string locationName)
+        /// <returns>AMR MarkerLocation</returns>
+        private MarkerLocation GetOrCreateAMRLocation(string locationId, string locationName)
         {
-            RobotLocation? amrLocation = _locationService.GetRobotLocationById(locationId);
+            MarkerLocation? amrLocation = _locationService.GetMarkerLocationById(locationId);
             if (amrLocation == null)
             {
                 // AMR Location이 없으면 생성
-                amrLocation = new RobotLocation(locationId, locationName, ELocationType.Robot);
+                amrLocation = new MarkerLocation(locationId, locationName);
 
                 // LocationService에 등록 (실제 구현에서는 초기화 시점에 미리 등록되어야 함)
                 _locationService.AddLocations(new[] { amrLocation });
@@ -522,7 +522,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             if (stockerLocation == null)
             {
                 // 스토커 Location이 없으면 생성
-                stockerLocation = new CassetteLocation(locationId, locationId, ELocationType.Cassette);
+                stockerLocation = new CassetteLocation(locationId, locationId);
 
                 // LocationService에 등록
                 _locationService.AddLocations(new[] { stockerLocation });

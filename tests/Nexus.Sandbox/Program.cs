@@ -20,18 +20,20 @@ namespace Nexus.Sandbox
             RedisTransportRepository transportRepo = new RedisTransportRepository(redis);
             RedisAreaRepository areaRepo = new RedisAreaRepository(redis, locationRepo);
             RedisStockerRepository stockerRepo = new RedisStockerRepository(redis, locationRepo);
+            RedisRobotRepository robotRepo = new RedisRobotRepository(redis, locationRepo);
 
             List<IDataSeeder> seeders = new List<IDataSeeder>
             {
                 new CassetteSeeder(transportRepo),
                 new AreaSeeder(areaRepo),
-                new StockerSeeder(stockerRepo)
+                new StockerSeeder(stockerRepo),
+                new RobotSeeder(robotRepo, locationRepo)
             };
 
             foreach (IDataSeeder seeder in seeders)
             {
                 await seeder.SeedAsync();
-                
+                Console.WriteLine($"{seeder.GetType()} Seeding completed.");
             }
 
 

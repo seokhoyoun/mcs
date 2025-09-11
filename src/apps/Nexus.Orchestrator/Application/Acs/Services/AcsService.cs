@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +12,7 @@ using Nexus.Orchestrator.Application.Acs.Models;
 
 namespace Nexus.Orchestrator.Application.Acs.Services
 {
-    internal class AcsService
+    internal class AcsService : IAcsService
     {
         private readonly ILogger<AcsService> _logger;
         private readonly HttpListener _httpListener;
@@ -50,7 +50,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
                 // 클라이언트 연결 대기 루프
                 while (!stoppingToken.IsCancellationRequested)
                 {
-                    var context = await _httpListener.GetContextAsync().ConfigureAwait(false);
+                    HttpListenerContext context = await _httpListener.GetContextAsync().ConfigureAwait(false);
 
                     if (context.Request.IsWebSocketRequest)
                     {
@@ -116,7 +116,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
 
         private async Task HandleClientAsync(string clientId, WebSocket webSocket, CancellationToken stoppingToken)
         {
-            var buffer = new byte[4096];
+            byte[] buffer = new byte[4096];
 
             try
             {
@@ -187,7 +187,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
             try
             {
                 // JSON 파싱
-                var messageObj = JsonSerializer.Deserialize<AcsMessage>(message);
+                AcsMessage? messageObj = JsonSerializer.Deserialize<AcsMessage>(message);
 
                 if (messageObj == null)
                 {
@@ -280,8 +280,8 @@ namespace Nexus.Orchestrator.Application.Acs.Services
         // Ack 메시지 로깅
         private void LogAckMessage(AcsMessage message)
         {
-            var result = message.Result ?? "Unknown";
-            var transactionId = message.TransactionId ?? "Unknown";
+            string result = message.Result ?? "Unknown";
+            string transactionId = message.TransactionId ?? "Unknown";
 
             if (result.Equals("Success", StringComparison.OrdinalIgnoreCase))
             {
@@ -304,7 +304,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
             {
                 _logger.LogWarning($"이미 등록된 클라이언트가 있습니다. clientId: {_registeredClientId}");
 
-                var failResponse = new AcsMessage
+                AcsMessage failResponse = new AcsMessage
                 {
                     Command = "RegistrationAck",
                     TransactionId = message.TransactionId,
@@ -317,7 +317,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
                 await SendMessageAsync(clientId, failResponse, stoppingToken);
 
                 // 거부된 클라이언트는 연결 종료
-                if (_clients.TryGetValue(clientId, out var webSocket) && webSocket.State == WebSocketState.Open)
+                if (_clients.TryGetValue(clientId, out WebSocket? webSocket) && webSocket.State == WebSocketState.Open)
                 {
                     try
                     {
@@ -341,7 +341,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
                 // 페이로드에서 robotId 등 필요한 정보 추출하여 저장
                 if (message.Payload != null)
                 {
-                    var payload = JsonSerializer.Serialize(message.Payload);
+                    string payload = JsonSerializer.Serialize(message.Payload);
                     _clientInfos[clientId] = payload;
                 }
 
@@ -356,7 +356,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
                 _logger.LogError(ex, "클라이언트 정보 저장 중 오류 발생");
             }
 
-            var response = new AcsMessage
+            AcsMessage response = new AcsMessage
             {
                 Command = "RegistrationAck",
                 TransactionId = message.TransactionId,
@@ -373,7 +373,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
         {
             _logger.LogInformation($"PlanReport 요청 처리 중: {clientId}");
 
-            var response = new AcsMessage
+            AcsMessage response = new AcsMessage
             {
                 Command = "PlanReportAck",
                 TransactionId = message.TransactionId,
@@ -390,7 +390,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
         {
             _logger.LogInformation($"StepReport 요청 처리 중: {clientId}");
 
-            var response = new AcsMessage
+            AcsMessage response = new AcsMessage
             {
                 Command = "StepReportAck",
                 TransactionId = message.TransactionId,
@@ -407,7 +407,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
         {
             _logger.LogInformation($"JobReport 요청 처리 중: {clientId}");
 
-            var response = new AcsMessage
+            AcsMessage response = new AcsMessage
             {
                 Command = "JobReportAck",
                 TransactionId = message.TransactionId,
@@ -424,7 +424,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
         {
             _logger.LogInformation($"ErrorReport 요청 처리 중: {clientId}");
 
-            var response = new AcsMessage
+            AcsMessage response = new AcsMessage
             {
                 Command = "ErrorReportAck",
                 TransactionId = message.TransactionId,
@@ -441,7 +441,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
         {
             _logger.LogInformation($"RobotStatusUpdate 요청 처리 중: {clientId}");
 
-            var response = new AcsMessage
+            AcsMessage response = new AcsMessage
             {
                 Command = "RobotStatusUpdateAck",
                 TransactionId = message.TransactionId,
@@ -458,7 +458,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
         {
             _logger.LogInformation($"TscStateUpdate 요청 처리 중: {clientId}");
 
-            var response = new AcsMessage
+            AcsMessage response = new AcsMessage
             {
                 Command = "TscStateUpdateAck",
                 TransactionId = message.TransactionId,
@@ -475,7 +475,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
         {
             _logger.LogInformation($"CancelResultReport 요청 처리 중: {clientId}");
 
-            var response = new AcsMessage
+            AcsMessage response = new AcsMessage
             {
                 Command = "CancelResultReportAck",
                 TransactionId = message.TransactionId,
@@ -492,7 +492,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
         {
             _logger.LogInformation($"AbortResultReport 요청 처리 중: {clientId}");
 
-            var response = new AcsMessage
+            AcsMessage response = new AcsMessage
             {
                 Command = "AbortResultReportAck",
                 TransactionId = message.TransactionId,
@@ -509,7 +509,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
         {
             _logger.LogInformation($"PauseResultReport 요청 처리 중: {clientId}");
 
-            var response = new AcsMessage
+            AcsMessage response = new AcsMessage
             {
                 Command = "PauseResultReportAck",
                 TransactionId = message.TransactionId,
@@ -526,7 +526,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
         {
             _logger.LogInformation($"ResumeResultReport 요청 처리 중: {clientId}");
 
-            var response = new AcsMessage
+            AcsMessage response = new AcsMessage
             {
                 Command = "ResumeResultReportAck",
                 TransactionId = message.TransactionId,
@@ -543,7 +543,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
         {
             _logger.LogInformation($"AcsCommStateUpdate 요청 처리 중: {clientId}");
 
-            var response = new AcsMessage
+            AcsMessage response = new AcsMessage
             {
                 Command = "AcsCommStateUpdateAck",
                 TransactionId = message.TransactionId,
@@ -560,7 +560,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
 
         private async Task SendMessageAsync(string clientId, AcsMessage message, CancellationToken stoppingToken)
         {
-            if (!_clients.TryGetValue(clientId, out var webSocket) || webSocket.State != WebSocketState.Open)
+            if (!_clients.TryGetValue(clientId, out WebSocket? webSocket) || webSocket.State != WebSocketState.Open)
             {
                 _logger.LogWarning($"클라이언트 {clientId}가 연결되어 있지 않습니다.");
                 return;
@@ -587,7 +587,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
 
         private async Task CloseAllClientsAsync()
         {
-            foreach (var clientPair in _clients)
+            foreach (KeyValuePair<string, WebSocket> clientPair in _clients)
             {
                 string clientId = clientPair.Key;
                 WebSocket webSocket = clientPair.Value;
@@ -618,56 +618,6 @@ namespace Nexus.Orchestrator.Application.Acs.Services
 
         #region MCS to ACS Message Methods
 
-        // 등록된 클라이언트에게 메시지 전송
-        public async Task SendToRegisteredClientAsync(AcsMessage message, CancellationToken stoppingToken = default)
-        {
-            if (!_hasRegisteredClient)
-            {
-                _logger.LogWarning("등록된 ACS 클라이언트가 없습니다. 메시지를 전송할 수 없습니다.");
-                return;
-            }
-
-            await SendMessageAsync(_registeredClientId, message, stoppingToken);
-        }
-
-        // 특정 로봇ID에 해당하는 클라이언트에게 메시지 전송
-        public async Task SendToRobotAsync(string robotId, AcsMessage message, CancellationToken stoppingToken = default)
-        {
-            if (!_hasRegisteredClient)
-            {
-                _logger.LogWarning($"등록된 ACS 클라이언트가 없습니다. RobotId {robotId}에 메시지를 전송할 수 없습니다.");
-                return;
-            }
-
-            // 등록된 클라이언트 정보에서 robotId 확인
-            bool robotMatch = false;
-            try
-            {
-                if (_clientInfos.TryGetValue(_registeredClientId, out var clientInfo))
-                {
-                    var info = JsonDocument.Parse(clientInfo);
-                    if (info.RootElement.TryGetProperty("robotId", out var idElement) &&
-                        idElement.GetString() == robotId)
-                    {
-                        robotMatch = true;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"RobotId {robotId} 확인 중 오류 발생");
-            }
-
-            if (robotMatch)
-            {
-                await SendMessageAsync(_registeredClientId, message, stoppingToken);
-            }
-            else
-            {
-                _logger.LogWarning($"RobotId {robotId}에 해당하는 등록된 클라이언트가 없습니다.");
-            }
-        }
-
         // ExecutionPlan 메시지 전송
         public async Task SendExecutionPlanAsync(string planId, string lotId, int priority, List<ExecutionStep> steps, CancellationToken stoppingToken = default)
         {
@@ -677,7 +627,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
                 return;
             }
 
-            var payload = new ExecutionPlanPayload
+            ExecutionPlanPayload payload = new ExecutionPlanPayload
             {
                 PlanId = planId,
                 LotId = lotId,
@@ -685,7 +635,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
                 Steps = steps
             };
 
-            var message = new AcsMessage
+            AcsMessage message = new AcsMessage
             {
                 Command = "ExecutionPlan",
                 TransactionId = Guid.NewGuid().ToString(),
@@ -705,13 +655,13 @@ namespace Nexus.Orchestrator.Application.Acs.Services
                 return;
             }
 
-            var payload = new CancelPlanPayload
+            CancelPlanPayload payload = new CancelPlanPayload
             {
                 PlanId = planId,
                 Reason = reason
             };
 
-            var message = new AcsMessage
+            AcsMessage message = new AcsMessage
             {
                 Command = "CancelPlan",
                 TransactionId = Guid.NewGuid().ToString(),
@@ -731,7 +681,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
                 return;
             }
 
-            var message = new AcsMessage
+            AcsMessage message = new AcsMessage
             {
                 Command = "AbortPlan",
                 TransactionId = Guid.NewGuid().ToString(),
@@ -755,7 +705,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
                 return;
             }
 
-            var message = new AcsMessage
+            AcsMessage message = new AcsMessage
             {
                 Command = "PausePlan",
                 TransactionId = Guid.NewGuid().ToString(),
@@ -779,7 +729,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
                 return;
             }
 
-            var message = new AcsMessage
+            AcsMessage message = new AcsMessage
             {
                 Command = "ResumePlan",
                 TransactionId = Guid.NewGuid().ToString(),
@@ -802,7 +752,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
                 return;
             }
 
-            var message = new AcsMessage
+            AcsMessage message = new AcsMessage
             {
                 Command = "SyncConfig",
                 TransactionId = Guid.NewGuid().ToString(),
@@ -822,7 +772,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
                 return;
             }
 
-            var message = new AcsMessage
+            AcsMessage message = new AcsMessage
             {
                 Command = "RequestAcsPlans",
                 TransactionId = Guid.NewGuid().ToString(),
@@ -842,7 +792,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
                 return;
             }
 
-            var message = new AcsMessage
+            AcsMessage message = new AcsMessage
             {
                 Command = "RequestAcsPlanHistory",
                 TransactionId = Guid.NewGuid().ToString(),
@@ -865,7 +815,7 @@ namespace Nexus.Orchestrator.Application.Acs.Services
                 return;
             }
 
-            var message = new AcsMessage
+            AcsMessage message = new AcsMessage
             {
                 Command = "RequestAcsErrorList",
                 TransactionId = Guid.NewGuid().ToString(),

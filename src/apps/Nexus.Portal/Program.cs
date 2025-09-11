@@ -4,6 +4,7 @@ using Nexus.Core.Domain.Models.Areas.Interfaces;
 using Nexus.Core.Domain.Models.Areas.Services;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Locations.Services;
+using Nexus.Core.Domain.Models.Robots.Interfaces;
 using Nexus.Core.Domain.Models.Stockers.Interfaces;
 using Nexus.Core.Domain.Models.Stockers.Services;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
@@ -50,6 +51,7 @@ namespace Nexus.Portal
             builder.Services.AddScoped<IStockerRepository, RedisStockerRepository>();
             builder.Services.AddScoped<IAreaRepository, RedisAreaRepository>();
             builder.Services.AddScoped<ILocationRepository, RedisLocationRepository>();
+            builder.Services.AddScoped<IRobotRepository, RedisRobotRepository>();
 
             builder.Services.AddScoped<ILocationService, LocationService>();
             builder.Services.AddScoped<ITransportService, TransportService>();
