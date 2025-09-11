@@ -5,6 +5,7 @@ using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Locations.Services;
 using Nexus.Core.Domain.Models.Lots.Events;
 using Nexus.Core.Domain.Models.Lots.Interfaces;
+using Nexus.Core.Domain.Models.Robots.Interfaces;
 using Nexus.Core.Domain.Models.Stockers.Interfaces;
 using Nexus.Core.Domain.Models.Stockers.Services;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
@@ -28,7 +29,7 @@ namespace Nexus.Orchestrator
     {
         public static void Main(string[] args)
         {
-            HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
             {
@@ -56,6 +57,7 @@ namespace Nexus.Orchestrator
             builder.Services.AddSingleton<IAreaRepository, RedisAreaRepository>();
             builder.Services.AddSingleton<IStockerRepository, RedisStockerRepository>();
             builder.Services.AddSingleton<ILotRepository, RedisLotRepository>();
+            builder.Services.AddSingleton<IRobotRepository, RedisRobotRepository>();
 
             builder.Services.AddSingleton<ILocationService, LocationService>();
             builder.Services.AddSingleton<ITransportService, TransportService>();
@@ -75,13 +77,32 @@ namespace Nexus.Orchestrator
             builder.Services.AddHostedService<AcsWorker>();
             builder.Services.AddHostedService<SchedulerWorker>();
 
+            // SignalR hub for robot position broadcast
+            builder.Services.AddSignalR();
+
+            // CORS to allow Portal (8080) to connect
+            builder.Services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                {
+                    policy.AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials()
+                          .SetIsOriginAllowed(_ => true);
+                });
+            });
+
             builder.Services.AddMetricServer(options =>
             {
                 options.Port = 9091;
             });
 
-            IHost host = builder.Build();
-            host.Run();
+            WebApplication app = builder.Build();
+
+            app.UseCors();
+            app.MapHub<Nexus.Core.Domain.Models.Robots.Hubs.RobotPositionMessageHub>("/hubs/robotPosition");
+
+            app.Run();
         }
     }
 }

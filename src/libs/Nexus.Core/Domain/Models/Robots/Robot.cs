@@ -15,13 +15,6 @@ namespace Nexus.Core.Domain.Models.Robots
 
         private readonly List<Location> _locations = new();
 
-        public Robot(string id, string name, ERobotType robotType)
-        {
-            Id = id;
-            Name = name;
-            RobotType = robotType;
-        }
-
         public Robot(
             string id,
             string name,

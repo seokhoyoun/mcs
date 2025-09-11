@@ -54,6 +54,7 @@
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - Redis__ConnectionString=${REDIS__CONNECTIONSTRING}
+      - SignalR__RobotHubUrl=http://nexus.orchestrator:8080/hubs/robotPosition
     volumes:
       # './src/' 경로 추가
       - ./src/data:/app/data
