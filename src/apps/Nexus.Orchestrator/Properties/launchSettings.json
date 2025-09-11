@@ -2,6 +2,7 @@
   "profiles": {
     "Nexus.Orchestrator": {
       "commandName": "Project",
+      "applicationUrl": "http://localhost:8081",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       },

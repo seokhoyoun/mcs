@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -8,6 +8,13 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..\..</DockerfileContext>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Application\Acs\Interfaces\**" />
+    <Content Remove="Application\Acs\Interfaces\**" />
+    <EmbeddedResource Remove="Application\Acs\Interfaces\**" />
+    <None Remove="Application\Acs\Interfaces\**" />
+  </ItemGroup>
 
 
 	<ItemGroup>
@@ -23,8 +30,4 @@
     <ProjectReference Include="..\..\libs\Nexus.Core\Nexus.Core.csproj" />
     <ProjectReference Include="..\..\libs\Nexus.Infrastructure\Nexus.Infrastructure.csproj" />
   </ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Application\Acs\Interfaces\" />
-	</ItemGroup>
 </Project>
