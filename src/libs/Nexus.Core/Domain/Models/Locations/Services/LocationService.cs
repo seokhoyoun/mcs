@@ -21,7 +21,7 @@ namespace Nexus.Core.Domain.Models.Locations.Services
         private List<CassetteLocation> _cassetteLocations = new();
         private List<TrayLocation> _trayLocations = new();
         private List<MemoryLocation> _memoryLocations = new();
-        private List<RobotLocation> _robotLocations = new();
+        private List<MarkerLocation> _markerLocations = new();
 
         public LocationService(
             ILogger<LocationService> logger,
@@ -58,8 +58,8 @@ namespace Nexus.Core.Domain.Models.Locations.Services
                     case ELocationType.Memory:
                         _memoryLocations.Add((MemoryLocation)location);
                         break;
-                    case ELocationType.Robot:  
-                        _robotLocations.Add((RobotLocation)location);
+                    case ELocationType.Marker:
+                        _markerLocations.Add((MarkerLocation)location);
                         break;
                     default:
                         Debug.Assert(false, $"Unknown location type: {location.LocationType}");
@@ -91,8 +91,8 @@ namespace Nexus.Core.Domain.Models.Locations.Services
                     case ELocationType.Memory:
                         _memoryLocations.Add((MemoryLocation)location);
                         break;
-                    case ELocationType.Robot:  // 새로 추가
-                        _robotLocations.Add((RobotLocation)location);
+                    case ELocationType.Marker:
+                        _markerLocations.Add((MarkerLocation)location);
                         break;
                     default:
                         Debug.Assert(false, $"Unknown location type: {location.LocationType}");
@@ -133,11 +133,11 @@ namespace Nexus.Core.Domain.Models.Locations.Services
         }
 
      
-        public RobotLocation? GetRobotLocationById(string id)
+        public MarkerLocation? GetMarkerLocationById(string id)
         {
             if (_locations.TryGetValue(id, out Location? location))
             {
-                return location as RobotLocation;
+                return location as MarkerLocation;
             }
             return null;
         }

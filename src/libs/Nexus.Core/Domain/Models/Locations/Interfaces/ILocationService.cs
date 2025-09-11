@@ -1,4 +1,4 @@
-﻿using Nexus.Core.Domain.Models.Locations.Base;
+using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Shared.Bases;
 
 namespace Nexus.Core.Domain.Models.Locations.Interfaces
@@ -36,11 +36,11 @@ namespace Nexus.Core.Domain.Models.Locations.Interfaces
         MemoryLocation? GetMemoryLocationById(string id);
 
         /// <summary>
-        /// ID로 로봇 위치를 조회합니다.
+        /// ID로 마커 위치를 조회합니다. (포지션 전용)
         /// </summary>
-        /// <param name="id">로봇 위치 ID</param>
-        /// <returns>해당 ID의 로봇 위치 또는 null</returns>
-        RobotLocation? GetRobotLocationById(string id);
+        /// <param name="id">마커 위치 ID</param>
+        /// <returns>해당 ID의 마커 위치 또는 null</returns>
+        MarkerLocation? GetMarkerLocationById(string id);
 
      
     }

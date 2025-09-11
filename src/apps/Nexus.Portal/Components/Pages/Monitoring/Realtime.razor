@@ -3,67 +3,279 @@
 @using MudBlazor
 @using Nexus.Core.Domain.Models.Areas.Interfaces
 @using Nexus.Core.Domain.Models.Stockers.Interfaces
+@using Nexus.Core.Domain.Models.Locations.Interfaces
+@using Nexus.Core.Domain.Models.Locations.Base
+@using Nexus.Core.Domain.Models.Locations.Enums
+@using Nexus.Core.Domain.Models.Robots
+@using Nexus.Core.Domain.Models.Robots.Enums
+@using Nexus.Core.Domain.Models.Robots.Interfaces
+@using Nexus.Portal.Components.Pages.Monitoring.DTOs
 
+@inject IJSRuntime JS
 @inject IStockerRepository StockerRepository
 @inject IAreaRepository AreaRepository
+@inject ILocationRepository LocationRepository
+@inject IRobotRepository RobotRepository
 
-<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
-    <MudText Typo="Typo.h4" Class="mb-4">Realtime Overview</MudText>
-    <MudGrid>
-        <MudItem xs="12" md="6">
-            <MudPaper Class="pa-4">
-                <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-2">Stocker ST01</MudText>
-                <MudGrid>
-                    @for (int index = 0; index < StockerPorts.Count; index++)
-                    {
-                        int i = index; // Local copy for lambda capture
-                        <MudItem xs="6" sm="4" md="3">
-                            <MudPaper Class="@($"d-flex flex-column align-items-center pa-2 {(StockerPorts[i] ? "mud-theme-success" : "mud-theme-surface")}")" Elevation="2">
-                                <MudText Typo="Typo.subtitle2">@($"ST01.CP{(i + 1):00}")</MudText>
-                                <MudChip T="string" Color="@(StockerPorts[i] ? Color.Success : Color.Default)" Variant="Variant.Filled" Class="mt-1">
-                                    @(StockerPorts[i] ? "Occupied" : "Empty")
-                                </MudChip>
-                            </MudPaper>
-                        </MudItem>
-                    }
-                </MudGrid>
-            </MudPaper>
-        </MudItem>
-        <MudItem xs="12" md="6">
-            <MudPaper Class="pa-4">
-                <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-2">Area A01</MudText>
-                <MudGrid>
-                    @for (int index = 0; index < AreaPorts.Count; index++)
-                    {
-						int i = index; // Local copy for lambda capture
-                        <MudItem xs="6" sm="4" md="3">
-                            <MudPaper Class="@($"d-flex flex-column align-items-center pa-2 {(AreaPorts[i] ? "mud-theme-success" : "mud-theme-surface")}")" Elevation="2">
-                                <MudText Typo="Typo.subtitle2">@($"A01.CP{(i + 1):00}")</MudText>
-                                <MudChip T="string" Color="@(AreaPorts[i] ? Color.Success : Color.Default)" Variant="Variant.Filled" Class="mt-1">
-                                    @(AreaPorts[i] ? "Occupied" : "Empty")
-                                </MudChip>
-                            </MudPaper>
-                        </MudItem>
-                    }
-                </MudGrid>
-            </MudPaper>
-        </MudItem>
-    </MudGrid>
-</MudContainer>
+<div style="position: relative; width: 100%; height: 100%; overflow: hidden;">
+    <canvas id="pixiCanvas" style="display:block; width:100%; height:100%;"></canvas>
+
+    <!-- 테스트용 컨트롤 패널 -->
+    <div style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 5px; border-radius: 5px; min-width: 200px;">
+        <h4>위치 관리</h4>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small"
+                   @onclick="AddTestLocation">
+            랜덤 테스트 위치 추가
+        </MudButton>
+
+
+    </div>
+</div>
 
 @code {
-  
+    private IReadOnlyList<Location> _locations = new List<Location>();
+    private IReadOnlyList<Robot> _robots = new List<Robot>();
+    private bool _pixiInitialized = false;
+    private Random _random = new Random();
+    private CancellationTokenSource? _robotSimCts;
+    private Dictionary<string, (int x, int y, int vx, int vy)> _robotStates = new Dictionary<string, (int x, int y, int vx, int vy)>();
 
-    // 선언과 동시에 초기화하여 코드를 간결하게 만듭니다.
-    private List<bool> StockerPorts { get; set; } = Enumerable.Repeat(false, 8).ToList();
-    private List<bool> AreaPorts { get; set; } = Enumerable.Repeat(false, 6).ToList();
-
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Stocker 정보 가져오기
-        var stockers = await StockerRepository.GetAllAsync();
-        // Area 정보 가져오기
-        var areas = await AreaRepository.GetAllAsync();
-      
+        if (firstRender)
+        {
+            // 모든 위치/로봇 정보 로드
+            await LoadLocationsAsync();
+            await LoadRobotsAsync();
+
+            LocationDto[] locations = _locations.Select(MapLocationToDto).ToArray();
+            RobotDto[] robots = _robots.Select(MapRobotToDto).ToArray();
+
+            // Pixi.js 초기화 및 데이터 전달
+            await JS.InvokeVoidAsync("pixiGame.init", "pixiCanvas", (object)locations);
+            await JS.InvokeVoidAsync("pixiGame.loadRobots", (object)robots);
+            await JS.InvokeVoidAsync("pixiGame.setRobotAutoMove", false);
+            _pixiInitialized = true;
+
+            InitializeRobotSimulation();
+        }
+    }
+
+    private async Task LoadLocationsAsync()
+    {
+        try
+        {
+            _locations = await LocationRepository.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"위치 정보 로드 중 오류 발생: {ex.Message}");
+            _locations = new List<Location>();
+        }
+    }
+
+    private async Task LoadRobotsAsync()
+    {
+        try
+        {
+            _robots = await RobotRepository.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"로봇 정보 로드 중 오류 발생: {ex.Message}");
+            _robots = new List<Robot>();
+        }
+    }
+
+    private void InitializeRobotSimulation()
+    {
+        _robotStates.Clear();
+        foreach (Robot robot in _robots)
+        {
+            RobotDto dto = MapRobotToDto(robot);
+            int startX = dto.X;
+            int startY = dto.Y;
+            int vx = _random.Next(-3, 4);
+            if (vx == 0) { vx = 2; }
+            int vy = _random.Next(-3, 4);
+            if (vy == 0) { vy = 2; }
+            _robotStates[robot.Id] = (startX, startY, vx, vy);
+        }
+
+        _robotSimCts = new CancellationTokenSource();
+        _ = RunRobotSimulationAsync(_robotSimCts.Token);
+    }
+
+    private async Task RunRobotSimulationAsync(CancellationToken token)
+    {
+        const int width = 1400;
+        const int height = 800;
+        while (!token.IsCancellationRequested)
+        {
+            List<RobotUpdateDto> updates = new List<RobotUpdateDto>();
+            Dictionary<string, (int x, int y, int vx, int vy)> snapshot = new Dictionary<string, (int x, int y, int vx, int vy)>(_robotStates);
+            foreach (KeyValuePair<string, (int x, int y, int vx, int vy)> kv in snapshot)
+            {
+                string id = kv.Key;
+                int x = kv.Value.x + kv.Value.vx;
+                int y = kv.Value.y + kv.Value.vy;
+                int vx = kv.Value.vx;
+                int vy = kv.Value.vy;
+
+                if (x < 0 || x > width)
+                {
+                    vx = -vx;
+                    x += vx * 2;
+                }
+                if (y < 0 || y > height)
+                {
+                    vy = -vy;
+                    y += vy * 2;
+                }
+
+                _robotStates[id] = (x, y, vx, vy);
+
+                Robot? robot = _robots.FirstOrDefault(r => r.Id == id);
+                if (robot != null)
+                {
+                    updates.Add(new RobotUpdateDto
+                    {
+                        Id = robot.Id,
+                        Name = robot.Name,
+                        RobotType = robot.RobotType.ToString(),
+                        X = x,
+                        Y = y,
+                        Z = 0
+                    });
+                }
+            }
+
+            if (_pixiInitialized && updates.Count > 0)
+            {
+                foreach (RobotUpdateDto update in updates)
+                {
+                    await JS.InvokeVoidAsync("pixiGame.updateRobot", update);
+                }
+            }
+
+            try
+            {
+                await Task.Delay(200, token);
+            }
+            catch (TaskCanceledException)
+            {
+                break;
+            }
+        }
+    }
+
+
+    // 새로운 위치 추가 (이벤트 기반)
+    private async Task AddNewLocation(Location location)
+    {
+        if (!_pixiInitialized)
+        {
+            return;
+        }
+
+        LocationDto locationDto = MapLocationToDto(location);
+        await JS.InvokeVoidAsync("pixiGame.addLocation", locationDto);
+    }
+
+    // 위치 제거 (이벤트 기반)
+    private async Task RemoveLocation(string locationId)
+    {
+        if (!_pixiInitialized)
+        {
+            return;
+        }
+        await JS.InvokeVoidAsync("pixiGame.removeLocation", locationId);
+    }
+
+    // 위치 업데이트 (이벤트 기반)
+    private async Task UpdateLocation(Location location)
+    {
+        if (!_pixiInitialized)
+        {
+            return;
+        }
+        LocationDto locationDto = MapLocationToDto(location);
+        await JS.InvokeVoidAsync("pixiGame.updateLocation", locationDto);
+    }
+
+    // 테스트용 위치 추가
+    private async Task AddTestLocation()
+    {
+        if (!_pixiInitialized)
+        {
+            return;
+        }
+
+        LocationDto testLocation = new LocationDto
+        {
+            Id = $"TEST_{DateTime.Now.Ticks}",
+            Name = $"Test_{_random.Next(100, 999)}",
+            LocationType = "Memory",
+            Status = "Available",
+            X = _random.Next(50, 800),
+            Y = _random.Next(50, 600),
+            Z = 0
+        };
+
+        await JS.InvokeVoidAsync("pixiGame.addLocation", testLocation);
+    }
+
+    // 모든 위치 제거 (테스트용)
+    private async Task ClearAllLocations()
+    {
+        if (!_pixiInitialized)
+        {
+            return;
+        }
+        await JS.InvokeVoidAsync("pixiGame.clearAllLocations");
+    }
+
+    private LocationDto MapLocationToDto(Location location)
+    {
+        return new LocationDto
+        {
+            Id = location.Id,
+            Name = location.Name,
+            LocationType = location.LocationType.ToString(),
+            Status = location.Status.ToString(),
+            X = (int)location.Position.X,
+            Y = (int)location.Position.Y,
+            Z = (int)location.Position.Z
+        };
+    }
+
+    private RobotDto MapRobotToDto(Robot robot)
+    {
+        return new RobotDto
+        {
+            Id = robot.Id,
+            Name = robot.Name,
+            RobotType = robot.RobotType.ToString(),
+            X = (int)robot.Position.X,
+            Y = (int)robot.Position.Y,
+            Z = (int)robot.Position.Z
+        };
+    }
+
+    // 외부에서 호출할 수 있는 퍼블릭 메서드들
+    public async Task OnLocationAdded(Location location)
+    {
+        await AddNewLocation(location);
+    }
+
+    public async Task OnLocationRemoved(string locationId)
+    {
+        await RemoveLocation(locationId);
+    }
+
+    public async Task OnLocationUpdated(Location location)
+    {
+        await UpdateLocation(location);
     }
 }

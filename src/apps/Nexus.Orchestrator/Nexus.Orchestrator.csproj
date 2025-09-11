@@ -23,4 +23,8 @@
     <ProjectReference Include="..\..\libs\Nexus.Core\Nexus.Core.csproj" />
     <ProjectReference Include="..\..\libs\Nexus.Infrastructure\Nexus.Infrastructure.csproj" />
   </ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Application\Acs\Interfaces\" />
+	</ItemGroup>
 </Project>

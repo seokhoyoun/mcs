@@ -1,13 +1,13 @@
 namespace Nexus.Core.Domain.Models.Locations.Enums
 {
     /// <summary>
-    /// À§Ä¡ÀÇ À¯ÇüÀ» ³ªÅ¸³»´Â ¿­°ÅÇüÀÔ´Ï´Ù.
+    /// ìœ„ì¹˜ì˜ ìœ í˜•ì„ ë‚˜íƒ€ë‚´ëŠ” ì—´ê±°í˜•ì…ë‹ˆë‹¤.
     /// </summary>
     public enum ELocationType
     {
         Cassette = 0,
         Tray = 1,
         Memory = 2,
-        Robot = 3          // »õ·Î Ãß°¡ - AMR/·Îº¿¿ë
+        Marker = 3,
     }
 }

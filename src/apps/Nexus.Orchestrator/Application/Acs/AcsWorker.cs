@@ -1,4 +1,4 @@
-﻿using Nexus.Orchestrator.Application.Acs.Services;
+using Nexus.Orchestrator.Application.Acs.Services;
 using Nexus.Orchestrator.Application.Scheduler;
 using Nexus.Orchestrator.Application.Scheduler.Services;
 using System;
@@ -11,16 +11,28 @@ namespace Nexus.Orchestrator.Application.Acs
 {
     internal class AcsWorker : BackgroundService
     {
-        private readonly AcsService _acsService;
+        private readonly ILogger<AcsWorker> _logger;
 
-        public AcsWorker(AcsService acsService)
+        public AcsWorker(ILogger<AcsWorker> logger)
         {
-            _acsService = acsService;
+            _logger = logger;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await _acsService.RunAsync(stoppingToken);
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    // 1초마다 체크
+                    await Task.Delay(1000, stoppingToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error in ProcessPendingLotsAsync");
+                    await Task.Delay(5000, stoppingToken); // 에러 시 5초 대기
+                }
+            }
         }
     }
 }

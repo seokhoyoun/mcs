@@ -3,6 +3,7 @@ using Nexus.Core.Domain.Models.Locations.Enums;
 using Nexus.Core.Domain.Models.Stockers;
 using Nexus.Infrastructure.Persistence.Redis;
 using Nexus.Sandbox.Seed.Interfaces;
+using Nexus.Core.Domain.Shared.Bases;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,42 +24,54 @@ namespace Nexus.Sandbox.Seed
 
         public async Task SeedAsync()
         {
-            List<Stocker> stockers = LoadStockersFromLocalFile(); 
+            List<Stocker> stockers = LoadStockersFromLocalFile();
             await _repo.AddRangeAsync(stockers);
         }
 
         private List<Stocker> LoadStockersFromLocalFile()
         {
             List<Stocker> stockers = new List<Stocker>();
-            string filePath = "stockers.json";
+            string filePath = "tmp\\stockers.json";
 
-            if (!File.Exists(filePath))
+
+            // 기본 Stocker 하나 생성
+            string stockerId = "ST01";
+            string stockerName = "Main Stocker";
+
+            List<CassetteLocation> cassetteLocations = new List<CassetteLocation>();
+            int columns = 6; // 6 x 2 grid for 12 ports
+            int spacingX = 30;
+            int spacingY = 30;
+
+            for (int i = 1; i <= 12; i++)
             {
-                // 기본 Stocker 하나 생성
-                string stockerId = "ST01";
-                string stockerName = "Main Stocker";
+                string portId = $"{stockerId}.CP{i:00}";
 
-                List<CassetteLocation> cassetteLocations = new List<CassetteLocation>();
-                for (int i = 1; i <= 12; i++)
-                {
-                    string portId = $"{stockerId}.CP{i:00}";
-                    cassetteLocations.Add(new CassetteLocation(
-                        id: portId,
-                        name: $"{stockerName}_cp{i:00}",
-                        locationType: ELocationType.Cassette
-                    ));
-                }
+                CassetteLocation cassette = new CassetteLocation(
+                    id: portId,
+                    name: $"{stockerName}_cp{i:00}"
+                );
 
-                Stocker stocker = new Stocker(stockerId, stockerName, cassetteLocations);
-                stockers.Add(stocker);
+                int zeroBased = i - 1;
+                int col = zeroBased % columns;
+                int row = zeroBased / columns;
+                uint x = (uint)(col * spacingX);
+                uint y = (uint)(row * spacingY);
+                uint z = 0;
+                cassette.Position = new Position(x, y, z);
 
-                // JSON 파일로 저장
-                //Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
-                string baseJson = JsonSerializer.Serialize(stockers, new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(filePath, baseJson);
-
-                return stockers;
+                cassetteLocations.Add(cassette);
             }
+
+            Stocker stocker = new Stocker(stockerId, stockerName, cassetteLocations);
+            stockers.Add(stocker);
+
+            // JSON 파일로 저장
+            Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+            string baseJson = JsonSerializer.Serialize(stockers, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(filePath, baseJson);
+
+
 
             // 파일이 이미 있는 경우 → 로딩
             string json = File.ReadAllText(filePath);
