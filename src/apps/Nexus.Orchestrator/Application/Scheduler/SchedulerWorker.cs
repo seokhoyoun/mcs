@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Nexus.Core.Domain.Models.Robots;
-using Nexus.Core.Domain.Models.Robots.Hubs;
+using Nexus.Core.Domain.Models.Robots.DTO;
+using Nexus.Orchestrator.Application.Hubs;
 using Nexus.Core.Domain.Models.Robots.Interfaces;
 using Nexus.Core.Domain.Models.Robots.Services;
 using Nexus.Orchestrator.Application.Scheduler.Services;
@@ -10,12 +11,12 @@ namespace Nexus.Orchestrator.Application.Scheduler
     internal class SchedulerWorker : BackgroundService
     {
         private readonly ILogger<SchedulerWorker> _logger;
-        private readonly IHubContext<RobotPositionMessageHub> _hubContext;
+        private readonly IHubContext<RobotPositionHub> _hubContext;
         private readonly SchedulerService _schedulerService;
         private readonly IRobotRepository _robotRepository;
 
         public SchedulerWorker(ILogger<SchedulerWorker> logger,
-                               IHubContext<RobotPositionMessageHub> hubContext,
+                               IHubContext<RobotPositionHub> hubContext,
                                SchedulerService schedulerService,
                                IRobotRepository robotRepository)
         {
@@ -35,8 +36,24 @@ namespace Nexus.Orchestrator.Application.Scheduler
             {
                 try
                 {
-                    IReadOnlyList<Robot> robots = await _robotRepository.GetAllAsync(stoppingToken); 
-                    await _hubContext.Clients.All.SendAsync("ReceiveRobotPosition", robots, stoppingToken);
+                    IReadOnlyList<Robot> robots = await _robotRepository.GetAllAsync(stoppingToken);
+
+                    List<RobotDto> updates = new List<RobotDto>();
+                    foreach (Robot robot in robots)
+                    {
+                        RobotDto dto = new RobotDto
+                        {
+                            Id = robot.Id,
+                            Name = robot.Name,
+                            RobotType = robot.RobotType.ToString(),
+                            X = (int)robot.Position.X,
+                            Y = (int)robot.Position.Y,
+                            Z = (int)robot.Position.Z
+                        };
+                        updates.Add(dto);
+                    }
+
+                    await _hubContext.Clients.All.SendAsync("ReceiveRobotPosition", updates, stoppingToken);
                     await Task.Delay(200, stoppingToken);
                 }
                 catch (Exception ex)

@@ -1,19 +1,18 @@
-using Nexus.Core.Domain.Shared.Events;
 
 namespace Nexus.Core.Domain.Shared.Bases
 {
     /// <summary>
-    /// °íÀ¯ ½Äº°ÀÚ¸¦ °¡Áö´Â °´Ã¼ÀÇ °øÅë ÀÎÅÍÆäÀÌ½ºÀÔ´Ï´Ù.
+    /// ê³ ìœ  ì‹ë³„ìë¥¼ ê°€ì§€ëŠ” ê°ì²´ì˜ ê³µí†µ ì¸í„°í˜ì´ìŠ¤ì…ë‹ˆë‹¤.
     /// </summary>
     public interface IEntity
     {
         /// <summary>
-        /// °íÀ¯ ½Äº°ÀÚ
+        /// ê³ ìœ  ì‹ë³„ì
         /// </summary>
         string Id { get; }
 
         /// <summary>
-        /// ÀÌ¸§
+        /// ì´ë¦„
         /// </summary>
         string Name { get; }
      

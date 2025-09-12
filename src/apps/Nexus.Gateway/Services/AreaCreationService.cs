@@ -1,12 +1,9 @@
-using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using Nexus.Core.Domain.Models.Areas;
 using Nexus.Core.Domain.Models.Areas.Interfaces;
 using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
-using Nexus.Core.Domain.Shared.Events;
-using Nexus.Gateway.Services.Commands;
 using Nexus.Gateway.Services.Interfaces;
-using System.Text.Json;
 
 namespace Nexus.Gateway.Services
 {
@@ -15,20 +12,18 @@ namespace Nexus.Gateway.Services
         private readonly IAreaService _areaService;
         private readonly IAreaRepository _areaRepository;
         private readonly ILocationService _locationService;
-        private readonly IEventPublisher _eventPublisher;
+ 
         private readonly ILogger<AreaCreationService> _logger;
 
         public AreaCreationService(
             IAreaService areaService,
             IAreaRepository areaRepository,
             ILocationService locationService,
-            IEventPublisher eventPublisher,
             ILogger<AreaCreationService> logger)
         {
             _areaService = areaService;
             _areaRepository = areaRepository;
             _locationService = locationService;
-            _eventPublisher = eventPublisher;
             _logger = logger;
         }
 

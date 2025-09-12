@@ -19,7 +19,7 @@ namespace Nexus.Gateway.Controllers
         [HttpPost]
         public async Task<ActionResult<string>> CreateLot([FromBody] CreateLotCommand command, CancellationToken cancellationToken = default)
         {
-            var lotId = await _lotCreationService.CreateLotAsync(command, cancellationToken);
+            string lotId = await _lotCreationService.CreateLotAsync(command, cancellationToken);
             return Ok(lotId);
         }
     }

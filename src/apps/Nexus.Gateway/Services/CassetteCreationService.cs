@@ -1,8 +1,6 @@
-using Microsoft.Extensions.Logging;
 using Nexus.Core.Domain.Models.Transports;
 using Nexus.Core.Domain.Models.Transports.Extensions;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
-using Nexus.Core.Domain.Shared.Events;
 using Nexus.Gateway.Services.Commands;
 using Nexus.Gateway.Services.Interfaces;
 
@@ -11,16 +9,13 @@ namespace Nexus.Gateway.Services
     public class CassetteCreationService : ICassetteCreationService
     {
         private readonly ITransportRepository _transportsRepository;
-        private readonly IEventPublisher _eventPublisher;
         private readonly ILogger<CassetteCreationService> _logger;
 
         public CassetteCreationService(
             ITransportRepository transportsRepository,
-            IEventPublisher eventPublisher,
             ILogger<CassetteCreationService> logger)
         {
             _transportsRepository = transportsRepository;
-            _eventPublisher = eventPublisher;
             _logger = logger;
         }
 
