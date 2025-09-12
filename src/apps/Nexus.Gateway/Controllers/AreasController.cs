@@ -23,11 +23,11 @@ namespace Nexus.Gateway.Controllers
         }
 
         /// <summary>
-        /// Area ½Ã½ºÅÛÀ» ÃÊ±âÈ­ÇÕ´Ï´Ù.
+        /// Area ì‹œìŠ¤í…œì„ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
         /// </summary>
-        /// <param name="command">ÃÊ±âÈ­ ¸í·É</param>
-        /// <param name="cancellationToken">Ãë¼Ò ÅäÅ«</param>
-        /// <returns>ÃÊ±âÈ­ °á°ú</returns>
+        /// <param name="command">ì´ˆê¸°í™” ëª…ë ¹</param>
+        /// <param name="cancellationToken">ì·¨ì†Œ í† í°</param>
+        /// <returns>ì´ˆê¸°í™” ê²°ê³¼</returns>
         [HttpPost]
         //[ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         //[ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
@@ -44,6 +44,8 @@ namespace Nexus.Gateway.Controllers
                 //var result = await _areaCreationService.CreateAreaAsync(jsonPayload, cancellationToken);
 
                 _logger.LogInformation("Area initialization completed: Result");
+
+                await Task.CompletedTask;
 
                 return Ok();
             }
@@ -62,6 +64,8 @@ namespace Nexus.Gateway.Controllers
                 _logger.LogError(ex, "Unexpected error during area initialization");
                 return StatusCode(500, "Internal server error occurred while initializing areas");
             }
+
+            
         }
 
     }

@@ -8,5 +8,4 @@
   nexus.gateway: 
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-    ports:
-      - "8082:8080"
+

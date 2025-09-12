@@ -27,6 +27,7 @@ namespace Nexus.Sandbox
                 new CassetteSeeder(transportRepo),
                 new AreaSeeder(areaRepo),
                 new StockerSeeder(stockerRepo),
+                new MarkerSeeder(locationRepo, areaRepo, stockerRepo),
                 new RobotSeeder(robotRepo, locationRepo)
             };
 

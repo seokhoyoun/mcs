@@ -20,11 +20,11 @@ namespace Nexus.Gateway.Controllers
         }
 
         /// <summary>
-        /// »õ·Î¿î Ä«¼¼Æ®¸¦ »ı¼ºÇÏ°í Æ®·¹ÀÌ¿Í ¸Ş¸ğ¸®·Î Ã¤¿ó´Ï´Ù.
+        /// ìƒˆë¡œìš´ ì¹´ì„¸íŠ¸ë¥¼ ìƒì„±í•˜ê³  íŠ¸ë ˆì´ì™€ ë©”ëª¨ë¦¬ë¡œ ì±„ì›ë‹ˆë‹¤.
         /// </summary>
-        /// <param name="command">Ä«¼¼Æ® »ı¼º ¸í·É</param>
-        /// <param name="cancellationToken">Ãë¼Ò ÅäÅ«</param>
-        /// <returns>»ı¼ºµÈ Ä«¼¼Æ® ID</returns>
+        /// <param name="command">ì¹´ì„¸íŠ¸ ìƒì„± ëª…ë ¹</param>
+        /// <param name="cancellationToken">ì·¨ì†Œ í† í°</param>
+        /// <returns>ìƒì„±ëœ ì¹´ì„¸íŠ¸ ID</returns>
         [HttpPost]
         [ProducesResponseType(typeof(string), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
@@ -38,7 +38,7 @@ namespace Nexus.Gateway.Controllers
             {
                 _logger.LogInformation("Received cassette creation request for ID: {CassetteId}", command.CassetteId);
 
-                var cassetteId = await _cassetteCreationService.CreateCassetteAsync(command, cancellationToken);
+                string cassetteId = await _cassetteCreationService.CreateCassetteAsync(command, cancellationToken);
 
                 _logger.LogInformation("Cassette created successfully with ID: {CassetteId}", cassetteId);
 
@@ -65,17 +65,17 @@ namespace Nexus.Gateway.Controllers
         }
 
         /// <summary>
-        /// Ä«¼¼Æ® ID·Î Ä«¼¼Æ® Á¤º¸¸¦ Á¶È¸ÇÕ´Ï´Ù.
+        /// ì¹´ì„¸íŠ¸ IDë¡œ ì¹´ì„¸íŠ¸ ì •ë³´ë¥¼ ì¡°íšŒí•©ë‹ˆë‹¤.
         /// </summary>
-        /// <param name="id">Ä«¼¼Æ® ID</param>
-        /// <param name="cancellationToken">Ãë¼Ò ÅäÅ«</param>
-        /// <returns>Ä«¼¼Æ® Á¤º¸</returns>
+        /// <param name="id">ì¹´ì„¸íŠ¸ ID</param>
+        /// <param name="cancellationToken">ì·¨ì†Œ í† í°</param>
+        /// <returns>ì¹´ì„¸íŠ¸ ì •ë³´</returns>
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> GetCassette(string id, CancellationToken cancellationToken = default)
         {
-            // ÇâÈÄ ±¸Çö ¿¹Á¤ - ÇöÀç´Â placeholder
+            // í–¥í›„ êµ¬í˜„ ì˜ˆì • - í˜„ì¬ëŠ” placeholder
             return Ok(new { Id = id, Message = "Cassette retrieved successfully" });
         }
     }

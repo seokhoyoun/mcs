@@ -1,9 +1,6 @@
 using Nexus.Core.Domain.Models.Lots;
 using Nexus.Core.Domain.Models.Lots.Enums;
-using Nexus.Core.Domain.Models.Lots.Events;
 using Nexus.Core.Domain.Models.Lots.Interfaces;
-using Nexus.Core.Domain.Models.Transports;
-using Nexus.Core.Domain.Shared.Events;
 using Nexus.Gateway.Services.Commands;
 using Nexus.Gateway.Services.Interfaces;
 
@@ -12,14 +9,12 @@ namespace Nexus.Gateway.Services
     public class LotCreationService : ILotCreationService
     {
         private readonly ILotRepository _lotRepository;
-        private readonly IEventPublisher _eventPublisher;
+
 
         public LotCreationService(
-            ILotRepository lotRepository,
-            IEventPublisher eventPublisher)
+            ILotRepository lotRepository)
         {
             _lotRepository = lotRepository;
-            _eventPublisher = eventPublisher;
         }
 
         public async Task<string> CreateLotAsync(CreateLotCommand command, CancellationToken cancellationToken = default)
@@ -69,9 +64,8 @@ namespace Nexus.Gateway.Services
             // Lot 저장 (Redis lot:{lotId})
             await _lotRepository.AddAsync(lot, cancellationToken);
 
-            // LotCreatedEvent를 발행하여 Orchestrator로 메시지 전달
-            LotCreatedEvent lotCreatedEvent = new LotCreatedEvent(lot.Id);
-            await _eventPublisher.PublishAsync(lotCreatedEvent, cancellationToken);
+            //TODO:: Event를 발행하여 Orchestrator로 메시지 전달
+         
 
             return lot.Id;
         }

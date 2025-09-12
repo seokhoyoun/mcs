@@ -1,21 +1,15 @@
+using System.Collections.Concurrent;
 using Nexus.Core.Domain.Models.Areas;
 using Nexus.Core.Domain.Models.Areas.Enums;
 using Nexus.Core.Domain.Models.Areas.Interfaces;
 using Nexus.Core.Domain.Models.Locations;
-using Nexus.Core.Domain.Models.Locations.Base;
-using Nexus.Core.Domain.Models.Locations.Enums;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Lots;
 using Nexus.Core.Domain.Models.Lots.Enums;
-using Nexus.Core.Domain.Models.Lots.Events;
 using Nexus.Core.Domain.Models.Lots.Interfaces;
 using Nexus.Core.Domain.Models.Plans;
 using Nexus.Core.Domain.Models.Plans.Enums;
 using Nexus.Core.Domain.Models.Transports;
-using Nexus.Core.Messaging;
-using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Text.Json;
 
 namespace Nexus.Orchestrator.Application.Scheduler.Services
 {
@@ -25,7 +19,6 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
 
         private readonly IAreaService _areaService;
         private readonly ILocationService _locationService;
-        private readonly IMessageSubscriber _messageSubscriber;
         private readonly ILotRepository _lotRepository;
         private readonly ILogger<SchedulerService> _logger;
 
@@ -38,13 +31,11 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
         public SchedulerService(
             IAreaService areaService,
             ILocationService locationService,
-            IMessageSubscriber messageSubscriber,
             ILotRepository lotRepository,
             ILogger<SchedulerService> logger)
         {
             _areaService = areaService;
             _locationService = locationService;
-            _messageSubscriber = messageSubscriber;
             _lotRepository = lotRepository;
             _logger = logger;
         }
@@ -55,10 +46,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
 
         public async Task StartAsync(CancellationToken stoppingToken)
         {
-            Task subscriptionTask = SubscribeToLotCreatedEventsAsync(stoppingToken);
-            Task processingTask = ProcessPendingLotsAsync(stoppingToken);
-
-            await Task.WhenAll(subscriptionTask, processingTask);
+            await SubscribeToLotCreatedEventsAsync(stoppingToken);
         }
 
         #endregion
@@ -67,66 +55,18 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
 
         private async Task SubscribeToLotCreatedEventsAsync(CancellationToken stoppingToken)
         {
-            try
-            {
-                await _messageSubscriber.SubscribeAsync("LotCreatedEvent", HandleLotCreatedEventMessage, stoppingToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while subscribing to LotCreatedEvent");
-            }
+            
         }
 
         private void HandleLotCreatedEventMessage(string message)
         {
-            try
-            {
-                LotCreatedEvent? lotCreatedEvent = JsonSerializer.Deserialize<LotCreatedEvent>(message);
-                if (lotCreatedEvent == null)
-                {
-                    _logger.LogWarning("Failed to deserialize LotCreatedEvent from message: {Message}", message);
-                    return;
-                }
-
-                _logger.LogInformation("Received LotCreatedEvent for LotId: {LotId}", lotCreatedEvent.LotId);
-
-                // 대기열에 추가
-                _pendingLotIds.Enqueue(lotCreatedEvent.LotId);
-
-                _logger.LogInformation("Added LotId {LotId} to pending queue", lotCreatedEvent.LotId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error handling LotCreatedEvent for message: {Message}", message);
-            }
+          
         }
 
         #endregion
 
         #region Lot Processing
 
-        private async Task ProcessPendingLotsAsync(CancellationToken stoppingToken)
-        {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                try
-                {
-                    // 대기열에서 Lot 처리
-                    while (_pendingLotIds.TryDequeue(out string? lotId))
-                    {
-                        await ProcessLotAsync(lotId, stoppingToken);
-                    }
-
-                    // 1초마다 체크
-                    await Task.Delay(1000, stoppingToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error in ProcessPendingLotsAsync");
-                    await Task.Delay(5000, stoppingToken); // 에러 시 5초 대기
-                }
-            }
-        }
 
         private async Task ProcessLotAsync(string lotId, CancellationToken cancellationToken)
         {

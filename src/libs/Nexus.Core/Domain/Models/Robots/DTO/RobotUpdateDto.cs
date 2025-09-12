@@ -1,4 +1,4 @@
-namespace Nexus.Portal.Components.Pages.Monitoring.DTOs
+namespace Nexus.Core.Domain.Models.Robots.DTO
 {
     public class RobotUpdateDto
     {
@@ -10,3 +10,4 @@ namespace Nexus.Portal.Components.Pages.Monitoring.DTOs
         public int Z { get; set; }
     }
 }
+

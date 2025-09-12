@@ -1,4 +1,4 @@
-namespace Nexus.Portal.Components.Pages.Monitoring.DTOs
+namespace Nexus.Core.Domain.Models.Locations.DTO
 {
     public class LocationDto
     {
@@ -9,5 +9,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring.DTOs
         public int X { get; set; }
         public int Y { get; set; }
         public int Z { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
     }
 }

@@ -15,4 +15,10 @@
  
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Domain\Models\Locations\Events\" />
+	  <Folder Include="Domain\Models\Lots\Events\" />
+	  <Folder Include="Domain\Models\Plans\Events\" />
+	</ItemGroup>
+
 </Project>

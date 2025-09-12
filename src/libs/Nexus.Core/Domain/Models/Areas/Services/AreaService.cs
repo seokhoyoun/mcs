@@ -1,14 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Nexus.Core.Domain.Models.Areas.Interfaces;
 using Nexus.Core.Domain.Models.Locations;
-using Nexus.Core.Domain.Models.Locations.Base;
-using Nexus.Core.Domain.Models.Locations.Enums;
-using Nexus.Core.Domain.Models.Locations.Services;
-using Nexus.Core.Domain.Shared.Bases;
-using System.Text.Json;
 using Nexus.Core.Domain.Models.Areas.Enums;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
-using Nexus.Core.Domain.Shared.Events;
+using Nexus.Core.Domain.Shared.Bases;
 
 namespace Nexus.Core.Domain.Models.Areas.Services
 {
@@ -21,7 +16,7 @@ namespace Nexus.Core.Domain.Models.Areas.Services
 
         private readonly List<Area> _areas = new List<Area>();
 
-        public AreaService(ILogger<AreaService> logger, IAreaRepository areaRepository, IEventPublisher eventPublisher, ILocationService locationService) : base(logger, areaRepository)
+        public AreaService(ILogger<AreaService> logger, IAreaRepository areaRepository, ILocationService locationService) : base(logger, areaRepository)
         {
             _areaRepository = areaRepository;
             _locationService = locationService;

@@ -1,29 +1,29 @@
-@page "/equipment/areas"
+ï»¿@page "/equipment/areas"
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
-    <MudText Typo="Typo.h3" GutterBottom="true">¿¡¾î¸®¾î °ü¸®</MudText>
-    <MudText Typo="Typo.subtitle1" Class="mb-4">¿¡¾î¸®¾î °ü·Ã Á¤º¸¸¦ °ü¸®ÇÕ´Ï´Ù.</MudText>
+    <MudText Typo="Typo.h3" GutterBottom="true">ì—ì–´ë¦¬ì–´ ê´€ë¦¬</MudText>
+    <MudText Typo="Typo.subtitle1" Class="mb-4">ì—ì–´ë¦¬ì–´ ê´€ë ¨ ì •ë³´ë¥¼ ê´€ë¦¬í•©ë‹ˆë‹¤.</MudText>
 
     <MudCard>
         <MudCardHeader>
             <CardHeaderContent>
-                <MudText Typo="Typo.h6">¿¡¾î¸®¾î ¸ñ·Ï</MudText>
+                <MudText Typo="Typo.h6">ì—ì–´ë¦¬ì–´ ëª©ë¡</MudText>
             </CardHeaderContent>
         </MudCardHeader>
         <MudCardContent>
             <MudTable Items="@_areas" Hover="true" Breakpoint="Breakpoint.Sm">
                 <HeaderContent>
-                    <MudTh>¿¡¾î¸®¾î ID</MudTh>
-                    <MudTh>À§Ä¡</MudTh>
-                    <MudTh>»óÅÂ</MudTh>
-                    <MudTh>ÀÛ¾÷</MudTh>
+                    <MudTh>ì—ì–´ë¦¬ì–´ ID</MudTh>
+                    <MudTh>ìœ„ì¹˜</MudTh>
+                    <MudTh>ìƒíƒœ</MudTh>
+                    <MudTh>ì‘ì—…</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="¿¡¾î¸®¾î ID">@context.AreaId</MudTd>
-                    <MudTd DataLabel="À§Ä¡">@context.Location</MudTd>
-                    <MudTd DataLabel="»óÅÂ">@context.Status" </MudTd>
-                    <MudTd DataLabel="ÀÛ¾÷">
-                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">»ó¼¼ º¸±â</MudButton>
+                    <MudTd DataLabel="ì—ì–´ë¦¬ì–´ ID">@context.AreaId</MudTd>
+                    <MudTd DataLabel="ìœ„ì¹˜">@context.Location</MudTd>
+                    <MudTd DataLabel="ìƒíƒœ">@context.Status" </MudTd>
+                    <MudTd DataLabel="ì‘ì—…">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">ìƒì„¸ ë³´ê¸°</MudButton>
                     </MudTd>
                 </RowTemplate>
             </MudTable>
@@ -34,9 +34,9 @@
 @code { 
     private readonly List<Area> _areas = new()
     {
-        new Area { AreaId = "A01", Location = "1Ãş", Status = "Active" },
-        new Area { AreaId = "A02", Location = "2Ãş", Status = "Inactive" },
-        new Area { AreaId = "A03", Location = "ÁöÇÏ", Status = "Maintenance" }
+        new Area { AreaId = "A01", Location = "1ì¸µ", Status = "Active" },
+        new Area { AreaId = "A02", Location = "2ì¸µ", Status = "Inactive" },
+        new Area { AreaId = "A03", Location = "ì§€í•˜", Status = "Maintenance" }
     };
 
     private Color GetStatusColor(string status)

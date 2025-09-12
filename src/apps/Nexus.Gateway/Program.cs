@@ -8,15 +8,12 @@ using Nexus.Core.Domain.Models.Stockers.Interfaces;
 using Nexus.Core.Domain.Models.Stockers.Services;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using Nexus.Core.Domain.Models.Transports.Services;
-using Nexus.Core.Domain.Shared.Events;
-using Nexus.Core.Messaging;
 using Nexus.Gateway.Services;
 using Nexus.Gateway.Services.Interfaces;
-using Nexus.Infrastructure.Messaging;
-using Nexus.Infrastructure.Messaging.Redis;
 using Nexus.Infrastructure.Persistence.Redis;
 using StackExchange.Redis;
 using System.Text.Json;
+using Nexus.Core.Domain.Models.Robots.Interfaces;
 
 namespace Nexus.Gateway
 {
@@ -66,11 +63,6 @@ namespace Nexus.Gateway
                 return ConnectionMultiplexer.Connect(connStr);
             });
 
-            // 메시징 서비스 등록
-            builder.Services.AddSingleton<IMessagePublisher, RedisPublisher>();
-            builder.Services.AddSingleton<IMessageSubscriber, RedisSubscriber>();
-            builder.Services.AddSingleton<IEventPublisher, DomainEventPublisher>();
-
             // Repository 서비스 등록
             builder.Services.AddSingleton<ILotRepository, RedisLotRepository>();
 
@@ -87,7 +79,9 @@ namespace Nexus.Gateway
             builder.Services.AddSingleton<IStockerRepository, RedisStockerRepository>();
             builder.Services.AddSingleton<IStockerService, StockerService>();
 
-      
+            // Robots
+            builder.Services.AddSingleton<IRobotRepository, RedisRobotRepository>();
+
             builder.Services.AddScoped<LotService>();
 
             // Application 서비스 등록

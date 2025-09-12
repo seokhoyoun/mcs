@@ -1,27 +1,19 @@
 using Nexus.Core.Domain.Models.Areas.Interfaces;
 using Nexus.Core.Domain.Models.Areas.Services;
-using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Locations.Services;
-using Nexus.Core.Domain.Models.Lots.Events;
 using Nexus.Core.Domain.Models.Lots.Interfaces;
 using Nexus.Core.Domain.Models.Robots.Interfaces;
 using Nexus.Core.Domain.Models.Stockers.Interfaces;
 using Nexus.Core.Domain.Models.Stockers.Services;
 using Nexus.Core.Domain.Models.Transports.Interfaces;
 using Nexus.Core.Domain.Models.Transports.Services;
-using Nexus.Core.Domain.Shared.Events;
-using Nexus.Core.Messaging;
-using Nexus.Infrastructure.Messaging;
-using Nexus.Infrastructure.Messaging.Redis;
 using Nexus.Infrastructure.Persistence.Redis;
 using Nexus.Orchestrator.Application.Acs;
-using Nexus.Orchestrator.Application.Acs.Services;
 using Nexus.Orchestrator.Application.Scheduler;
 using Nexus.Orchestrator.Application.Scheduler.Services;
-using Nexus.Orchestrator.Application.Scheduler.Services.EventHandlers;
-using Prometheus;
 using StackExchange.Redis;
+using Prometheus;
 
 namespace Nexus.Orchestrator
 {
@@ -66,16 +58,12 @@ namespace Nexus.Orchestrator
 
             //builder.Services.AddSingleton<IAcsService, AcsSimulationService>();
             builder.Services.AddSingleton<SchedulerService>();
+            builder.Services.AddSingleton<Nexus.Orchestrator.Application.Robots.Simulation.RobotMotionService>();
 
-            builder.Services.AddSingleton<IMessagePublisher, RedisPublisher>();
-            builder.Services.AddSingleton<IMessageSubscriber, RedisSubscriber>();
-            builder.Services.AddSingleton<IEventPublisher, DomainEventPublisher>();
-
-
-            builder.Services.AddScoped<IEventHandler<LotCreatedEvent>, LotCreatedEventHandler>();
 
             builder.Services.AddHostedService<AcsWorker>();
             builder.Services.AddHostedService<SchedulerWorker>();
+            builder.Services.AddHostedService<Nexus.Orchestrator.Application.Robots.Simulation.RobotMotionWorker>();
 
             // SignalR hub for robot position broadcast
             builder.Services.AddSignalR();
@@ -100,7 +88,7 @@ namespace Nexus.Orchestrator
             WebApplication app = builder.Build();
 
             app.UseCors();
-            app.MapHub<Nexus.Core.Domain.Models.Robots.Hubs.RobotPositionMessageHub>("/hubs/robotPosition");
+            app.MapHub<Nexus.Orchestrator.Application.Hubs.RobotPositionHub>("/hubs/robotPosition");
 
             app.Run();
         }

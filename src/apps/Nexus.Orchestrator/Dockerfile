@@ -1,4 +1,4 @@
-# 디버그 컨테이너를 사용자 지정하는 방법과 Visual Studio 이 Dockerfile을 사용하여 더 빠른 디버깅을 위해 이미지를 빌드하는 방법을 알아보려면 https://aka.ms/customizecontainer를 참조하세요.
+﻿# 디버그 컨테이너를 사용자 지정하는 방법과 Visual Studio 이 Dockerfile을 사용하여 더 빠른 디버깅을 위해 이미지를 빌드하는 방법을 알아보려면 https://aka.ms/customizecontainer를 참조하세요.
 
 # 이 스테이지는 VS에서 빠른 모드로 실행할 때 사용됩니다(디버그 구성의 기본값).
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
@@ -13,7 +13,6 @@ WORKDIR /src
 COPY ["Directory.build.props", "."]
 COPY ["src/apps/Nexus.Orchestrator/Nexus.Orchestrator.csproj", "src/apps/Nexus.Orchestrator/"]
 COPY ["src/libs/Nexus.Core/Nexus.Core.csproj", "src/libs/Nexus.Core/"]
-COPY ["src/libs/Nexus.Shared/Nexus.Shared.csproj", "src/libs/Nexus.Shared/"]
 COPY ["src/libs/Nexus.Infrastructure/Nexus.Infrastructure.csproj", "src/libs/Nexus.Infrastructure/"]
 RUN dotnet restore "./src/apps/Nexus.Orchestrator/Nexus.Orchestrator.csproj"
 COPY . .

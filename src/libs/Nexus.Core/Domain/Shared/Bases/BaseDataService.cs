@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 namespace Nexus.Core.Domain.Shared.Bases
 {
     /// <summary>
-    /// µ¥ÀÌÅÍ ¼­ºñ½ºÀÇ ±âº» Ãß»ó ±¸Çö
+    /// ë°ì´í„° ì„œë¹„ìŠ¤ì˜ ê¸°ë³¸ ì¶”ìƒ êµ¬í˜„
     /// </summary>
-    /// <typeparam name="T">°ü¸®ÇÒ ¿£Æ¼Æ¼ Å¸ÀÔ</typeparam>
-    /// <typeparam name="TKey">¿£Æ¼Æ¼ÀÇ ÁÖ ½Äº°ÀÚ Å¸ÀÔ</typeparam>
+    /// <typeparam name="T">ê´€ë¦¬í•  ì—”í‹°í‹° íƒ€ì…</typeparam>
+    /// <typeparam name="TKey">ì—”í‹°í‹°ì˜ ì£¼ ì‹ë³„ì íƒ€ì…</typeparam>
     public abstract class BaseDataService<T, TKey> : IDataService<T, TKey> where T : class, IEntity
     {
         protected readonly ILogger _logger;
@@ -30,7 +30,7 @@ namespace Nexus.Core.Domain.Shared.Bases
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "¿£Æ¼Æ¼ ¸ñ·Ï Á¶È¸ Áß ¿À·ù ¹ß»ı");
+                _logger.LogError(ex, "ì—”í‹°í‹° ëª©ë¡ ì¡°íšŒ ì¤‘ ì˜¤ë¥˜ ë°œìƒ");
                 throw;
             }
         }
@@ -43,7 +43,7 @@ namespace Nexus.Core.Domain.Shared.Bases
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"ID {id}ÀÇ ¿£Æ¼Æ¼ Á¶È¸ Áß ¿À·ù ¹ß»ı");
+                _logger.LogError(ex, $"ID {id}ì˜ ì—”í‹°í‹° ì¡°íšŒ ì¤‘ ì˜¤ë¥˜ ë°œìƒ");
                 throw;
             }
         }
@@ -52,16 +52,16 @@ namespace Nexus.Core.Domain.Shared.Bases
         {
             try
             {
-                var result = await _repository.AddAsync(entity, cancellationToken);
+                T result = await _repository.AddAsync(entity, cancellationToken);
 
-                // ÇÊ¿ä ½Ã ÀÌº¥Æ® ¹ßÇà
+                // í•„ìš” ì‹œ ì´ë²¤íŠ¸ ë°œí–‰
                 // await _eventPublisher.PublishAsync(new EntityCreatedEvent<T>(result), cancellationToken);
 
                 return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "¿£Æ¼Æ¼ Ãß°¡ Áß ¿À·ù ¹ß»ı");
+                _logger.LogError(ex, "ì—”í‹°í‹° ì¶”ê°€ ì¤‘ ì˜¤ë¥˜ ë°œìƒ");
                 throw;
             }
         }
@@ -70,12 +70,12 @@ namespace Nexus.Core.Domain.Shared.Bases
         {
             try
             {
-                var result = await _repository.UpdateAsync(entity, cancellationToken);
+                T result = await _repository.UpdateAsync(entity, cancellationToken);
                 return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "¿£Æ¼Æ¼ ¾÷µ¥ÀÌÆ® Áß ¿À·ù ¹ß»ı");
+                _logger.LogError(ex, "ì—”í‹°í‹° ì—…ë°ì´íŠ¸ ì¤‘ ì˜¤ë¥˜ ë°œìƒ");
                 throw;
             }
         }
@@ -88,7 +88,7 @@ namespace Nexus.Core.Domain.Shared.Bases
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"ID {id}ÀÇ ¿£Æ¼Æ¼ »èÁ¦ Áß ¿À·ù ¹ß»ı");
+                _logger.LogError(ex, $"ID {id}ì˜ ì—”í‹°í‹° ì‚­ì œ ì¤‘ ì˜¤ë¥˜ ë°œìƒ");
                 throw;
             }
         }

@@ -1,33 +1,27 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>dotnet-Nexus.Orchestrator-0ce71cb6-dbdb-4f50-bab8-c54bba1098d5</UserSecretsId>
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <DockerfileContext>..\..\..</DockerfileContext>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>dotnet-Nexus.Orchestrator-0ce71cb6-dbdb-4f50-bab8-c54bba1098d5</UserSecretsId>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<DockerfileContext>..\..\..</DockerfileContext>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Application\Acs\Interfaces\**" />
-    <Content Remove="Application\Acs\Interfaces\**" />
-    <EmbeddedResource Remove="Application\Acs\Interfaces\**" />
-    <None Remove="Application\Acs\Interfaces\**" />
-  </ItemGroup>
 
 
 	<ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
 		<PackageReference Include="StackExchange.Redis" Version="2.8.58" />
-    <PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
+		<PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
 	</ItemGroup>
 
 	<ItemGroup>
-    <ProjectReference Include="..\..\libs\Nexus.Core\Nexus.Core.csproj" />
-    <ProjectReference Include="..\..\libs\Nexus.Infrastructure\Nexus.Infrastructure.csproj" />
-  </ItemGroup>
+		<ProjectReference Include="..\..\libs\Nexus.Core\Nexus.Core.csproj" />
+		<ProjectReference Include="..\..\libs\Nexus.Infrastructure\Nexus.Infrastructure.csproj" />
+	</ItemGroup>
 </Project>

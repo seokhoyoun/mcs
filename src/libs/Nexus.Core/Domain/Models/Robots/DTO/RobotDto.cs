@@ -1,4 +1,4 @@
-namespace Nexus.Portal.Components.Pages.Monitoring.DTOs
+namespace Nexus.Core.Domain.Models.Robots.DTO
 {
     public class RobotDto
     {
