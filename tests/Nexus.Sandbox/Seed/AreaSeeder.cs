@@ -78,6 +78,8 @@ namespace Nexus.Sandbox.Seed
                     uint cassetteY = (uint)(areaBaseY + cassetteRow * cassetteSpacingY);
                     uint cassetteZ = 0;
                     cassette.Position = new Position(cassetteX, cassetteY, cassetteZ);
+                    cassette.Width = 30;
+                    cassette.Height = 30;
                     cassetteLocations.Add(cassette);
 
                     for (int trayIdx = 1; trayIdx <= 6; trayIdx++)
@@ -91,16 +93,20 @@ namespace Nexus.Sandbox.Seed
                         uint trayY = cassetteY;
                         uint trayZ = (uint)trayIdx;
                         tray.Position = new Position(trayX, trayY, trayZ);
+                        tray.Width = 20;
+                        tray.Height = 20;
                         trayLocations.Add(tray);
                     }
                 }
 
                 List<Set> sets = new List<Set>();
-                int setColumns = 10; // arrange 20 
-                int setSpacingX = 50;
-                int setSpacingY = 50;
-                int setsBaseX = areaBaseX + 100; // place sets apart from cassette/tray block
-                int setsBaseY = areaBaseY;
+                // Place sets fully within the intended area bounds
+                int setColumns = 5; // 5 columns x 4 rows = 20 sets
+                int setSpacingX = 100; // ensure each set block (≈95px wide) does not overlap
+                int setSpacingY = 30;  // vertical separation between set blocks
+                // Uniform start X for all areas; only Y differs by areaBaseY.
+                int setsBaseX = areaBaseX + 40;
+                int setsBaseY = areaBaseY + 10; // small top padding
 
                 for (int i = 1; i <= 20; i++)
                 {
@@ -112,8 +118,8 @@ namespace Nexus.Sandbox.Seed
                     int setOriginY = setsBaseY + setRow * setSpacingY;
 
                     int memColumns = 16;
-                    int memSpacingX = 1;
-                    int memSpacingY = 1;
+                    int memSpacingX = 6;
+                    int memSpacingY = 6;
 
                     for (int m = 1; m <= 32; m++)
                     {
@@ -128,6 +134,8 @@ namespace Nexus.Sandbox.Seed
                         uint memY = (uint)(setOriginY + memRow * memSpacingY);
                         uint memZ = 0;
                         memory.Position = new Position(memX, memY, memZ);
+                        memory.Width = 5;
+                        memory.Height = 5;
 
                         memoryLocations.Add(memory);
                     }

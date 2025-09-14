@@ -98,6 +98,8 @@
 
         // 카메라 컨테이너
         this.camera = new PIXI.Container();
+        // Enable z-index sorting for layered rendering
+        this.camera.sortableChildren = true;
         this.app.stage.addChild(this.camera);
         window._camera = this.camera;
 
@@ -237,6 +239,7 @@
         group.addChild(label);
         group.x = robot.x * 2;
         group.y = robot.y * 2;
+        group.zIndex = 30;
         group._robotType = robot.robotType;
         const baseSpeed = robot.robotType === 'Logistics' ? 1.5 : 1.0;
         group.vx = (Math.random() * 2 - 1) * baseSpeed;
@@ -286,24 +289,58 @@
                 const label = group.children[1];
                 const locType = group._locType;
                 const locStatus = group._locStatus;
-                const size = group._locSize || { width: 25, height: 25 };
+                const size = group._locSize || { width: 10, height: 10 };
+                const scaledW = (size.width || 10) * 2;
+                const scaledH = (size.height || 10) * 2;
                 const colorMap = {
                     'Cassette': (this.themeColors.warning ?? 0xffc107),
                     'Tray': (this.themeColors.success ?? 0x2e7d32),
                     'Memory': (this.themeColors.info ?? 0x0288d1),
                     'Marker': (this.themeColors.secondary ?? 0x9c27b0)
                 };
-                const color = colorMap[locType] || 0x888888;
+                // Choose color by location type, but override for region roles
+                let color = colorMap[locType] || 0x888888;
+                if (group._isRegion) {
+                    const regionType = group._regionType || null;
+                    const regionColorMap = {
+                        'Area': (this.themeColors.success ?? 0x2e7d32),
+                        'Stocker': (this.themeColors.warning ?? 0xffc107),
+                        'Set': (this.themeColors.secondary ?? 0x9c27b0),
+                        'MoveArea': (this.themeColors.info ?? 0x0288d1)
+                    };
+                    if (regionType && regionColorMap[regionType]) {
+                        color = regionColorMap[regionType];
+                    }
+                }
                 const borderColor = (locStatus === 'Occupied')
                     ? (this.themeColors.textPrimary ?? 0x000000)
                     : (this.themeColors.textSecondary ?? 0x666666);
                 if (rect && rect.clear && rect.beginFill) {
                     rect.clear();
-                    rect.beginFill(color);
-                    rect.drawRect(0, 0, size.width, size.height);
+                    const isRegion = !!group._isRegion;
+                    const regionType = group._regionType || null;
+                    let fillAlpha = 1.0;
+                    let borderWidth = 2;
+                    if (isRegion) {
+                        if (regionType === 'Area') {
+                            fillAlpha = 0.15;
+                            borderWidth = 3;
+                        } else if (regionType === 'Stocker') {
+                            fillAlpha = 0.18;
+                            borderWidth = 3;
+                        } else if (regionType === 'MoveArea') {
+                            fillAlpha = 0.12;
+                            borderWidth = 3;
+                        } else {
+                            fillAlpha = 0.2;
+                            borderWidth = 2;
+                        }
+                    }
+                    rect.beginFill(color, fillAlpha);
+                    rect.drawRect(0, 0, scaledW, scaledH);
                     rect.endFill();
-                    rect.lineStyle(2, borderColor);
-                    rect.drawRect(0, 0, size.width, size.height);
+                    rect.lineStyle(borderWidth, borderColor);
+                    rect.drawRect(0, 0, scaledW, scaledH);
                 }
                 if (label && label.style) {
                     label.style.fill = (this.themeColors.textPrimary ?? 0x000000);
@@ -552,45 +589,94 @@
             'Marker': (this.themeColors.secondary ?? 0x9c27b0)
         };
 
+        // Classify special Marker roles to render as regions
+        let markerRole = null; // 'Area' | 'Stocker' | 'Set' | 'MoveArea' | null
+        if (location && location.locationType === 'Marker') {
+            const idLower = (location.id || '').toString().toLowerCase();
+            const nameLower = (location.name || '').toString().toLowerCase();
+            // Detect robot move area first to avoid matching generic 'area'
+            if (nameLower.includes('move area') || idLower.startsWith('move.')) {
+                markerRole = 'MoveArea';
+            } else if (nameLower.includes('area') || (idLower.startsWith('a') && idLower.indexOf('.') === -1)) {
+                markerRole = 'Area';
+            } else if (nameLower.includes('set') || idLower.indexOf('.set') !== -1) {
+                markerRole = 'Set';
+            } else if (nameLower.includes('stocker') || idLower.startsWith('st')) {
+                markerRole = 'Stocker';
+            }
+        }
+
         // 위치 타입별 크기 정의
-        const sizeMap = {
-            'Cassette': { width: 30, height: 30 },
-            'Tray': { width: 20, height: 20 },
-            'Memory': { width: 5, height: 5 },
-            'Marker': { width: 40, height: 40 }
-        };
+        // No client-side defaults; use location.width/height
 
         const locationGroup = new PIXI.Container();
         locationGroup._locType = location.locationType;
         locationGroup._locStatus = location.status;
+        if (markerRole) {
+            locationGroup._isRegion = true;
+            locationGroup._regionType = markerRole;
+            locationGroup.zIndex = 5;
+        } else {
+            locationGroup.zIndex = 20;
+        }
 
         // 위치 박스 생성
         const rect = new PIXI.Graphics();
-        const color = colorMap[location.locationType] || 0x888888;
-        let size = sizeMap[location.locationType] || { width: 25, height: 25 };
+        let color = colorMap[location.locationType] || 0x888888;
+        if (markerRole) {
+            const regionColorMap = {
+                'Area': (this.themeColors.success ?? 0x2e7d32),
+                'Stocker': (this.themeColors.warning ?? 0xffc107),
+                'Set': (this.themeColors.secondary ?? 0x9c27b0),
+                'MoveArea': (this.themeColors.info ?? 0x0288d1)
+            };
+            color = regionColorMap[markerRole] || color;
+        }
+        // Use actual location size; minimal fallback if missing
+        let size = { width: 10, height: 10 };
         if (location && typeof location.width === 'number' && typeof location.height === 'number' && location.width > 0 && location.height > 0) {
             size = { width: location.width, height: location.height };
         }
         locationGroup._locSize = size;
+        // Apply same scale factor to width/height as to position
+        const scaledW = size.width * 2;
+        const scaledH = size.height * 2;
 
-        rect.beginFill(color);
-        rect.drawRect(0, 0, size.width, size.height);
+        if (markerRole === 'Area') {
+            rect.beginFill(color, 0.15);
+        } else if (markerRole === 'Stocker') {
+            rect.beginFill(color, 0.18);
+        } else if (markerRole === 'Set') {
+            rect.beginFill(color, 0.14);
+        } else if (markerRole === 'MoveArea') {
+            rect.beginFill(color, 0.12);
+        } else {
+            rect.beginFill(color);
+        }
+        rect.drawRect(0, 0, scaledW, scaledH);
         rect.endFill();
 
         // 테두리 추가 (상태에 따라 다른 색상)
         const borderColor = location.status === 'Occupied'
             ? (this.themeColors.textPrimary ?? 0x000000)
             : (this.themeColors.textSecondary ?? 0x666666);
-        rect.lineStyle(2, borderColor);
-        rect.drawRect(0, 0, size.width, size.height);
+        const borderWidth = markerRole ? 3 : 2;
+        rect.lineStyle(borderWidth, borderColor);
+        rect.drawRect(0, 0, scaledW, scaledH);
 
         // 위치 설정 (스케일 조정 - 실제 좌표계에 맞게)
         locationGroup.x = location.x * 2; // 스케일 조정
         locationGroup.y = location.y * 2; // 스케일 조정
 
         // 상호작용 활성화
-        rect.interactive = true;
-        rect.buttonMode = true;
+        if (markerRole) {
+            // Background regions should not intercept pointer events
+            rect.interactive = false;
+            rect.buttonMode = false;
+        } else {
+            rect.interactive = true;
+            rect.buttonMode = true;
+        }
 
         // 클릭 이벤트
         rect.on('pointerdown', () => {
@@ -616,15 +702,21 @@
         // 라벨 텍스트 추가
         const style = new PIXI.TextStyle({
             fontFamily: 'Arial',
-            fontSize: 8,
+            fontSize: markerRole ? 10 : 8,
             fill: (this.themeColors.textPrimary ?? 0x000000),
             align: 'center'
         });
 
         const text = new PIXI.Text(location.id, style);
-        text.x = size.width / 2;
-        text.y = size.height + 2;
-        text.anchor.set(0.5, 0);
+        if (markerRole) {
+            text.x = 4;
+            text.y = 2;
+            text.anchor.set(0, 0);
+        } else {
+            text.x = scaledW / 2;
+            text.y = scaledH + 2;
+            text.anchor.set(0.5, 0);
+        }
 
         locationGroup.addChild(text);
 
@@ -638,7 +730,7 @@
             });
 
             const itemText = new PIXI.Text(location.currentItemId, itemStyle);
-            itemText.x = size.width / 2;
+            itemText.x = scaledW / 2;
             itemText.y = -12;
             itemText.anchor.set(0.5, 0);
 
