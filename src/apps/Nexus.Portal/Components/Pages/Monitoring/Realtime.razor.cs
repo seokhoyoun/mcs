@@ -16,7 +16,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
         private string _selectedLocationId = string.Empty;
         private double _moveSpeed = 10;
         private string _loadItemId = string.Empty;
-        private bool _pixiInitialized = false;
+        private bool _threeInitialized = false;
         private HubConnection? _hubConnection;
         private Random _random = new Random();
 
@@ -43,11 +43,10 @@ namespace Nexus.Portal.Components.Pages.Monitoring
 
             LocationDto[] locations = _locations.Select(MapLocationToDto).ToArray();
             RobotDto[] robots = _robots.Select(MapRobotToDto).ToArray();
+            await JS.InvokeVoidAsync("pixiGame.init3D", "threeContainer", (object)locations);
+            await JS.InvokeVoidAsync("pixiGame.loadRobots3D", (object)robots);
 
-            await JS.InvokeVoidAsync("pixiGame.init", "pixiCanvas", (object)locations);
-            await JS.InvokeVoidAsync("pixiGame.loadRobots", (object)robots);
-            await JS.InvokeVoidAsync("pixiGame.setRobotAutoMove", false);
-            _pixiInitialized = true;
+            _threeInitialized = true;
 
             try
             {
@@ -58,6 +57,8 @@ namespace Nexus.Portal.Components.Pages.Monitoring
                 Console.WriteLine($"ConnectSignalRAsync failed: {ex}");
             }
         }
+
+        
 
         private async Task ConnectSignalRAsync()
         {
@@ -79,7 +80,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
 
             _hubConnection.On<IEnumerable<RobotDto>>("ReceiveRobotPosition", async (updates) =>
             {
-                if (!_pixiInitialized)
+                if (!_threeInitialized)
                 {
                     return;
                 }
@@ -88,7 +89,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
                 {
                     await InvokeAsync(async () =>
                     {
-                        await JS.InvokeVoidAsync("pixiGame.updateRobot", update);
+                        await JS.InvokeVoidAsync("pixiGame.updateRobot3D", update);
                     });
                 }
             });
@@ -107,7 +108,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
         {
             try
             {
-                _locations = await LocationRepository.GetAllAsync();
+                _locations = await LocationRepository.GetLocationsByTypeAsync(ELocationType.Marker);
             }
             catch (Exception ex)
             {
@@ -132,7 +133,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
         // 테스트용 위치 추가
         private async Task AddTestLocation()
         {
-            if (!_pixiInitialized)
+            if (!_threeInitialized)
             {
                 return;
             }
@@ -148,7 +149,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
                 Z = 0
             };
 
-            await JS.InvokeVoidAsync("pixiGame.addLocation", testLocation);
+            await JS.InvokeVoidAsync("pixiGame.addLocation3D", testLocation);
         }
 
         private LocationDto MapLocationToDto(Location location)
@@ -204,12 +205,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
                 HttpResponseMessage res = await client.PostAsJsonAsync($"{baseUrl}/api/v1/robots/{_selectedRobotId}/move", payload);
                 Console.WriteLine($"Move result: {(int)res.StatusCode}");
 
-                // draw dashed path to target
-                Location? target = _locations.FirstOrDefault(l => l.Id == _selectedLocationId);
-                if (target != null)
-                {
-                    await JS.InvokeVoidAsync("pixiGame.setRobotPath", _selectedRobotId, (int)target.Position.X, (int)target.Position.Y);
-                }
+                // path drawing removed in 3D-only mode
             }
             catch (Exception ex)
             {

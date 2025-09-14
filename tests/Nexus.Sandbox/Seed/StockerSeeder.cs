@@ -59,6 +59,8 @@ namespace Nexus.Sandbox.Seed
                 uint y = (uint)(row * spacingY);
                 uint z = 0;
                 cassette.Position = new Position(x, y, z);
+                cassette.Width = 30;
+                cassette.Height = 30;
 
                 cassetteLocations.Add(cassette);
             }

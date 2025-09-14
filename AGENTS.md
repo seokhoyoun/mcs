@@ -24,9 +24,10 @@
 - Projects/folders use PascalCase; namespaces mirror folder structure.
 - Formatting: prefer `dotnet format` before PRs.
 
- - Do not use `var` for local declarations; always use explicit types.
- - Do not use the null-coalescing operators `??` or `??=`; prefer explicit null checks or conditional expressions.
- - Avoid ternary (`?:`) conditional operator in favor of clear `if/else` statements unless it materially improves readability.
+- Do not use `var` for local declarations; always use explicit types.
+- Do not use the null-coalescing operators `??` or `??=`; prefer explicit null checks or conditional expressions.
+- Avoid ternary (`?:`) conditional operator in favor of clear `if/else` statements unless it materially improves readability.
+ - Do not use tuples (ValueTuple or tuple literals) for return types or locals; avoid tuple deconstruction. Prefer dedicated types, records, or out parameters for multiple values.
 
 ## Testing Guidelines
 - Framework: xUnit (`Fact`/`Theory`); coverage via Coverlet collector.
