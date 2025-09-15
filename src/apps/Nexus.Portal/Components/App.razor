@@ -20,9 +20,14 @@
     <script src="_content/MudBlazor/MudBlazor.min.js?v=@(MudBlazor.Metadata.Version)"></script>
     <!-- 2D renderer -->
     <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.x/dist/pixi.min.js"></script>
-    <!-- Optional 3D renderer (Three.js) -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Optional 3D renderer (Three.js) via ES Modules -->
+    <script type="module">
+        import * as THREE_MOD from 'https://esm.sh/three@0.158.0';
+        import { OrbitControls as OrbitControlsClass } from 'https://esm.sh/three@0.158.0/examples/jsm/controls/OrbitControls.js';
+        const THREE_NS = Object.assign({}, THREE_MOD);
+        THREE_NS.OrbitControls = OrbitControlsClass;
+        window.THREE = THREE_NS;
+    </script>
     <script src="pixi.js"></script>
     <script src="three-layer.js"></script>
 </body>

@@ -6,6 +6,7 @@ using Nexus.Sandbox.Seed;
 using Nexus.Sandbox.Seed.Interfaces;
 using StackExchange.Redis;
 using System.Data;
+using System.Net;
 using System.Text.Json;
 
 namespace Nexus.Sandbox
@@ -15,7 +16,23 @@ namespace Nexus.Sandbox
         static async Task Main(string[] args)
         {
 
-            ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost:6379");
+            ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost:6379,allowAdmin=true");
+
+            // Always FLUSHALL before running seeders
+            EndPoint[] endpoints = redis.GetEndPoints();
+            for (int i = 0; i < endpoints.Length; i++)
+            {
+                IServer server = redis.GetServer(endpoints[i]);
+                try
+                {
+                    server.FlushAllDatabases();
+                    Console.WriteLine($"Redis FLUSHALL executed on {server.EndPoint}.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Redis FLUSHALL failed on {server.EndPoint}: {ex.Message}");
+                }
+            }
             RedisLocationRepository locationRepo = new RedisLocationRepository(redis);
             RedisTransportRepository transportRepo = new RedisTransportRepository(redis);
             RedisAreaRepository areaRepo = new RedisAreaRepository(redis, locationRepo);

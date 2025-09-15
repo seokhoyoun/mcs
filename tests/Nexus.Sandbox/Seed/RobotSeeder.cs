@@ -33,6 +33,7 @@ namespace Nexus.Sandbox.Seed
                 trayLocation.Position = new Nexus.Core.Domain.Shared.Bases.Position((uint)(100 + i * 25), 100, 0);
                 trayLocation.Width = 20;
                 trayLocation.Height = 20;
+                trayLocation.Depth = 20;
                 await _locationRepo.AddAsync(trayLocation);
                 cr01Locations.Add(trayLocation);
             }
@@ -51,6 +52,7 @@ namespace Nexus.Sandbox.Seed
                 trayLocation.Position = new Nexus.Core.Domain.Shared.Bases.Position((uint)(200 + i * 25), 120, 0);
                 trayLocation.Width = 20;
                 trayLocation.Height = 20;
+                trayLocation.Depth = 20;
                 await _locationRepo.AddAsync(trayLocation);
                 cr02Locations.Add(trayLocation);
             }
@@ -66,6 +68,7 @@ namespace Nexus.Sandbox.Seed
             cassetteLocation.Position = new Nexus.Core.Domain.Shared.Bases.Position(50, 100, 0);
             cassetteLocation.Width = 30;
             cassetteLocation.Height = 30;
+            cassetteLocation.Depth = 30;
             await _locationRepo.AddAsync(cassetteLocation);
             lrLocations.Add(cassetteLocation);
             robots.Add(new Robot(

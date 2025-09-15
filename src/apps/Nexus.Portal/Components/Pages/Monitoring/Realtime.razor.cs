@@ -108,11 +108,27 @@ namespace Nexus.Portal.Components.Pages.Monitoring
         {
             try
             {
-                _locations = await LocationRepository.GetLocationsByTypeAsync(ELocationType.Marker);
+                                IReadOnlyList<Location> markers = await LocationRepository.GetLocationsByTypeAsync(ELocationType.Marker);
+                IReadOnlyList<Location> cassettes = await LocationRepository.GetLocationsByTypeAsync(ELocationType.Cassette);
+
+                List<Location> combined = new List<Location>();
+                if (markers != null)
+                {
+                    combined.AddRange(markers);
+                }
+                if (cassettes != null)
+                {
+                    combined.AddRange(cassettes);
+                }
+
+                _locations = combined
+                    .GroupBy(l => l.Id)
+                    .Select(g => g.First())
+                    .ToList();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"위치 정보 로드 중 오류 발생: {ex.Message}");
+                Console.WriteLine($"?꾩튂 ?뺣낫 濡쒕뱶 以??ㅻ쪟 諛쒖깮: {ex.Message}");
                 _locations = new List<Location>();
             }
         }
@@ -125,12 +141,12 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"로봇 정보 로드 중 오류 발생: {ex.Message}");
+                Console.WriteLine($"濡쒕큸 ?뺣낫 濡쒕뱶 以??ㅻ쪟 諛쒖깮: {ex.Message}");
                 _robots = new List<Robot>();
             }
         }
 
-        // 테스트용 위치 추가
+        // ?뚯뒪?몄슜 ?꾩튂 異붽?
         private async Task AddTestLocation()
         {
             if (!_threeInitialized)
@@ -153,19 +169,26 @@ namespace Nexus.Portal.Components.Pages.Monitoring
         }
 
         private LocationDto MapLocationToDto(Location location)
-        {    
-            return new LocationDto
+        {
+            LocationDto dto = new LocationDto();
+            dto.Id = location.Id;
+            dto.Name = location.Name;
+            dto.LocationType = location.LocationType.ToString();
+            dto.Status = location.Status.ToString();
+            dto.X = (int)location.Position.X;
+            dto.Y = (int)location.Position.Y;
+            dto.Z = (int)location.Position.Z;
+            dto.Width = (int)location.Width;
+            dto.Height = (int)location.Height;
+            dto.Depth = (int)location.Depth;
+
+            Nexus.Core.Domain.Models.Locations.MarkerLocation? marker = location as Nexus.Core.Domain.Models.Locations.MarkerLocation;
+            if (marker != null)
             {
-                Id = location.Id,
-                Name = location.Name,
-                LocationType = location.LocationType.ToString(),
-                Status = location.Status.ToString(),
-                X = (int)location.Position.X,
-                Y = (int)location.Position.Y,
-                Z = (int)location.Position.Z,
-                Width = (int)location.Width,
-                Height = (int)location.Height
-            };
+                dto.MarkerRole = marker.MarkerRole.ToString();
+            }
+
+            return dto;
         }
 
         private RobotDto MapRobotToDto(Robot robot)
@@ -263,4 +286,5 @@ namespace Nexus.Portal.Components.Pages.Monitoring
         }
     }
 }
+
 

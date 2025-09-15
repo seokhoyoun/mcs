@@ -386,6 +386,8 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
             int widthValue = Helper.GetHashValueAsInt(hashEntries, "width");
             int heightValue = Helper.GetHashValueAsInt(hashEntries, "height");
+            int depthValue = Helper.GetHashValueAsInt(hashEntries, "depth");
+            
 
             CassetteLocation loc = new CassetteLocation(id, name) { Status = status };
             loc.CurrentItemId = currentItemId;
@@ -397,6 +399,10 @@ namespace Nexus.Infrastructure.Persistence.Redis
             if (heightValue > 0)
             {
                 loc.Height = (uint)heightValue;
+            }
+            if (depthValue > 0)
+            {
+                loc.Depth = (uint)depthValue;
             }
 
             return loc;
@@ -420,6 +426,8 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
             int widthValue = Helper.GetHashValueAsInt(hashEntries, "width");
             int heightValue = Helper.GetHashValueAsInt(hashEntries, "height");
+            int depthValue = Helper.GetHashValueAsInt(hashEntries, "depth");
+            
 
             TrayLocation loc = new TrayLocation(id, name) { Status = status };
             loc.CurrentItemId = currentItemId;
@@ -431,6 +439,10 @@ namespace Nexus.Infrastructure.Persistence.Redis
             if (heightValue > 0)
             {
                 loc.Height = (uint)heightValue;
+            }
+            if (depthValue > 0)
+            {
+                loc.Depth = (uint)depthValue;
             }
 
             return loc;
@@ -454,6 +466,8 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
             int widthValue = Helper.GetHashValueAsInt(hashEntries, "width");
             int heightValue = Helper.GetHashValueAsInt(hashEntries, "height");
+            int depthValue = Helper.GetHashValueAsInt(hashEntries, "depth");
+            
 
             MemoryLocation loc = new MemoryLocation(id, name) { Status = status };
             loc.CurrentItemId = currentItemId;
@@ -465,6 +479,10 @@ namespace Nexus.Infrastructure.Persistence.Redis
             if (heightValue > 0)
             {
                 loc.Height = (uint)heightValue;
+            }
+            if (depthValue > 0)
+            {
+                loc.Depth = (uint)depthValue;
             }
 
             return loc;
@@ -487,6 +505,9 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
             int widthValue = Helper.GetHashValueAsInt(hashEntries, "width");
             int heightValue = Helper.GetHashValueAsInt(hashEntries, "height");
+            int depthValue = Helper.GetHashValueAsInt(hashEntries, "depth");
+            string markerRoleValue = Helper.GetHashValue(hashEntries, "marker_role");
+            
 
             MarkerLocation loc = new MarkerLocation(id, name) { Status = status };
             loc.Position = new Position((uint)xValue, (uint)yValue, (uint)zValue);
@@ -497,6 +518,23 @@ namespace Nexus.Infrastructure.Persistence.Redis
             if (heightValue > 0)
             {
                 loc.Height = (uint)heightValue;
+            }
+            if (depthValue > 0)
+            {
+                loc.Depth = (uint)depthValue;
+            }
+
+            if (!string.IsNullOrEmpty(markerRoleValue))
+            {
+                try
+                {
+                    EMarkerRole roleParsed = (EMarkerRole)Enum.Parse(typeof(EMarkerRole), markerRoleValue, true);
+                    loc.MarkerRole = roleParsed;
+                }
+                catch
+                {
+                    loc.MarkerRole = EMarkerRole.None;
+                }
             }
 
             return loc;
@@ -520,7 +558,8 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("y", loc.Position.Y.ToString()),
                 new HashEntry("z", loc.Position.Z.ToString()),
                 new HashEntry("width", loc.Width.ToString()),
-                new HashEntry("height", loc.Height.ToString())
+                new HashEntry("height", loc.Height.ToString()),
+                new HashEntry("depth", loc.Depth.ToString())
             };
             await _database.HashSetAsync($"{CASSETTE_LOCATION_KEY_PREFIX}{loc.Id}", entries);
             await _database.SetAddAsync(CASSETTE_LOCATIONS_ALL_KEY, loc.Id);
@@ -544,7 +583,8 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("y", loc.Position.Y.ToString()),
                 new HashEntry("z", loc.Position.Z.ToString()),
                 new HashEntry("width", loc.Width.ToString()),
-                new HashEntry("height", loc.Height.ToString())
+                new HashEntry("height", loc.Height.ToString()),
+                new HashEntry("depth", loc.Depth.ToString())
             };
             await _database.HashSetAsync($"{TRAY_LOCATION_KEY_PREFIX}{loc.Id}", entries);
             await _database.SetAddAsync(TRAY_LOCATIONS_ALL_KEY, loc.Id);
@@ -569,7 +609,8 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("y", loc.Position.Y.ToString()),
                 new HashEntry("z", loc.Position.Z.ToString()),
                 new HashEntry("width", loc.Width.ToString()),
-                new HashEntry("height", loc.Height.ToString())
+                new HashEntry("height", loc.Height.ToString()),
+                new HashEntry("depth", loc.Depth.ToString())
             };
             await _database.HashSetAsync($"{MEMORY_LOCATION_KEY_PREFIX}{loc.Id}", entries);
             await _database.SetAddAsync(MEMORY_LOCATIONS_ALL_KEY, loc.Id);
@@ -587,7 +628,9 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("y", loc.Position.Y.ToString()),
                 new HashEntry("z", loc.Position.Z.ToString()),
                 new HashEntry("width", loc.Width.ToString()),
-                new HashEntry("height", loc.Height.ToString())
+                new HashEntry("height", loc.Height.ToString()),
+                new HashEntry("depth", loc.Depth.ToString()),
+                new HashEntry("marker_role", loc.MarkerRole.ToString())
             };
             await _database.HashSetAsync($"{MARKER_LOCATION_KEY_PREFIX}{loc.Id}", entries);
             await _database.SetAddAsync(MARKER_LOCATIONS_ALL_KEY, loc.Id);
@@ -596,3 +639,4 @@ namespace Nexus.Infrastructure.Persistence.Redis
         #endregion
     }
 }
+
