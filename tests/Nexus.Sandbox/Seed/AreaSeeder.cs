@@ -80,6 +80,7 @@ namespace Nexus.Sandbox.Seed
                     cassette.Position = new Position(cassetteX, cassetteY, cassetteZ);
                     cassette.Width = 30;
                     cassette.Height = 30;
+                    cassette.Depth = 30;
                     cassetteLocations.Add(cassette);
 
                     for (int trayIdx = 1; trayIdx <= 6; trayIdx++)
@@ -95,6 +96,7 @@ namespace Nexus.Sandbox.Seed
                         tray.Position = new Position(trayX, trayY, trayZ);
                         tray.Width = 20;
                         tray.Height = 20;
+                        tray.Depth = 20;
                         trayLocations.Add(tray);
                     }
                 }
@@ -136,6 +138,7 @@ namespace Nexus.Sandbox.Seed
                         memory.Position = new Position(memX, memY, memZ);
                         memory.Width = 5;
                         memory.Height = 5;
+                        memory.Depth = 5;
 
                         memoryLocations.Add(memory);
                     }

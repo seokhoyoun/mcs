@@ -39,11 +39,16 @@ namespace Nexus.Sandbox.Seed
             string stockerName = "Main Stocker";
 
             List<CassetteLocation> cassetteLocations = new List<CassetteLocation>();
-            int columns = 6; // 6 x 2 grid for 12 ports
+            int columns = 6; // 6 per floor
             int spacingX = 30;
             int spacingY = 30;
+            int itemsPerFloor = 6; // total 12 -> 6 ports x 2 floors
+            int floors = 2;
+            int cassetteDepth = 60; // length along Z (depth)
+            int cassetteHeight = 60; // fixed vertical thickness (Y axis)
+            int floorHeight = cassetteHeight; // Z-position offset per floor (vertical stacking)
 
-            for (int i = 1; i <= 12; i++)
+            for (int i = 1; i <= itemsPerFloor * floors; i++)
             {
                 string portId = $"{stockerId}.CP{i:00}";
 
@@ -53,14 +58,19 @@ namespace Nexus.Sandbox.Seed
                 );
 
                 int zeroBased = i - 1;
-                int col = zeroBased % columns;
-                int row = zeroBased / columns;
+                int floorIndex = zeroBased / itemsPerFloor; // 0 or 1
+                int indexInFloor = zeroBased % itemsPerFloor;
+                int col = indexInFloor % columns; // 0..5
+                int rowInFloor = indexInFloor / columns; // always 0 when columns==6
+
                 uint x = (uint)(col * spacingX);
-                uint y = (uint)(row * spacingY);
-                uint z = 0;
+                uint y = (uint)(rowInFloor * spacingY);
+                // Use Position.Z to stack floors vertically (0 = 1F, cassetteHeight = 2F)
+                uint z = (uint)(floorIndex * floorHeight);
                 cassette.Position = new Position(x, y, z);
                 cassette.Width = 30;
-                cassette.Height = 30;
+                cassette.Height = (uint)cassetteHeight; // fixed
+                cassette.Depth = (uint)cassetteDepth; // length on Z
 
                 cassetteLocations.Add(cassette);
             }

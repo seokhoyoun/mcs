@@ -11,5 +11,7 @@ namespace Nexus.Core.Domain.Models.Locations.DTO
         public int Z { get; set; }
         public int Width { get; set; }
         public int Height { get; set; }
+        public int Depth { get; set; }
+        public string MarkerRole { get; set; } = string.Empty;
     }
 }

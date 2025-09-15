@@ -15,6 +15,7 @@ namespace Nexus.Core.Domain.Models.Locations.Base
         public Position Position { get; set; } = new Position(0, 0, 0);
         public uint Width { get; set; } = 0;
         public uint Height { get; set; } = 0;
+        public uint Depth { get; set; } = 0;
 
         protected Location(string id, string name, ELocationType locationType) 
         {

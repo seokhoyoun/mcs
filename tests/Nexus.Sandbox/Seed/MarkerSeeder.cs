@@ -96,9 +96,11 @@ namespace Nexus.Sandbox.Seed
                 }
 
                 MarkerLocation region = new MarkerLocation(stocker.Id, stocker.Name);
+                region.MarkerRole = Nexus.Core.Domain.Models.Locations.Enums.EMarkerRole.Stocker;
                 region.Position = new Position(left, top, z);
                 region.Width = width;
-                region.Height = height;
+                region.Height = 180; // thin vertical thickness
+                region.Depth = height; // depth is Z length
                 await _locationRepo.AddAsync(region);
             }
         }
@@ -160,9 +162,11 @@ namespace Nexus.Sandbox.Seed
                 }
 
                 MarkerLocation region = new MarkerLocation(area.Id, area.Name);
+                region.MarkerRole = Nexus.Core.Domain.Models.Locations.Enums.EMarkerRole.Area;
                 region.Position = new Position(left, top, z);
                 region.Width = width;
-                region.Height = height;
+                region.Height = 120; // thin vertical thickness
+                region.Depth = height; // depth is Z length
                 await _locationRepo.AddAsync(region);
             }
         }
@@ -239,9 +243,11 @@ namespace Nexus.Sandbox.Seed
                     }
 
                     MarkerLocation region = new MarkerLocation(s.Id, s.Name);
+                    region.MarkerRole = Nexus.Core.Domain.Models.Locations.Enums.EMarkerRole.Set;
                     region.Position = new Position(left, top, z);
                     region.Width = width;
-                    region.Height = height;
+                    region.Height = 30; // thin vertical thickness
+                    region.Depth = height; // depth is Z length
                     await _locationRepo.AddAsync(region);
                 }
             }
