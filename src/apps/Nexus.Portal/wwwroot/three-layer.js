@@ -1,104 +1,564 @@
 ﻿// Minimal Three.js layer integrated with pixiGame namespace
 (function () {
-    if (!window) return;
-    const pg = window.pixiGame || (window.pixiGame = {});
-
-    function intColor(val) {
-        if (typeof val === 'number') return (val >>> 0) & 0xffffff;
-        try { return new THREE.Color(val).getHex(); } catch (e) { return 0xffffff; }
+    if (!window) {
+        return;
     }
-    function num(a, b, def) { if (typeof a === 'number' && isFinite(a)) return a; if (typeof b === 'number' && isFinite(b)) return b; return def; }
-    function normLoc(l) {
-        if (!l) return { id: '', name: '', locationType: 'Marker', status: 'Available', x: 0, y: 0, z: 0, width: 0, height: 0, depth: 0, markerRole: '' };
-        const id = l.id != null ? l.id : l.Id; const name = l.name != null ? l.name : l.Name;
-        const locationType = l.locationType != null ? l.locationType : l.LocationType;
-        const status = l.status != null ? l.status : l.Status;
-        const x = num(l.x, l.X, 0), y = num(l.y, l.Y, 0), z = num(l.z, l.Z, 0);
-        const width = num(l.width, l.Width, 0), height = num(l.height, l.Height, 0), depth = num(l.depth, l.Depth, 0);
-        const markerRole = (l.markerRole != null ? l.markerRole : l.MarkerRole) || '';
-        return { id, name, locationType, status, x, y, z, width, height, depth, markerRole };
-    }
-    function normRobot(r) { if (!r) return { id: '', robotType: 'Logistics', x: 0, y: 0, z: 0 }; return { id: (r.id != null ? r.id : r.Id), robotType: (r.robotType != null ? r.robotType : r.RobotType), x: num(r.x, r.X, 0), y: num(r.y, r.Y, 0), z: num(r.z, r.Z, 0) }; }
 
-    function roleFromId(l) {
-        const loc = normLoc(l); if (!loc || loc.locationType !== 'Marker') return null; const s = (loc.id || '').toString().toUpperCase();
-        if (/\.SET[0-9A-Z]+$/.test(s)) return 'set';
-        if (s.indexOf('MOVE.') === 0) return 'movearea';
-        if (s.indexOf('ST') === 0) return 'stocker';
-        if (s.indexOf('A') === 0 && s.indexOf('.') === -1) return 'area';
+    const pixiGameInstance = window.pixiGame || (window.pixiGame = {});
+
+    function convertToIntegerColor(colorValue) {
+        if (typeof colorValue === 'number') {
+            return (colorValue >>> 0) & 0xffffff;
+        }
+
+        try {
+            return new THREE.Color(colorValue).getHex();
+        } catch (error) {
+            return 0xffffff;
+        }
+    }
+
+    function getValidNumber(primaryValue, secondaryValue, defaultValue) {
+        if (typeof primaryValue === 'number' && isFinite(primaryValue)) {
+            return primaryValue;
+        }
+
+        if (typeof secondaryValue === 'number' && isFinite(secondaryValue)) {
+            return secondaryValue;
+        }
+
+        return defaultValue;
+    }
+
+    function normalizeLocationData(locationData) {
+        if (!locationData) {
+            return {
+                id: '',
+                name: '',
+                locationType: 'Marker',
+                status: 'Available',
+                x: 0,
+                y: 0,
+                z: 0,
+                width: 0,
+                height: 0,
+                depth: 0,
+                markerRole: ''
+            };
+        }
+
+        const locationId = locationData.id != null ? locationData.id : locationData.Id;
+        const locationName = locationData.name != null ? locationData.name : locationData.Name;
+        const locationType = locationData.locationType != null ? locationData.locationType : locationData.LocationType;
+        const locationStatus = locationData.status != null ? locationData.status : locationData.Status;
+        const xCoordinate = getValidNumber(locationData.x, locationData.X, 0);
+        const yCoordinate = getValidNumber(locationData.y, locationData.Y, 0);
+        const zCoordinate = getValidNumber(locationData.z, locationData.Z, 0);
+        const locationWidth = getValidNumber(locationData.width, locationData.Width, 0);
+        const locationHeight = getValidNumber(locationData.height, locationData.Height, 0);
+        const locationDepth = getValidNumber(locationData.depth, locationData.Depth, 0);
+        const markerRole = (locationData.markerRole != null ? locationData.markerRole : locationData.MarkerRole) || '';
+
+        return {
+            id: locationId,
+            name: locationName,
+            locationType,
+            status: locationStatus,
+            x: xCoordinate,
+            y: yCoordinate,
+            z: zCoordinate,
+            width: locationWidth,
+            height: locationHeight,
+            depth: locationDepth,
+            markerRole
+        };
+    }
+
+    function normalizeRobotData(robotData) {
+        if (!robotData) {
+            return {
+                id: '',
+                robotType: 'Logistics',
+                x: 0,
+                y: 0,
+                z: 0
+            };
+        }
+
+        const robotId = robotData.id != null ? robotData.id : robotData.Id;
+        const robotType = robotData.robotType != null ? robotData.robotType : robotData.RobotType;
+        const xPosition = getValidNumber(robotData.x, robotData.X, 0);
+        const yPosition = getValidNumber(robotData.y, robotData.Y, 0);
+        const zPosition = getValidNumber(robotData.z, robotData.Z, 0);
+
+        return {
+            id: robotId,
+            robotType,
+            x: xPosition,
+            y: yPosition,
+            z: zPosition
+        };
+    }
+
+    function determineRoleFromLocationId(locationData) {
+        const normalizedLocation = normalizeLocationData(locationData);
+
+        if (!normalizedLocation || normalizedLocation.locationType !== 'Marker') {
+            return null;
+        }
+
         return null;
     }
 
-    function pickRole(l) { const n = normLoc(l); if (n.markerRole) return n.markerRole.toString().toLowerCase(); return roleFromId(n); }
+    function selectLocationRole(locationData) {
+        const normalizedLocation = normalizeLocationData(locationData);
 
-    function createLocationMesh(pgRef, l) {
-        const loc = normLoc(l);
-        const baseType = loc.locationType;
-        const typeColors = {
-            'Cassette': (pgRef.themeColors && pgRef.themeColors.info != null ? pgRef.themeColors.info : 0xffc107),
-            'Tray': (pgRef.themeColors && pgRef.themeColors.success != null ? pgRef.themeColors.success : 0x2e7d32),
-            'Memory': (pgRef.themeColors && pgRef.themeColors.info != null ? pgRef.themeColors.info : 0x0288d1),
-            'Marker': (pgRef.themeColors && pgRef.themeColors.secondary != null ? pgRef.themeColors.secondary : 0x9c27b0)
+        if (normalizedLocation.markerRole) {
+            return normalizedLocation.markerRole.toString().toLowerCase();
+        }
+
+        return determineRoleFromLocationId(normalizedLocation);
+    }
+
+    function createLocationMeshObject(pixiGameReference, locationData) {
+        const normalizedLocation = normalizeLocationData(locationData);
+        const baseLocationType = normalizedLocation.locationType;
+
+        const locationTypeColorMap = {
+            'Cassette': pixiGameReference.themeColors && pixiGameReference.themeColors.info != null ? pixiGameReference.themeColors.info : 0xffc107,
+            'Tray': pixiGameReference.themeColors && pixiGameReference.themeColors.success != null ? pixiGameReference.themeColors.success : 0x2e7d32,
+            'Memory': pixiGameReference.themeColors && pixiGameReference.themeColors.info != null ? pixiGameReference.themeColors.info : 0x0288d1,
+            'Marker': pixiGameReference.themeColors && pixiGameReference.themeColors.secondary != null ? pixiGameReference.themeColors.secondary : 0x9c27b0
         };
-        let color = typeColors[baseType] || 0x888888;
-        const role = pickRole(loc);
-        if (role) {
-            const map = {
-                'area': (pgRef.themeColors && pgRef.themeColors.background != null ? pgRef.themeColors.background : 0x2e7d32),
-                'stocker': (pgRef.themeColors && pgRef.themeColors.background != null ? pgRef.themeColors.background : 0xffc107),
-                'set': (pgRef.themeColors && pgRef.themeColors.primary != null ? pgRef.themeColors.primary : 0x3f51b5),
-                'movearea': (pgRef.themeColors && pgRef.themeColors.info != null ? pgRef.themeColors.info : 0x0288d1)
+
+        let selectedColor = locationTypeColorMap[baseLocationType] || 0x888888;
+        const locationRole = selectLocationRole(normalizedLocation);
+
+        if (locationRole) {
+            const roleColorMap = {
+                'area': pixiGameReference.themeColors && pixiGameReference.themeColors.background != null ? pixiGameReference.themeColors.background : 0x2e7d32,
+                'stocker': pixiGameReference.themeColors && pixiGameReference.themeColors.background != null ? pixiGameReference.themeColors.background : 0xffc107,
+                'set': pixiGameReference.themeColors && pixiGameReference.themeColors.primary != null ? pixiGameReference.themeColors.primary : 0x3f51b5,
+                'movearea': pixiGameReference.themeColors && pixiGameReference.themeColors.info != null ? pixiGameReference.themeColors.info : 0x0288d1
             };
-            color = map[role] || color;
+            selectedColor = roleColorMap[locationRole] || selectedColor;
         }
-        const borderColor = (loc.status === 'Occupied') ? (pgRef.themeColors && pgRef.themeColors.textPrimary != null ? pgRef.themeColors.textPrimary : 0x000000) : (pgRef.themeColors && pgRef.themeColors.textSecondary != null ? pgRef.themeColors.textSecondary : 0x666666);
-        const widthX = typeof loc.width === 'number' ? loc.width : 0;
-        const heightY = typeof loc.height === 'number' ? loc.height : 0;
-        const lengthZ = typeof loc.depth === 'number' ? loc.depth : 0;
-        const geom = new THREE.BoxGeometry(widthX, heightY, lengthZ);
-        const makeTransparent = (!!role) || (baseType === 'Cassette');
-        const opacity = role ? 0.2 : ((baseType === 'Cassette') ? 0.4 : 1.0);
-        const mat = new THREE.MeshLambertMaterial({ color: intColor(color), transparent: makeTransparent, opacity: opacity });
-        const mesh = new THREE.Mesh(geom, mat);
-        try { const edges = new THREE.EdgesGeometry(geom); const lineMat = new THREE.LineBasicMaterial({ color: intColor(borderColor) }); mesh.add(new THREE.LineSegments(edges, lineMat)); } catch (e) { }
-    const px = (loc.x || 0) + widthX / 2;
-    const pz = (loc.y || 0) + lengthZ / 2;
-    const py = ((typeof loc.z === 'number' ? loc.z : 0)) + (heightY / 2);
-    mesh.position.set(px, py, -pz);
-        mesh.userData = { id: loc.id, type: 'location', role: role };
-        return mesh;
+
+        let edgeColor;
+        if (normalizedLocation.status === 'Occupied') {
+            edgeColor = pixiGameReference.themeColors && pixiGameReference.themeColors.textPrimary != null ? pixiGameReference.themeColors.textPrimary : 0x000000;
+        } else {
+            edgeColor = pixiGameReference.themeColors && pixiGameReference.themeColors.textSecondary != null ? pixiGameReference.themeColors.textSecondary : 0x666666;
+        }
+
+        const meshWidth = typeof normalizedLocation.width === 'number' ? normalizedLocation.width : 0;
+        const meshHeight = typeof normalizedLocation.height === 'number' ? normalizedLocation.height : 0;
+        const meshDepth = typeof normalizedLocation.depth === 'number' ? normalizedLocation.depth : 0;
+
+        const boxGeometry = new THREE.BoxGeometry(meshWidth, meshHeight, meshDepth);
+        const shouldMakeTransparent = (!!locationRole) || (baseLocationType === 'Cassette');
+
+        let materialOpacity;
+        if (locationRole) {
+            materialOpacity = 0.2;
+        } else if (baseLocationType === 'Cassette') {
+            materialOpacity = 0.4;
+        } else {
+            materialOpacity = 1.0;
+        }
+
+        const meshMaterial = new THREE.MeshLambertMaterial({
+            color: convertToIntegerColor(selectedColor),
+            transparent: shouldMakeTransparent,
+            opacity: materialOpacity
+        });
+
+        const locationMesh = new THREE.Mesh(boxGeometry, meshMaterial);
+
+        try {
+            const edgeGeometry = new THREE.EdgesGeometry(boxGeometry);
+            const edgeMaterial = new THREE.LineBasicMaterial({ color: convertToIntegerColor(edgeColor) });
+            locationMesh.add(new THREE.LineSegments(edgeGeometry, edgeMaterial));
+        } catch (error) {
+            // 에러 무시
+        }
+
+        const positionX = (normalizedLocation.x || 0) + meshWidth / 2;
+        const positionZ = (normalizedLocation.y || 0) + meshDepth / 2;
+
+        let positionY;
+        if (typeof normalizedLocation.z === 'number') {
+            positionY = normalizedLocation.z + (meshHeight / 2);
+        } else {
+            positionY = 0 + (meshHeight / 2);
+        }
+
+        locationMesh.position.set(positionX, positionY, -positionZ);
+        locationMesh.userData = {
+            id: normalizedLocation.id,
+            type: 'location',
+            role: locationRole
+        };
+
+        return locationMesh;
     }
 
-    function createRobotMesh(pgRef, r) { const n = normRobot(r); const c = n.robotType === 'Logistics' ? (pgRef.themeColors && pgRef.themeColors.primary != null ? pgRef.themeColors.primary : 0x00aaff) : (pgRef.themeColors && pgRef.themeColors.secondary != null ? pgRef.themeColors.secondary : 0xff8800); const geom = new THREE.CylinderGeometry(10, 10, 18, 16); const mat = new THREE.MeshPhongMaterial({ color: intColor(c), shininess: 80 }); const mesh = new THREE.Mesh(geom, mat); mesh.position.set((n.x || 0), 9, -(n.y || 0)); mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData = { id: n.id, type: 'robot' }; return mesh; }
+    function createRobotMeshObject(pixiGameReference, robotData) {
+        const normalizedRobot = normalizeRobotData(robotData);
 
-    function initThree(pgRef, initialLocations) {
-        const parent = pgRef.canvas && pgRef.canvas.nodeType === 1 ? pgRef.canvas : document.body;
-        const w = parent.clientWidth || window.innerWidth; const h = parent.clientHeight || window.innerHeight;
-        const canvas = document.createElement('canvas'); canvas.id = 'threeCanvas'; Object.assign(canvas.style, { position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', display: 'block', zIndex: '0' }); if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative'; parent.appendChild(canvas);
-        const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true }); renderer.setPixelRatio(window.devicePixelRatio || 1); renderer.setSize(w, h); if (pgRef.themeColors && pgRef.themeColors.background != null) { renderer.setClearColor(new THREE.Color(intColor(pgRef.themeColors.background)), 1); }
-        const scene = new THREE.Scene(); const camera = new THREE.PerspectiveCamera(45, w / h, 1, 10000); camera.position.set(600, 600, 600); camera.lookAt(0, 0, 0);
-        let controls = null; if (THREE.OrbitControls) { controls = new THREE.OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.dampingFactor = 0.08; controls.minDistance = 10; controls.maxDistance = 10000; controls.maxPolarAngle = Math.PI * 0.49; if (THREE.MOUSE) { controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }; } controls.target.set(0, 0, 0); controls.update(); }
-        scene.add(new THREE.AmbientLight(0xffffff, 0.6)); const dir = new THREE.DirectionalLight(0xffffff, 0.8); dir.position.set(500, 800, 400); scene.add(dir);
-        const grid = new THREE.GridHelper(4000, 80, 0x666666, 0xcccccc); grid.position.y = -0.01; scene.add(grid);
-        const locationMeshes = new Map(); const robotMeshes = new Map();
-        if (Array.isArray(initialLocations)) {
-            try { for (let i = 0; i < initialLocations.length; i++) { const m = createLocationMesh(pgRef, initialLocations[i]); if (m) { scene.add(m); const nl = normLoc(initialLocations[i]); locationMeshes.set(nl.id, m); } } } catch (e) { }
+        let robotColor;
+        if (normalizedRobot.robotType === 'Logistics') {
+            robotColor = pixiGameReference.themeColors && pixiGameReference.themeColors.primary != null ? pixiGameReference.themeColors.primary : 0x00aaff;
+        } else {
+            robotColor = pixiGameReference.themeColors && pixiGameReference.themeColors.secondary != null ? pixiGameReference.themeColors.secondary : 0xff8800;
         }
-        // Fit camera
-        (function () { if (!Array.isArray(initialLocations) || initialLocations.length === 0) return; let minX = Infinity, minZ = Infinity, maxX = -Infinity, maxZ = -Infinity; for (let i = 0; i < initialLocations.length; i++) { const l = normLoc(initialLocations[i]); const x0 = l.x || 0, z0 = l.y || 0, x1 = x0 + (l.width || 0), z1 = z0 + (l.depth || 0); if (x0 < minX) minX = x0; if (z0 < minZ) minZ = z0; if (x1 > maxX) maxX = x1; if (z1 > maxZ) maxZ = z1; } if (!isFinite(minX) || !isFinite(minZ) || !isFinite(maxX) || !isFinite(maxZ)) return; const cx = (minX + maxX) / 2, cz = (minZ + maxZ) / 2; const span = Math.max(100, Math.max(maxX - minX, maxZ - minZ)); const dist = span * 1.4; if (controls) { controls.target.set(cx, 0, -cz); camera.position.set(cx + dist, dist, -cz + dist); camera.lookAt(controls.target); controls.update(); } else { camera.position.set(cx + dist, dist, -cz + dist); camera.lookAt(new THREE.Vector3(cx, 0, -cz)); } })();
-        // Mouse XYZ overlay
-        const raycaster = new THREE.Raycaster(); const pointer = new THREE.Vector2(); const ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); const onMove = (e) => { const rect = renderer.domElement.getBoundingClientRect(); pointer.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1); raycaster.setFromCamera(pointer, camera); const hit = new THREE.Vector3(); if (raycaster.ray.intersectPlane(ground, hit)) { const gx = Math.round(hit.x), gy = Math.round(-hit.z), gz = Math.round(hit.y); const el = document.getElementById('mouseXYZ'); if (el) { el.textContent = `X: ${gx}  Y: ${gy}  Z: ${gz}`; } } }; renderer.domElement.addEventListener('mousemove', onMove);
-        // Resize
-        const onResize = () => { const nw = parent.clientWidth || window.innerWidth; const nh = parent.clientHeight || window.innerHeight; renderer.setSize(nw, nh); camera.aspect = nw / nh; camera.updateProjectionMatrix(); };
-        window.addEventListener('resize', onResize);
-        // Animate
-        function animate() { pg.three && (pg.three.animReq = requestAnimationFrame(animate)); if (controls) controls.update(); renderer.render(scene, camera); }
-        pg.three = { renderer, scene, camera, controls, canvas, locationMeshes, robotMeshes, onResize, onMove, animReq: 0 };
-        animate();
+
+        const cylinderGeometry = new THREE.CylinderGeometry(10, 10, 18, 16);
+        const robotMaterial = new THREE.MeshPhongMaterial({
+            color: convertToIntegerColor(robotColor),
+            shininess: 80
+        });
+        const robotMesh = new THREE.Mesh(cylinderGeometry, robotMaterial);
+
+        robotMesh.position.set((normalizedRobot.x || 0), 9, -(normalizedRobot.y || 0));
+        robotMesh.castShadow = true;
+        robotMesh.receiveShadow = true;
+        robotMesh.userData = {
+            id: normalizedRobot.id,
+            type: 'robot'
+        };
+
+        return robotMesh;
     }
 
-    pg.init3D = function (containerId, locations) { try { const el = document.getElementById(containerId); if (!el) return false; pg.canvas = el; initThree(pg, Array.isArray(locations) ? locations : []); return true; } catch (e) { console.warn('init3D failed', e); return false; } };
-    pg.addLocation3D = function (loc) { if (!pg.three) return; try { const m = createLocationMesh(pg, loc); if (m) { pg.three.scene.add(m); const nl = normLoc(loc); pg.three.locationMeshes.set(nl.id, m); } } catch (e) { console.warn('addLocation3D failed', e); } };
-    pg.loadRobots3D = function (robots) { if (!pg.three || !Array.isArray(robots)) return; try { robots.forEach(r => { const m = createRobotMesh(pg, r); if (m) { pg.three.scene.add(m); const nr = normRobot(r); pg.three.robotMeshes.set(nr.id, m); } }); } catch (e) { console.warn('loadRobots3D failed', e); } };
-    pg.updateRobot3D = function (robot) { if (!pg.three || !robot) return; const nr = normRobot(robot); let m = pg.three.robotMeshes.get(nr.id); if (!m) { try { m = createRobotMesh(pg, robot); if (m) { pg.three.scene.add(m); pg.three.robotMeshes.set(nr.id, m); } } catch (e) { return; } } else { try { m.position.set((nr.x || 0), m.position.y, -(nr.y || 0)); } catch (e) { } } };
+    function initializeThreeJsScene(pixiGameReference, initialLocationList) {
+        let containerElement;
+        if (pixiGameReference.canvas && pixiGameReference.canvas.nodeType === 1) {
+            containerElement = pixiGameReference.canvas;
+        } else {
+            containerElement = document.body;
+        }
+
+        const containerWidth = containerElement.clientWidth || window.innerWidth;
+        const containerHeight = containerElement.clientHeight || window.innerHeight;
+
+        const canvasElement = document.createElement('canvas');
+        canvasElement.id = 'threeCanvas';
+
+        Object.assign(canvasElement.style, {
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '100%',
+            display: 'block',
+            zIndex: '0'
+        });
+
+        if (getComputedStyle(containerElement).position === 'static') {
+            containerElement.style.position = 'relative';
+        }
+
+        containerElement.appendChild(canvasElement);
+
+        const webglRenderer = new THREE.WebGLRenderer({
+            canvas: canvasElement,
+            antialias: true,
+            alpha: true
+        });
+        webglRenderer.setPixelRatio(window.devicePixelRatio || 1);
+        webglRenderer.setSize(containerWidth, containerHeight);
+
+        if (pixiGameReference.themeColors && pixiGameReference.themeColors.background != null) {
+            webglRenderer.setClearColor(new THREE.Color(convertToIntegerColor(pixiGameReference.themeColors.background)), 1);
+        }
+
+        const sceneObject = new THREE.Scene();
+        const perspectiveCamera = new THREE.PerspectiveCamera(45, containerWidth / containerHeight, 1, 10000);
+        perspectiveCamera.position.set(600, 600, 600);
+        perspectiveCamera.lookAt(0, 0, 0);
+
+        let orbitControls = null;
+
+        if (THREE.OrbitControls) {
+            orbitControls = new THREE.OrbitControls(perspectiveCamera, webglRenderer.domElement);
+            orbitControls.enableDamping = true;
+            orbitControls.dampingFactor = 0.08;
+            orbitControls.minDistance = 10;
+            orbitControls.maxDistance = 10000;
+            orbitControls.maxPolarAngle = Math.PI * 0.49;
+
+            if (THREE.MOUSE) {
+                orbitControls.mouseButtons = {
+                    LEFT: THREE.MOUSE.PAN,
+                    MIDDLE: THREE.MOUSE.DOLLY,
+                    RIGHT: THREE.MOUSE.ROTATE
+                };
+            }
+
+            orbitControls.target.set(0, 0, 0);
+            orbitControls.update();
+        }
+
+        sceneObject.add(new THREE.AmbientLight(0xffffff, 0.6));
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(500, 800, 400);
+        sceneObject.add(directionalLight);
+
+        const gridHelper = new THREE.GridHelper(4000, 80, 0x666666, 0xcccccc);
+        gridHelper.position.y = -0.01;
+        sceneObject.add(gridHelper);
+
+        const locationMeshCollection = new Map();
+        const robotMeshCollection = new Map();
+
+        if (Array.isArray(initialLocationList)) {
+            try {
+                for (let locationIndex = 0; locationIndex < initialLocationList.length; locationIndex++) {
+                    const locationMesh = createLocationMeshObject(pixiGameReference, initialLocationList[locationIndex]);
+
+                    if (locationMesh) {
+                        sceneObject.add(locationMesh);
+                        const normalizedLocationData = normalizeLocationData(initialLocationList[locationIndex]);
+                        locationMeshCollection.set(normalizedLocationData.id, locationMesh);
+                    }
+                }
+            } catch (error) {
+                // 에러 무시
+            }
+        }
+
+        // 카메라 자동 조정
+        (function fitCameraToLocations() {
+            if (!Array.isArray(initialLocationList) || initialLocationList.length === 0) {
+                return;
+            }
+
+            let minXBound = Infinity;
+            let minZBound = Infinity;
+            let maxXBound = -Infinity;
+            let maxZBound = -Infinity;
+
+            for (let locationIndex = 0; locationIndex < initialLocationList.length; locationIndex++) {
+                const locationData = normalizeLocationData(initialLocationList[locationIndex]);
+                const startX = locationData.x || 0;
+                const startZ = locationData.y || 0;
+                const endX = startX + (locationData.width || 0);
+                const endZ = startZ + (locationData.depth || 0);
+
+                if (startX < minXBound) {
+                    minXBound = startX;
+                }
+
+                if (startZ < minZBound) {
+                    minZBound = startZ;
+                }
+
+                if (endX > maxXBound) {
+                    maxXBound = endX;
+                }
+
+                if (endZ > maxZBound) {
+                    maxZBound = endZ;
+                }
+            }
+
+            if (!isFinite(minXBound) || !isFinite(minZBound) || !isFinite(maxXBound) || !isFinite(maxZBound)) {
+                return;
+            }
+
+            const centerX = (minXBound + maxXBound) / 2;
+            const centerZ = (minZBound + maxZBound) / 2;
+            const boundingSpan = Math.max(100, Math.max(maxXBound - minXBound, maxZBound - minZBound));
+            const cameraDistance = boundingSpan * 1.4;
+
+            if (orbitControls) {
+                orbitControls.target.set(centerX, 0, -centerZ);
+                perspectiveCamera.position.set(centerX + cameraDistance, cameraDistance, -centerZ + cameraDistance);
+                perspectiveCamera.lookAt(orbitControls.target);
+                orbitControls.update();
+            } else {
+                perspectiveCamera.position.set(centerX + cameraDistance, cameraDistance, -centerZ + cameraDistance);
+                perspectiveCamera.lookAt(new THREE.Vector3(centerX, 0, -centerZ));
+            }
+        })();
+
+        // 마우스 좌표 표시
+        const raycastHelper = new THREE.Raycaster();
+        const mousePointer = new THREE.Vector2();
+        const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+
+        const handleMouseMovement = (mouseEvent) => {
+            const canvasRect = webglRenderer.domElement.getBoundingClientRect();
+            mousePointer.set(
+                ((mouseEvent.clientX - canvasRect.left) / canvasRect.width) * 2 - 1,
+                -((mouseEvent.clientY - canvasRect.top) / canvasRect.height) * 2 + 1
+            );
+
+            raycastHelper.setFromCamera(mousePointer, perspectiveCamera);
+            let intersectionPoint = null;
+
+            try {
+                const intersectedObjects = raycastHelper.intersectObjects(sceneObject.children, true);
+
+                if (intersectedObjects && intersectedObjects.length > 0) {
+                    intersectionPoint = intersectedObjects[0].point.clone();
+                }
+            } catch {
+                // 에러 무시
+            }
+
+            if (!intersectionPoint) {
+                const groundIntersection = new THREE.Vector3();
+
+                if (raycastHelper.ray.intersectPlane(groundPlane, groundIntersection)) {
+                    intersectionPoint = groundIntersection;
+                }
+            }
+
+            if (intersectionPoint) {
+                const roundedX = Math.round(intersectionPoint.x);
+                const roundedY = Math.round(intersectionPoint.y);
+                const roundedZ = Math.round(intersectionPoint.z);
+                const coordinateDisplayElement = document.getElementById('mouseXYZ');
+
+                if (coordinateDisplayElement) {
+                    coordinateDisplayElement.textContent = `X: ${roundedX}  Y: ${roundedY}  Z: ${roundedZ}`;
+                }
+            }
+        };
+
+        webglRenderer.domElement.addEventListener('mousemove', handleMouseMovement);
+
+        // 창 크기 조정
+        const handleWindowResize = () => {
+            const newWidth = containerElement.clientWidth || window.innerWidth;
+            const newHeight = containerElement.clientHeight || window.innerHeight;
+
+            webglRenderer.setSize(newWidth, newHeight);
+            perspectiveCamera.aspect = newWidth / newHeight;
+            perspectiveCamera.updateProjectionMatrix();
+        };
+
+        window.addEventListener('resize', handleWindowResize);
+
+        // 애니메이션 루프
+        function animationLoop() {
+            if (pixiGameInstance.three) {
+                pixiGameInstance.three.animationRequestId = requestAnimationFrame(animationLoop);
+            }
+
+            if (orbitControls) {
+                orbitControls.update();
+            }
+
+            webglRenderer.render(sceneObject, perspectiveCamera);
+        }
+
+        pixiGameInstance.three = {
+            renderer: webglRenderer,
+            scene: sceneObject,
+            camera: perspectiveCamera,
+            controls: orbitControls,
+            canvas: canvasElement,
+            locationMeshes: locationMeshCollection,
+            robotMeshes: robotMeshCollection,
+            onResize: handleWindowResize,
+            onMove: handleMouseMovement,
+            animationRequestId: 0
+        };
+
+        animationLoop();
+    }
+
+    pixiGameInstance.init3D = function (containerElementId, locationList) {
+        try {
+            const targetElement = document.getElementById(containerElementId);
+
+            if (!targetElement) {
+                return false;
+            }
+
+            pixiGameInstance.canvas = targetElement;
+
+            const validLocationArray = Array.isArray(locationList) ? locationList : [];
+            initializeThreeJsScene(pixiGameInstance, validLocationArray);
+
+            return true;
+        } catch (error) {
+            console.warn('init3D failed', error);
+            return false;
+        }
+    };
+
+    pixiGameInstance.addLocation3D = function (locationData) {
+        if (!pixiGameInstance.three) {
+            return;
+        }
+
+        try {
+            const locationMesh = createLocationMeshObject(pixiGameInstance, locationData);
+
+            if (locationMesh) {
+                pixiGameInstance.three.scene.add(locationMesh);
+                const normalizedLocationData = normalizeLocationData(locationData);
+                pixiGameInstance.three.locationMeshes.set(normalizedLocationData.id, locationMesh);
+            }
+        } catch (error) {
+            console.warn('addLocation3D failed', error);
+        }
+    };
+
+    pixiGameInstance.loadRobots3D = function (robotList) {
+        if (!pixiGameInstance.three || !Array.isArray(robotList)) {
+            return;
+        }
+
+        try {
+            robotList.forEach(robotData => {
+                const robotMesh = createRobotMeshObject(pixiGameInstance, robotData);
+
+                if (robotMesh) {
+                    pixiGameInstance.three.scene.add(robotMesh);
+                    const normalizedRobotData = normalizeRobotData(robotData);
+                    pixiGameInstance.three.robotMeshes.set(normalizedRobotData.id, robotMesh);
+                }
+            });
+        } catch (error) {
+            console.warn('loadRobots3D failed', error);
+        }
+    };
+
+    pixiGameInstance.updateRobot3D = function (robotData) {
+        if (!pixiGameInstance.three || !robotData) {
+            return;
+        }
+
+        const normalizedRobotData = normalizeRobotData(robotData);
+        let existingRobotMesh = pixiGameInstance.three.robotMeshes.get(normalizedRobotData.id);
+
+        if (!existingRobotMesh) {
+            try {
+                existingRobotMesh = createRobotMeshObject(pixiGameInstance, robotData);
+
+                if (existingRobotMesh) {
+                    pixiGameInstance.three.scene.add(existingRobotMesh);
+                    pixiGameInstance.three.robotMeshes.set(normalizedRobotData.id, existingRobotMesh);
+                }
+            } catch (error) {
+                return;
+            }
+        } else {
+            try {
+                existingRobotMesh.position.set(
+                    (normalizedRobotData.x || 0),
+                    existingRobotMesh.position.y,
+                    -(normalizedRobotData.y || 0)
+                );
+            } catch (error) {
+                // 에러 무시
+            }
+        }
+    };
 })();
