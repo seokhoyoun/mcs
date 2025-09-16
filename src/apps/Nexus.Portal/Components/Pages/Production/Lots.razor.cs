@@ -18,6 +18,9 @@ namespace Nexus.Portal.Components.Pages.Production
         [Inject]
         private ISnackbar Snackbar { get; set; } = default!;
 
+        [Inject]
+        private IDialogService DialogService { get; set; } = default!;
+
         private List<Lot> _lots = new List<Lot>();
         private HashSet<Lot> _selectedLots = new HashSet<Lot>();
         private HashSet<LotStep> _selectedSteps = new HashSet<LotStep>();
@@ -25,6 +28,7 @@ namespace Nexus.Portal.Components.Pages.Production
         private string _searchLot = string.Empty;
         private string _searchStep = string.Empty;
 
+        // Lot editor state (panel below grid)
         private bool _showLotEditor = false;
         private bool _isCreatingLot = false;
         private LotEditModel _lotEditor = new LotEditModel();
@@ -46,6 +50,13 @@ namespace Nexus.Portal.Components.Pages.Production
             {
                 IReadOnlyList<Lot> lots = await LotRepository.GetAllAsync();
                 _lots = lots.ToList();
+
+                // Select the first lot by default so its steps are visible on initial load
+                if (_lots.Count > 0)
+                {
+                    _selectedLots = new HashSet<Lot>();
+                    _selectedLots.Add(_lots[0]);
+                }
             }
             catch (Exception ex)
             {
@@ -155,8 +166,9 @@ namespace Nexus.Portal.Components.Pages.Production
         private void OnNewLot()
         {
             _isCreatingLot = true;
-            _showLotEditor = true;
             _lotEditor = LotEditModel.CreateNew();
+            _lotEditor.Status = ELotStatus.None;
+            _showLotEditor = true;
         }
 
         private void OnEditLot(Lot lot)
@@ -165,9 +177,9 @@ namespace Nexus.Portal.Components.Pages.Production
             {
                 return;
             }
-            _isCreatingLot = false;
-            _showLotEditor = true;
             _lotEditor = LotEditModel.FromLot(lot);
+            _showLotEditor = true;
+            _isCreatingLot = false;
         }
 
         private async Task OnSaveLot()
@@ -201,9 +213,9 @@ namespace Nexus.Portal.Components.Pages.Production
                     await LotRepository.UpdateAsync(target);
                     Snackbar.Add($"Lot '{target.Id}' updated", Severity.Success);
                 }
-
-                await LoadLotsAsync();
                 _showLotEditor = false;
+                _isCreatingLot = false;
+                await LoadLotsAsync();
             }
             catch (Exception ex)
             {
@@ -214,6 +226,7 @@ namespace Nexus.Portal.Components.Pages.Production
         private void OnCancelLot()
         {
             _showLotEditor = false;
+            _isCreatingLot = false;
         }
 
         private async Task OnDeleteSelectedLots()
@@ -223,6 +236,17 @@ namespace Nexus.Portal.Components.Pages.Production
                 return;
             }
             if (_selectedLots.Count == 0)
+            {
+                return;
+            }
+
+            string message = $"Delete [{_selectedLots.First().Id}]? This action cannot be undone.";
+            DialogOptions dialogOptions = new DialogOptions
+            {
+                CloseOnEscapeKey = true
+            };
+            bool? confirmed = await DialogService.ShowMessageBox("Confirm Delete", message, yesText: "Delete", cancelText: "Cancel", options: dialogOptions);
+            if (!(confirmed == true))
             {
                 return;
             }
@@ -264,6 +288,7 @@ namespace Nexus.Portal.Components.Pages.Production
             _showStepEditor = true;
             Lot lot = _selectedLots.First();
             _stepEditor = LotStepEditModel.CreateNew(lot.Id);
+            _stepEditor.Status = ELotStatus.None;
         }
 
         private void OnEditStep(LotStep step)
@@ -358,10 +383,20 @@ namespace Nexus.Portal.Components.Pages.Production
                 return;
             }
 
+            Lot lot = _selectedLots.First();
+            string message = $"Delete [{_selectedSteps.First().Id}] from lot '{lot.Id}'? This action cannot be undone.";
+            DialogOptions dialogOptions = new DialogOptions
+            {
+                CloseOnEscapeKey = true
+            };
+            bool? confirmed = await DialogService.ShowMessageBox("Confirm Delete", message, yesText: "Delete", cancelText: "Cancel", options: dialogOptions);
+            if (!(confirmed == true))
+            {
+                return;
+            }
+
             try
             {
-                Lot lot = _selectedLots.First();
-
                 // Prefer repository-level removal to also delete underlying step records
                 Nexus.Infrastructure.Persistence.Redis.RedisLotRepository? redisRepo = LotRepository as Nexus.Infrastructure.Persistence.Redis.RedisLotRepository;
                 if (redisRepo != null)
@@ -409,7 +444,7 @@ namespace Nexus.Portal.Components.Pages.Production
         {
             public string Id { get; set; } = string.Empty;
             public string Name { get; set; } = string.Empty;
-            public ELotStatus Status { get; set; } = ELotStatus.Waiting;
+            public ELotStatus Status { get; set; } = ELotStatus.None;
             public int Priority { get; set; } = 0;
             public DateTime? ReceivedTime { get; set; } = DateTime.UtcNow;
             public string Purpose { get; set; } = string.Empty;
@@ -494,7 +529,7 @@ namespace Nexus.Portal.Components.Pages.Production
             public string Chipset { get; set; } = string.Empty;
             public string PGM { get; set; } = string.Empty;
             public int PlanPercent { get; set; } = 100;
-            public ELotStatus Status { get; set; } = ELotStatus.Waiting;
+            public ELotStatus Status { get; set; } = ELotStatus.None;
 
             public static LotStepEditModel CreateNew(string lotId)
             {

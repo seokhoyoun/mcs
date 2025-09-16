@@ -36,6 +36,7 @@
                 <MudButton StartIcon="@Icons.Material.Filled.Add"
                            Color="Color.Primary"
                            Variant="Variant.Filled"
+                           Class="ml-2"
                            OnClick="@OnNewLot">New Lot</MudButton>
                 <MudButton StartIcon="@Icons.Material.Filled.Delete"
                            Color="Color.Error"
@@ -79,51 +80,45 @@
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
-
+        
             <PagerContent>
                 <MudDataGridPager />
             </PagerContent>
         </MudDataGrid>
     </MudPaper>
 
-    <MudGrid Class="mb-4">
-        <MudItem xs="12" md="6">
-            <MudPaper Class="pa-3">
-                <MudText Typo="Typo.h6" GutterBottom="true">Lot Editor</MudText>
-                @if (_showLotEditor)
-                {
-                    <MudForm @ref="_lotForm">
-                        <MudStack Spacing="2">
-                            <MudTextField T="string" Label="Id" @bind-Value="_lotEditor.Id" Disabled="@(!_isCreatingLot)" Required="true" />
-                            <MudTextField T="string" Label="Name" @bind-Value="_lotEditor.Name" Required="true" />
-                            <MudSelect T="ELotStatus" Label="Status" @bind-Value="_lotEditor.Status">
-                                @foreach (ELotStatus st in Enum.GetValues(typeof(ELotStatus)))
-                                {
-                                    <MudSelectItem Value="@st">@st</MudSelectItem>
-                                }
-                            </MudSelect>
-                            <MudNumericField T="int" Label="Priority" @bind-Value="_lotEditor.Priority" />
-                            <MudNumericField T="int" Label="Qty" @bind-Value="_lotEditor.Qty" />
-                            <MudTextField T="string" Label="Purpose" @bind-Value="_lotEditor.Purpose" />
-                            <MudTextField T="string" Label="Eval No" @bind-Value="_lotEditor.EvalNo" />
-                            <MudTextField T="string" Label="Part No" @bind-Value="_lotEditor.PartNo" />
-                            <MudTextField T="string" Label="Line" @bind-Value="_lotEditor.Line" />
-                            <MudDatePicker Label="Received Time" @bind-Date="_lotEditor.ReceivedTime" />
-                            <MudStack Row="true" Spacing="2">
-                                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@OnSaveLot">Save</MudButton>
-                                <MudButton Color="Color.Default" Variant="Variant.Outlined" OnClick="@OnCancelLot">Cancel</MudButton>
-                            </MudStack>
-                        </MudStack>
-                    </MudForm>
-                }
-                else
-                {
-                    <MudText Color="Color.Secondary">Select a lot to edit or click New.</MudText>
-                }
-            </MudPaper>
-        </MudItem>
+    @if (_showLotEditor)
+    {
+        <MudPaper Class="pa-3 mb-4">
+            <MudText Typo="Typo.h6" GutterBottom="true">Lot Editor</MudText>
+            <MudForm @ref="_lotForm">
+                <MudStack Spacing="2">
+                    <MudTextField T="string" Label="Id" @bind-Value="_lotEditor.Id" Disabled="@(!_isCreatingLot)" Required="true" />
+                    <MudTextField T="string" Label="Name" @bind-Value="_lotEditor.Name" Required="true" />
+                    <MudSelect T="ELotStatus" Label="Status" @bind-Value="_lotEditor.Status" Disabled="@_isCreatingLot">
+                        @foreach (ELotStatus st in Enum.GetValues(typeof(ELotStatus)))
+                        {
+                            <MudSelectItem Value="@st">@st</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudNumericField T="int" Label="Priority" @bind-Value="_lotEditor.Priority" />
+                    <MudNumericField T="int" Label="Qty" @bind-Value="_lotEditor.Qty" />
+                    <MudTextField T="string" Label="Purpose" @bind-Value="_lotEditor.Purpose" />
+                    <MudTextField T="string" Label="Eval No" @bind-Value="_lotEditor.EvalNo" />
+                    <MudTextField T="string" Label="Part No" @bind-Value="_lotEditor.PartNo" />
+                    <MudTextField T="string" Label="Line" @bind-Value="_lotEditor.Line" />
+                    <MudDatePicker Label="Received Time" @bind-Date="_lotEditor.ReceivedTime" />
+                    <MudStack Row="true" Spacing="2">
+                        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@OnSaveLot">Save</MudButton>
+                        <MudButton Color="Color.Default" Variant="Variant.Outlined" OnClick="@OnCancelLot">Cancel</MudButton>
+                    </MudStack>
+                </MudStack>
+            </MudForm>
+        </MudPaper>
+    }
 
-        <MudItem xs="12" md="6">
+    <MudGrid Class="mb-4">
+        <MudItem xs="12">
             <MudPaper Class="pa-3">
                 <MudText Typo="Typo.h6" GutterBottom="true">Lot Steps</MudText>
                 <MudDataGrid T="LotStep"
@@ -202,7 +197,7 @@
                             <MudTextField T="string" Label="Chipset" @bind-Value="_stepEditor.Chipset" />
                             <MudTextField T="string" Label="PGM" @bind-Value="_stepEditor.PGM" />
                             <MudNumericField T="int" Label="Plan %" @bind-Value="_stepEditor.PlanPercent" />
-                            <MudSelect T="ELotStatus" Label="Status" @bind-Value="_stepEditor.Status">
+                            <MudSelect T="ELotStatus" Label="Status" @bind-Value="_stepEditor.Status" Disabled="@_isCreatingStep">
                                 @foreach (ELotStatus st in Enum.GetValues(typeof(ELotStatus)))
                                 {
                                     <MudSelectItem Value="@st">@st</MudSelectItem>
