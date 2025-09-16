@@ -7,6 +7,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Domain\Models\Locations\Events\**" />
+	  <EmbeddedResource Remove="Domain\Models\Locations\Events\**" />
+	  <None Remove="Domain\Models\Locations\Events\**" />
+	</ItemGroup>
+
+	<ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
@@ -16,7 +22,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Domain\Models\Locations\Events\" />
 	  <Folder Include="Domain\Models\Lots\Events\" />
 	  <Folder Include="Domain\Models\Plans\Events\" />
 	</ItemGroup>

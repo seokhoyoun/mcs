@@ -164,6 +164,86 @@ namespace Nexus.Infrastructure.Persistence.Redis
             return filteredLots.Count;
         }
 
+        // --- Additional maintenance helpers ---
+
+        /// <summary>
+        /// Remove a LotStep from a Lot and delete the underlying step record.
+        /// Note: Not part of ILotRepository interface to maintain backwards-compatibility.
+        /// </summary>
+        public async Task<bool> RemoveLotStepAsync(string lotId, string stepId, CancellationToken cancellationToken = default)
+        {
+            Lot? lot = await GetByIdAsync(lotId, cancellationToken);
+            if (lot == null)
+            {
+                return false;
+            }
+
+            List<LotStep> remaining = new List<LotStep>();
+            foreach (LotStep step in lot.LotSteps)
+            {
+                if (step.Id != stepId)
+                {
+                    remaining.Add(step);
+                }
+            }
+
+            lot.LotSteps = remaining;
+
+            await UpdateAsync(lot, cancellationToken);
+
+            await _database.KeyDeleteAsync($"{LOT_STEP_KEY_PREFIX}{stepId}");
+            return true;
+        }
+
+        /// <summary>
+        /// Cleanup orphan LotSteps that are not referenced by any Lot.
+        /// Returns the number of removed step records.
+        /// </summary>
+        public async Task<int> CleanupOrphanLotStepsAsync(CancellationToken cancellationToken = default)
+        {
+            IReadOnlyList<Lot> lots = await GetAllAsync(cancellationToken);
+            HashSet<string> referenced = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (Lot lot in lots)
+            {
+                foreach (LotStep step in lot.LotSteps)
+                {
+                    if (step.Id != null)
+                    {
+                        referenced.Add(step.Id);
+                    }
+                }
+            }
+
+            IServer server = _redis.GetServer(_redis.GetEndPoints().First());
+            IEnumerable<RedisKey> stepKeys = server.Keys(pattern: $"{LOT_STEP_KEY_PREFIX}*");
+
+            int removed = 0;
+            foreach (RedisKey key in stepKeys)
+            {
+                string full = key.ToString();
+                string stepId;
+                if (full.StartsWith(LOT_STEP_KEY_PREFIX, StringComparison.Ordinal))
+                {
+                    stepId = full.Substring(LOT_STEP_KEY_PREFIX.Length);
+                }
+                else
+                {
+                    stepId = full;
+                }
+
+                if (!referenced.Contains(stepId))
+                {
+                    bool deleted = await _database.KeyDeleteAsync(key);
+                    if (deleted)
+                    {
+                        removed++;
+                    }
+                }
+            }
+
+            return removed;
+        }
+
         // ILotRepository 특화 메서드들
         public async Task<IReadOnlyList<Lot>> GetLotsByStatusAsync(ELotStatus status, CancellationToken cancellationToken = default)
         {

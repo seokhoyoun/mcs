@@ -447,3 +447,8 @@ Desktop.ini
 # Logs
 logs/
 *.log
+
+# Environment configuration files (secrets)
+.env
+.env.*
+*.env

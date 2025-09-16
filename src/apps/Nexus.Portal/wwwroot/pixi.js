@@ -60,10 +60,16 @@
                 }
             } catch (e) { /* ignore */ }
         }
-        // If scene exists, refresh visuals
+        // If scene exists, refresh visuals (2D)
         if (this.camera) {
             this.refreshThemeStyles();
         }
+        // Also apply to 3D layer if present
+        try {
+            if (typeof this._applyThemeToThree === 'function') {
+                this._applyThemeToThree();
+            }
+        } catch (e) { /* ignore */ }
     },
 
     init: function (canvasId, locations = []) {

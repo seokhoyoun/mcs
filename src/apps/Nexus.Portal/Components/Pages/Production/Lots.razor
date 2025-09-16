@@ -1,109 +1,223 @@
 ﻿@page "/production/lots"
 @using MudBlazor
+@using MudBlazor.Components
+@using Nexus.Core.Domain.Models.Lots
+@using Nexus.Core.Domain.Models.Lots.Enums
 
-<PageTitle>LOT 관리</PageTitle>
+<PageTitle>Lots</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
-    <MudText Typo="Typo.h3" GutterBottom="true">LOT 관리</MudText>
-    <MudText Typo="Typo.subtitle1" Class="mb-4">LOT 생성, 수정, 삭제 및 상태 관리</MudText>
+    <MudText Typo="Typo.h4" GutterBottom="true">LOT Management</MudText>
 
-    <MudGrid>
-        <MudItem xs="12">
-            <MudCard>
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">LOT 목록</MudText>
-                    </CardHeaderContent>
-                    <CardHeaderActions>
-                        <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Variant="Variant.Filled">
-                            새 LOT 생성
-                        </MudButton>
-                        <MudButton StartIcon="@Icons.Material.Filled.FileUpload" Color="Color.Secondary" Variant="Variant.Outlined">
-                            LOT 일괄 등록
-                        </MudButton>
-                    </CardHeaderActions>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudTable Items="@_lotItems" Hover="true" Breakpoint="Breakpoint.Sm" Filter="_filterLot">
-                        <ToolBarContent>
-                            <MudTextField @bind-Value="_searchString" Placeholder="LOT ID 또는 제품명 검색" 
-                                        Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" 
-                                        IconSize="Size.Medium" Class="mt-0" />
-                        </ToolBarContent>
-                        <HeaderContent>
-                            <MudTh>LOT ID</MudTh>
-                            <MudTh>제품명</MudTh>
-                            <MudTh>수량</MudTh>
-                            <MudTh>상태</MudTh>
-                            <MudTh>우선순위</MudTh>
-                            <MudTh>등록일</MudTh>
-                            <MudTh>예상 완료일</MudTh>
-                            <MudTh>작업</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd DataLabel="LOT ID">@context.LotId</MudTd>
-                            <MudTd DataLabel="제품명">@context.ProductName</MudTd>
-                            <MudTd DataLabel="수량">@context.Quantity</MudTd>
-                            <MudTd DataLabel="상태">
-                                    @context.Status
-                            </MudTd>
-                            <MudTd DataLabel="우선순위">
-                                <MudRating SelectedValue="@context.Priority" MaxValue="5" ReadOnly="true" Size="Size.Small" />
-                            </MudTd>
-                            <MudTd DataLabel="등록일">@context.CreatedDate.ToString("yyyy-MM-dd")</MudTd>
-                            <MudTd DataLabel="예상 완료일">@context.ExpectedDate?.ToString("yyyy-MM-dd")</MudTd>
-                            <MudTd DataLabel="작업">
-                                <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small">
-                                    <MudButton StartIcon="@Icons.Material.Filled.Edit">편집</MudButton>
-                                    <MudButton StartIcon="@Icons.Material.Filled.PlayArrow">시작</MudButton>
-                                    <MudButton StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error">삭제</MudButton>
-                                </MudButtonGroup>
-                            </MudTd>
-                        </RowTemplate>
-                    </MudTable>
-                </MudCardContent>
-            </MudCard>
+    <MudPaper Class="pa-3 mb-4">
+        <MudDataGrid T="Lot"
+                     Items="_lots"
+                     @bind-SelectedItems="_selectedLots"
+                     MultiSelection="false"
+                     Dense="true"
+                     Hover="true"
+                     Bordered="true"
+                     Striped="true"
+                     Filterable="true"
+                     SortMode="SortMode.Multiple"
+                     QuickFilter="@QuickLotFilter"
+                     Hideable="true"
+                     RowsPerPage="20"
+                     Virtualize="true">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Lots</MudText>
+                <MudSpacer />
+                <MudTextField @bind-Value="_searchLot"
+                              Placeholder="Search lots..."
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              IconSize="Size.Medium"
+                              Class="mx-2" />
+                <MudButton StartIcon="@Icons.Material.Filled.Add"
+                           Color="Color.Primary"
+                           Variant="Variant.Filled"
+                           OnClick="@OnNewLot">New Lot</MudButton>
+                <MudButton StartIcon="@Icons.Material.Filled.Delete"
+                           Color="Color.Error"
+                           Variant="Variant.Outlined"
+                           Disabled="@(_selectedLots.Count == 0)"
+                           Class="ml-2"
+                           OnClick="@OnDeleteSelectedLots">Delete</MudButton>
+                <MudButton StartIcon="@Icons.Material.Filled.Refresh"
+                           Color="Color.Default"
+                           Variant="Variant.Outlined"
+                           Class="ml-2"
+                           OnClick="@OnReloadLots">Refresh</MudButton>
+            </ToolBarContent>
+
+            <Columns>
+                <PropertyColumn Property="x => x.Id" Title="ID" Sortable="true" />
+                <PropertyColumn Property="x => x.Name" Title="NAME" Sortable="true" />
+                <TemplateColumn Title="STATUS" Sortable="true">
+                    <CellTemplate>
+                        <MudChip Color="@GetLotStatusColor(context.Item.Status)" Variant="Variant.Outlined" Size="Size.Small">@context.Item.Status</MudChip>
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn Property="x => x.Priority" Title="PRIORITY" Sortable="true" />
+                <PropertyColumn Property="x => x.Qty" Title="QTY" Sortable="true" />
+                <PropertyColumn Property="x => x.Purpose" Title="PURPOSE" Sortable="true" />
+                <PropertyColumn Property="x => x.EvalNo" Title="EVAL NO" Sortable="true" />
+                <PropertyColumn Property="x => x.PartNo" Title="PART NO" Sortable="true" />
+                <PropertyColumn Property="x => x.Line" Title="LINE" Sortable="true" />
+                <TemplateColumn Title="RECEIVED" Sortable="true">
+                    <CellTemplate>
+                        @context.Item.ReceivedTime.ToString("yyyy-MM-dd HH:mm")
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn Title="ACTIONS">
+                    <CellTemplate>
+                        <MudButton StartIcon="@Icons.Material.Filled.Edit"
+                                   Size="Size.Small"
+                                   Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   OnClick="@(() => OnEditLot(context.Item))">Edit</MudButton>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+
+            <PagerContent>
+                <MudDataGridPager />
+            </PagerContent>
+        </MudDataGrid>
+    </MudPaper>
+
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-3">
+                <MudText Typo="Typo.h6" GutterBottom="true">Lot Editor</MudText>
+                @if (_showLotEditor)
+                {
+                    <MudForm @ref="_lotForm">
+                        <MudStack Spacing="2">
+                            <MudTextField T="string" Label="Id" @bind-Value="_lotEditor.Id" Disabled="@(!_isCreatingLot)" Required="true" />
+                            <MudTextField T="string" Label="Name" @bind-Value="_lotEditor.Name" Required="true" />
+                            <MudSelect T="ELotStatus" Label="Status" @bind-Value="_lotEditor.Status">
+                                @foreach (ELotStatus st in Enum.GetValues(typeof(ELotStatus)))
+                                {
+                                    <MudSelectItem Value="@st">@st</MudSelectItem>
+                                }
+                            </MudSelect>
+                            <MudNumericField T="int" Label="Priority" @bind-Value="_lotEditor.Priority" />
+                            <MudNumericField T="int" Label="Qty" @bind-Value="_lotEditor.Qty" />
+                            <MudTextField T="string" Label="Purpose" @bind-Value="_lotEditor.Purpose" />
+                            <MudTextField T="string" Label="Eval No" @bind-Value="_lotEditor.EvalNo" />
+                            <MudTextField T="string" Label="Part No" @bind-Value="_lotEditor.PartNo" />
+                            <MudTextField T="string" Label="Line" @bind-Value="_lotEditor.Line" />
+                            <MudDatePicker Label="Received Time" @bind-Date="_lotEditor.ReceivedTime" />
+                            <MudStack Row="true" Spacing="2">
+                                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@OnSaveLot">Save</MudButton>
+                                <MudButton Color="Color.Default" Variant="Variant.Outlined" OnClick="@OnCancelLot">Cancel</MudButton>
+                            </MudStack>
+                        </MudStack>
+                    </MudForm>
+                }
+                else
+                {
+                    <MudText Color="Color.Secondary">Select a lot to edit or click New.</MudText>
+                }
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-3">
+                <MudText Typo="Typo.h6" GutterBottom="true">Lot Steps</MudText>
+                <MudDataGrid T="LotStep"
+                             Items="GetCurrentSteps()"
+                             @bind-SelectedItems="_selectedSteps"
+                             Dense="true"
+                             Hover="true"
+                             Bordered="true"
+                             Striped="true"
+                             Filterable="true"
+                             SortMode="SortMode.Multiple"
+                             QuickFilter="@QuickStepFilter"
+                             Hideable="true"
+                             RowsPerPage="10">
+                    <ToolBarContent>
+                        <MudText Typo="Typo.subtitle1">Steps of @(_selectedLots.Count > 0 ? _selectedLots.First().Id : "-")</MudText>
+                        <MudSpacer />
+                        <MudTextField @bind-Value="_searchStep"
+                                      Placeholder="Search steps..."
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Search"
+                                      IconSize="Size.Medium"
+                                      Class="mx-2" />
+                        <MudButton StartIcon="@Icons.Material.Filled.Add"
+                                   Color="Color.Primary"
+                                   Variant="Variant.Filled"
+                                   Disabled="@(_selectedLots.Count == 0)"
+                                   OnClick="@OnNewStep">New Step</MudButton>
+                        <MudButton StartIcon="@Icons.Material.Filled.Delete"
+                                   Color="Color.Error"
+                                   Variant="Variant.Outlined"
+                                   Disabled="@(_selectedSteps.Count == 0)"
+                                   Class="ml-2"
+                                   OnClick="@OnDeleteSelectedSteps">Delete</MudButton>
+                    </ToolBarContent>
+
+                    <Columns>
+                        <PropertyColumn Property="x => x.Id" Title="ID" Sortable="true" />
+                        <PropertyColumn Property="x => x.Name" Title="NAME" Sortable="true" />
+                        <PropertyColumn Property="x => x.LoadingType" Title="LOADING" Sortable="true" />
+                        <PropertyColumn Property="x => x.DpcType" Title="DPC" Sortable="true" />
+                        <PropertyColumn Property="x => x.Chipset" Title="CHIPSET" Sortable="true" />
+                        <PropertyColumn Property="x => x.PGM" Title="PGM" Sortable="true" />
+                        <PropertyColumn Property="x => x.PlanPercent" Title="PLAN %" Sortable="true" />
+                        <TemplateColumn Title="STATUS" Sortable="true">
+                            <CellTemplate>
+                                <MudChip Color="@GetLotStatusColor(context.Item.Status)" Variant="Variant.Outlined" Size="Size.Small">@context.Item.Status</MudChip>
+                            </CellTemplate>
+                        </TemplateColumn>
+                        <TemplateColumn Title="ACTIONS">
+                            <CellTemplate>
+                                <MudButton StartIcon="@Icons.Material.Filled.Edit"
+                                           Size="Size.Small"
+                                           Variant="Variant.Outlined"
+                                           Color="Color.Primary"
+                                           OnClick="@(() => OnEditStep(context.Item))">Edit</MudButton>
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+
+                    <PagerContent>
+                        <MudDataGridPager />
+                    </PagerContent>
+                </MudDataGrid>
+
+                @if (_showStepEditor)
+                {
+                    <MudDivider Class="my-3" />
+                    <MudText Typo="Typo.subtitle2">Step Editor</MudText>
+                    <MudForm @ref="_stepForm">
+                        <MudStack Spacing="2">
+                            <MudTextField T="string" Label="Id" @bind-Value="_stepEditor.Id" Disabled="@(!_isCreatingStep)" Required="true" />
+                            <MudTextField T="string" Label="Name" @bind-Value="_stepEditor.Name" Required="true" />
+                            <MudNumericField T="int" Label="Loading Type" @bind-Value="_stepEditor.LoadingType" />
+                            <MudTextField T="string" Label="DPC Type" @bind-Value="_stepEditor.DpcType" />
+                            <MudTextField T="string" Label="Chipset" @bind-Value="_stepEditor.Chipset" />
+                            <MudTextField T="string" Label="PGM" @bind-Value="_stepEditor.PGM" />
+                            <MudNumericField T="int" Label="Plan %" @bind-Value="_stepEditor.PlanPercent" />
+                            <MudSelect T="ELotStatus" Label="Status" @bind-Value="_stepEditor.Status">
+                                @foreach (ELotStatus st in Enum.GetValues(typeof(ELotStatus)))
+                                {
+                                    <MudSelectItem Value="@st">@st</MudSelectItem>
+                                }
+                            </MudSelect>
+                            <MudStack Row="true" Spacing="2">
+                                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@OnSaveStep">Save</MudButton>
+                                <MudButton Color="Color.Default" Variant="Variant.Outlined" OnClick="@OnCancelStep">Cancel</MudButton>
+                            </MudStack>
+                        </MudStack>
+                    </MudForm>
+                }
+            </MudPaper>
         </MudItem>
     </MudGrid>
+
 </MudContainer>
 
-@code {
-    private string _searchString = string.Empty;
-    private readonly List<LotItem> _lotItems = new()
-    {
-        new LotItem { LotId = "LOT-20250101-001", ProductName = "Memory Test Kit A", Quantity = 100, Status = "Ready", Priority = 3, CreatedDate = DateTime.Now.AddDays(-5), ExpectedDate = DateTime.Now.AddDays(2) },
-        new LotItem { LotId = "LOT-20250101-002", ProductName = "Memory Test Kit B", Quantity = 200, Status = "InProgress", Priority = 5, CreatedDate = DateTime.Now.AddDays(-3), ExpectedDate = DateTime.Now.AddDays(1) },
-        new LotItem { LotId = "LOT-20250101-003", ProductName = "Memory Test Kit C", Quantity = 150, Status = "Completed", Priority = 2, CreatedDate = DateTime.Now.AddDays(-7), ExpectedDate = DateTime.Now.AddDays(-1) }
-    };
-
-    private bool _filterLot(LotItem lotItem)
-    {
-        return string.IsNullOrWhiteSpace(_searchString) ||
-               lotItem.LotId.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ||
-               lotItem.ProductName.Contains(_searchString, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private Color GetLotStatusColor(string status)
-    {
-        return status switch
-        {
-            "Ready" => Color.Info,
-            "InProgress" => Color.Primary,
-            "Completed" => Color.Success,
-            "Failed" => Color.Error,
-            "Cancelled" => Color.Default,
-            _ => Color.Default
-        };
-    }
-
-    public class LotItem
-    {
-        public string LotId { get; set; } = string.Empty;
-        public string ProductName { get; set; } = string.Empty;
-        public int Quantity { get; set; }
-        public string Status { get; set; } = string.Empty;
-        public int Priority { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public DateTime? ExpectedDate { get; set; }
-    }
-}

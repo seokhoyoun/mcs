@@ -19,7 +19,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
         private bool _threeInitialized = false;
         private HubConnection? _hubConnection;
         private Random _random = new Random();
-
+        private bool _showTestPanel = true;
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (!firstRender)
@@ -146,7 +146,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             }
         }
 
-        // ?뚯뒪?몄슜 ?꾩튂 異붽?
+        
         private async Task AddTestLocation()
         {
             if (!_threeInitialized)
@@ -212,6 +212,16 @@ namespace Nexus.Portal.Components.Pages.Monitoring
                 return configured;
             }
             return "http://nexus.gateway:8082";
+        }
+
+        private void OnShowTestPanel()
+        {
+            _showTestPanel = !_showTestPanel;
+        }
+
+        private string GetTestPanelTooltip()
+        {
+            return _showTestPanel ? "Hide test panel" : "Show test panel";
         }
 
         private async Task MoveSelectedRobot()

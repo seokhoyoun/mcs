@@ -197,7 +197,9 @@
         locationMesh.userData = {
             id: normalizedLocation.id,
             type: 'location',
-            role: locationRole
+            role: locationRole,
+            locationType: baseLocationType,
+            status: normalizedLocation.status
         };
 
         return locationMesh;
@@ -220,12 +222,16 @@
         });
         const robotMesh = new THREE.Mesh(cylinderGeometry, robotMaterial);
 
-        robotMesh.position.set((normalizedRobot.x || 0), 9, -(normalizedRobot.y || 0));
+        const initialX = (normalizedRobot.x || 0);
+        const initialY = (typeof normalizedRobot.z === 'number' && isFinite(normalizedRobot.z)) ? normalizedRobot.z : 9;
+        const initialZ = -(normalizedRobot.y || 0);
+        robotMesh.position.set(initialX, initialY, initialZ);
         robotMesh.castShadow = true;
         robotMesh.receiveShadow = true;
         robotMesh.userData = {
             id: normalizedRobot.id,
-            type: 'robot'
+            type: 'robot',
+            robotType: normalizedRobot.robotType
         };
 
         return robotMesh;
@@ -418,13 +424,18 @@
             }
 
             if (intersectionPoint) {
-                const roundedX = Math.round(intersectionPoint.x);
-                const roundedY = Math.round(intersectionPoint.y);
-                const roundedZ = Math.round(intersectionPoint.z);
-                const coordinateDisplayElement = document.getElementById('mouseXYZ');
+                // Convert Three.js world (Y-up) to domain (X/Y floor, Z height)
+                const worldX = intersectionPoint.x;
+                const worldY = intersectionPoint.y;
+                const worldZ = intersectionPoint.z;
 
+                const domainX = Math.round(worldX);
+                const domainY = Math.round(-worldZ); // domain Y maps to -world Z
+                const domainZ = Math.round(worldY);  // domain Z (height) maps to world Y
+
+                const coordinateDisplayElement = document.getElementById('mouseXYZ');
                 if (coordinateDisplayElement) {
-                    coordinateDisplayElement.textContent = `X: ${roundedX}  Y: ${roundedY}  Z: ${roundedZ}`;
+                    coordinateDisplayElement.textContent = `X: ${domainX}  Y: ${domainY}  Z: ${domainZ}`;
                 }
             }
         };
@@ -467,6 +478,98 @@
             onResize: handleWindowResize,
             onMove: handleMouseMovement,
             animationRequestId: 0
+        };
+
+        // Expose a theme applier for external theme changes
+        pixiGameInstance._applyThemeToThree = function () {
+            try {
+                const colors = pixiGameInstance.themeColors || {};
+                if (colors.background != null && webglRenderer && webglRenderer.setClearColor) {
+                    webglRenderer.setClearColor(new THREE.Color(convertToIntegerColor(colors.background)), 1);
+                }
+
+                // Update location mesh materials
+                if (locationMeshCollection && locationMeshCollection.forEach) {
+                    locationMeshCollection.forEach((mesh, id) => {
+                        if (!mesh || !mesh.material) { return; }
+                        const userData = mesh.userData || {};
+                        const baseType = userData.locationType;
+                        const role = userData.role ? String(userData.role).toLowerCase() : '';
+                        const status = userData.status || '';
+
+                        const typeColorMap = {
+                            'Cassette': colors.info != null ? colors.info : 0xffc107,
+                            'Tray': colors.success != null ? colors.success : 0x2e7d32,
+                            'Memory': colors.info != null ? colors.info : 0x0288d1,
+                            'Marker': colors.secondary != null ? colors.secondary : 0x9c27b0
+                        };
+
+                        let selectedColor = typeColorMap[baseType] || 0x888888;
+                        if (role) {
+                            const roleColorMap = {
+                                'area': colors.background != null ? colors.background : 0x2e7d32,
+                                'stocker': colors.background != null ? colors.background : 0xffc107,
+                                'set': colors.primary != null ? colors.primary : 0x3f51b5,
+                                'movearea': colors.info != null ? colors.info : 0x0288d1
+                            };
+                            if (roleColorMap[role] != null) {
+                                selectedColor = roleColorMap[role];
+                            }
+                        }
+
+                        const edgeColor = (status === 'Occupied')
+                            ? (colors.textPrimary != null ? colors.textPrimary : 0x000000)
+                            : (colors.textSecondary != null ? colors.textSecondary : 0x666666);
+
+                        // Update fill material
+                        try {
+                            const fillColor = convertToIntegerColor(selectedColor);
+                            if (mesh.material && mesh.material.color) {
+                                mesh.material.color.setHex(fillColor);
+                                // Opacity based on role/type
+                                let opacity = 1.0;
+                                if (role) { opacity = 0.2; }
+                                else if (baseType === 'Cassette') { opacity = 0.4; }
+                                mesh.material.transparent = opacity < 1.0;
+                                mesh.material.opacity = opacity;
+                                mesh.material.needsUpdate = true;
+                            }
+                        } catch { }
+
+                        // Update edge material
+                        try {
+                            const edgeHex = convertToIntegerColor(edgeColor);
+                            if (mesh.children && mesh.children.length > 0) {
+                                for (let ci = 0; ci < mesh.children.length; ci++) {
+                                    const child = mesh.children[ci];
+                                    if (child && child.isLineSegments && child.material && child.material.color) {
+                                        child.material.color.setHex(edgeHex);
+                                        child.material.needsUpdate = true;
+                                    }
+                                }
+                            }
+                        } catch { }
+                    });
+                }
+
+                // Update robot mesh materials
+                if (robotMeshCollection && robotMeshCollection.forEach) {
+                    robotMeshCollection.forEach((mesh, id) => {
+                        try {
+                            const ud = mesh.userData || {};
+                            const isLogistics = (ud.robotType === 'Logistics');
+                            const color = isLogistics
+                                ? (colors.primary != null ? colors.primary : 0x00aaff)
+                                : (colors.secondary != null ? colors.secondary : 0xff8800);
+                            const hex = convertToIntegerColor(color);
+                            if (mesh.material && mesh.material.color) {
+                                mesh.material.color.setHex(hex);
+                                mesh.material.needsUpdate = true;
+                            }
+                        } catch { }
+                    });
+                }
+            } catch { }
         };
 
         animationLoop();
@@ -551,11 +654,10 @@
             }
         } else {
             try {
-                existingRobotMesh.position.set(
-                    (normalizedRobotData.x || 0),
-                    existingRobotMesh.position.y,
-                    -(normalizedRobotData.y || 0)
-                );
+                const nextX = (normalizedRobotData.x || 0);
+                const nextY = (typeof normalizedRobotData.z === 'number' && isFinite(normalizedRobotData.z)) ? normalizedRobotData.z : existingRobotMesh.position.y;
+                const nextZ = -(normalizedRobotData.y || 0);
+                existingRobotMesh.position.set(nextX, nextY, nextZ);
             } catch (error) {
                 // 에러 무시
             }

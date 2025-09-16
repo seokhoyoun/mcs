@@ -22,79 +22,90 @@
 @inject ILocationRepository LocationRepository
 @inject IRobotRepository RobotRepository
 
-<MudContainer MaxWidth="MaxWidth.False" Class="pa-0" >
+<MudContainer MaxWidth="MaxWidth.False" Class="pa-0">
 	<div id="threeContainer" style="display:block; width:100%; height:100%; position: relative;">
+		<div style="position:absolute; top:10px; right:10px; z-index:1000; pointer-events:auto;">
+			<MudIconButton Icon="@(_showTestPanel? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+						   Color="Color.Default"
+						   Title="@GetTestPanelTooltip()"
+						   @onclick="OnShowTestPanel" />
+		</div>
 		<div id="mouseXYZ" style="position:absolute; bottom:10px; right:10px; z-index:1000; background: rgba(0,0,0,0.6); color:#fff; padding:6px 10px; font-size:12px; pointer-events:none; border-radius:4px;">
 			X: -  Y: -  Z: -
 		</div>
 	</div>
 
 	<!-- 테스트용 컨트롤 패널 -->
-	<MudPaper Class="pa-3" Style="width: 320px; z-index: 10; pointer-events: auto;" Elevation="3">
+	@if (_showTestPanel)
+	{
+		<MudPaper Class="pa-3" Style="position: absolute; width: 320px; z-index: 10; pointer-events: auto;" Elevation="3" >
 
-		<MudText Variant="Variant.h6" GutterBottom="true">위치 관리</MudText>
-
-		<MudButton Variant="Variant.Filled"
-				   Color="Color.Secondary"
-				   Size="Size.Small"
-				   Class="mb-3"
-				   @onclick="AddTestLocation">
-			랜덤 테스트 위치 추가
-		</MudButton>
-
-		<MudDivider Class="my-3" />
-
-		<MudText Variant="Variant.h6" GutterBottom="true">로봇 테스트</MudText>
-
-		<MudStack Spacing="3">
-			<MudSelect T="string"
-					   Label="로봇 선택"
-					   @bind-Value="_selectedRobotId"
-					   Variant="Variant.Outlined"
-					   Margin="Margin.Dense">
-				@foreach (Robot r in _robots)
-				{
-					<MudSelectItem Value="@r.Id">@r.Id</MudSelectItem>
-				}
-			</MudSelect>
-
-			<MudSelect T="string"
-					   Label="위치 선택"
-					   @bind-Value="_selectedLocationId"
-					   Variant="Variant.Outlined"
-					   Margin="Margin.Dense">
-				@foreach (Location loc in _locations)
-				{
-					<MudSelectItem Value="@loc.Id">@loc.Id</MudSelectItem>
-				}
-			</MudSelect>
-
-			<MudNumericField T="double"
-							 Label="속도"
-							 @bind-Value="_moveSpeed"
-							 Variant="Variant.Outlined"
-							 Margin="Margin.Dense"
-							 Step="10" />
+			<MudText Variant="Variant.h6" GutterBottom="true">위치 관리</MudText>
 
 			<MudButton Variant="Variant.Filled"
-					   Color="Color.Primary"
+					   Color="Color.Secondary"
 					   Size="Size.Small"
-					   FullWidth="true"
-					   @onclick="MoveSelectedRobot">
-				Move
+					   Class="mb-3"
+					   @onclick="AddTestLocation">
+				랜덤 테스트 위치 추가
 			</MudButton>
 
-			<MudTextField T="string"
-						  Label="아이템 ID (Load)"
-						  @bind-Value="_loadItemId"
-						  Placeholder="CASS_001"
-						  Variant="Variant.Outlined"
-						  Margin="Margin.Dense" />
+			<MudDivider Class="my-3" />
 
-			<MudButtonGroup Variant="Variant.Filled" Size="Size.Small">
-				<MudButton Color="Color.Info" @onclick="LoadSelectedRobot">Load</MudButton>
-				<MudButton Color="Color.Warning" @onclick="UnloadSelectedRobot">Unload</MudButton>
-			</MudButtonGroup>
-		</MudStack>
-	</MudPaper>
+			<MudText Variant="Variant.h6" GutterBottom="true">로봇 테스트</MudText>
+
+			<MudStack Spacing="3">
+				<MudSelect T="string"
+						   Label="로봇 선택"
+						   @bind-Value="_selectedRobotId"
+						   Variant="Variant.Outlined"
+						   Margin="Margin.Dense">
+					@foreach (Robot r in _robots)
+					{
+						<MudSelectItem Value="@r.Id">@r.Id</MudSelectItem>
+					}
+				</MudSelect>
+
+				<MudSelect T="string"
+						   Label="위치 선택"
+						   @bind-Value="_selectedLocationId"
+						   Variant="Variant.Outlined"
+						   Margin="Margin.Dense">
+					@foreach (Location loc in _locations)
+					{
+						<MudSelectItem Value="@loc.Id">@loc.Id</MudSelectItem>
+					}
+				</MudSelect>
+
+				<MudNumericField T="double"
+								 Label="속도"
+								 @bind-Value="_moveSpeed"
+								 Variant="Variant.Outlined"
+								 Margin="Margin.Dense"
+								 Step="10" />
+
+				<MudButton Variant="Variant.Filled"
+						   Color="Color.Primary"
+						   Size="Size.Small"
+						   FullWidth="true"
+						   @onclick="MoveSelectedRobot">
+					Move
+				</MudButton>
+
+				<MudTextField T="string"
+							  Label="아이템 ID (Load)"
+							  @bind-Value="_loadItemId"
+							  Placeholder="CASS_001"
+							  Variant="Variant.Outlined"
+							  Margin="Margin.Dense" />
+
+				<MudButtonGroup Variant="Variant.Filled" Size="Size.Small">
+					<MudButton Color="Color.Info" @onclick="LoadSelectedRobot">Load</MudButton>
+					<MudButton Color="Color.Warning" @onclick="UnloadSelectedRobot">Unload</MudButton>
+				</MudButtonGroup>
+			</MudStack>
+		</MudPaper>
+	}
 </MudContainer>
+
+
