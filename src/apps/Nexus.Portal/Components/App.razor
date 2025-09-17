@@ -18,9 +18,7 @@
     <Routes @rendermode=RenderMode.InteractiveServer />
     <script src="_framework/blazor.web.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js?v=@(MudBlazor.Metadata.Version)"></script>
-    <!-- 2D renderer -->
-    <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.x/dist/pixi.min.js"></script>
-    <!-- Optional 3D renderer (Three.js) via ES Modules -->
+    <!-- 3D renderer (Three.js) via ES Modules -->
     <script type="module">
         import * as THREE_MOD from 'https://esm.sh/three@0.158.0';
         import { OrbitControls as OrbitControlsClass } from 'https://esm.sh/three@0.158.0/examples/jsm/controls/OrbitControls.js';
@@ -28,7 +26,6 @@
         THREE_NS.OrbitControls = OrbitControlsClass;
         window.THREE = THREE_NS;
     </script>
-    <script src="pixi.js"></script>
     <script src="three-layer.js"></script>
 </body>
 

@@ -79,8 +79,8 @@ namespace Nexus.Sandbox.Seed
                     uint cassetteZ = 0;
                     cassette.Position = new Position(cassetteX, cassetteY, cassetteZ);
                     cassette.Width = 30;
-                    cassette.Height = 30;
-                    cassette.Depth = 30;
+                    cassette.Height = 60;
+                    cassette.Depth = 60;
                     cassetteLocations.Add(cassette);
 
                     for (int trayIdx = 1; trayIdx <= 6; trayIdx++)

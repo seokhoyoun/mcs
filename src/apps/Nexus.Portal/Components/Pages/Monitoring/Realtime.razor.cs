@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.JSInterop;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Components;
 using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Locations.DTO;
 using Nexus.Core.Domain.Models.Locations.Enums;
@@ -10,6 +12,9 @@ namespace Nexus.Portal.Components.Pages.Monitoring
 {
     public partial class Realtime : IAsyncDisposable
     {
+        [Inject]
+        private ILogger<Realtime> Logger { get; set; } = default!;
+
         private IReadOnlyList<Location> _locations = new List<Location>();
         private IReadOnlyList<Robot> _robots = new List<Robot>();
         private string _selectedRobotId = string.Empty;
@@ -43,8 +48,8 @@ namespace Nexus.Portal.Components.Pages.Monitoring
 
             LocationDto[] locations = _locations.Select(MapLocationToDto).ToArray();
             RobotDto[] robots = _robots.Select(MapRobotToDto).ToArray();
-            await JS.InvokeVoidAsync("pixiGame.init3D", "threeContainer", (object)locations);
-            await JS.InvokeVoidAsync("pixiGame.loadRobots3D", (object)robots);
+            await JS.InvokeVoidAsync("nexus3d.init3D", "threeContainer", (object)locations);
+            await JS.InvokeVoidAsync("nexus3d.loadRobots3D", (object)robots);
 
             _threeInitialized = true;
 
@@ -54,7 +59,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ConnectSignalRAsync failed: {ex}");
+                Logger.LogError(ex, "ConnectSignalRAsync failed");
             }
         }
 
@@ -89,7 +94,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
                 {
                     await InvokeAsync(async () =>
                     {
-                        await JS.InvokeVoidAsync("pixiGame.updateRobot3D", update);
+                        await JS.InvokeVoidAsync("nexus3d.updateRobot3D", update);
                     });
                 }
             });
@@ -100,7 +105,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"SignalR StartAsync failed: {ex}");
+                Logger.LogError(ex, "SignalR StartAsync failed");
             }
         }
 
@@ -108,7 +113,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
         {
             try
             {
-                                IReadOnlyList<Location> markers = await LocationRepository.GetLocationsByTypeAsync(ELocationType.Marker);
+                IReadOnlyList<Location> markers = await LocationRepository.GetLocationsByTypeAsync(ELocationType.Marker);
                 IReadOnlyList<Location> cassettes = await LocationRepository.GetLocationsByTypeAsync(ELocationType.Cassette);
 
                 List<Location> combined = new List<Location>();
@@ -128,7 +133,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"?꾩튂 ?뺣낫 濡쒕뱶 以??ㅻ쪟 諛쒖깮: {ex.Message}");
+                Logger.LogError(ex, "위치 데이터 로드 중 오류 발생: {Message}", ex.Message);
                 _locations = new List<Location>();
             }
         }
@@ -141,7 +146,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"濡쒕큸 ?뺣낫 濡쒕뱶 以??ㅻ쪟 諛쒖깮: {ex.Message}");
+                Logger.LogError(ex, "로봇 데이터 로드 중 오류 발생: {Message}", ex.Message);
                 _robots = new List<Robot>();
             }
         }
@@ -165,7 +170,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
                 Z = 0
             };
 
-            await JS.InvokeVoidAsync("pixiGame.addLocation3D", testLocation);
+            await JS.InvokeVoidAsync("nexus3d.addLocation3D", testLocation);
         }
 
         private LocationDto MapLocationToDto(Location location)
@@ -181,6 +186,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             dto.Width = (int)location.Width;
             dto.Height = (int)location.Height;
             dto.Depth = (int)location.Depth;
+            dto.CurrentItemId = location.CurrentItemId;
 
             Nexus.Core.Domain.Models.Locations.MarkerLocation? marker = location as Nexus.Core.Domain.Models.Locations.MarkerLocation;
             if (marker != null)
@@ -236,13 +242,13 @@ namespace Nexus.Portal.Components.Pages.Monitoring
                 string baseUrl = GetGatewayBaseUrl().TrimEnd('/');
                 var payload = new { LocationId = _selectedLocationId, Speed = _moveSpeed };
                 HttpResponseMessage res = await client.PostAsJsonAsync($"{baseUrl}/api/v1/robots/{_selectedRobotId}/move", payload);
-                Console.WriteLine($"Move result: {(int)res.StatusCode}");
+                Logger.LogInformation("Move result: {StatusCode}", (int)res.StatusCode);
 
                 // path drawing removed in 3D-only mode
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"MoveSelectedRobot failed: {ex}");
+                Logger.LogError(ex, "MoveSelectedRobot failed");
             }
         }
 
@@ -259,11 +265,19 @@ namespace Nexus.Portal.Components.Pages.Monitoring
                 string baseUrl = GetGatewayBaseUrl().TrimEnd('/');
                 var payload = new { FromLocationId = _selectedLocationId, ItemId = _loadItemId };
                 HttpResponseMessage res = await client.PostAsJsonAsync($"{baseUrl}/api/v1/robots/{_selectedRobotId}/load", payload);
-                Console.WriteLine($"Load result: {(int)res.StatusCode}");
+                Logger.LogInformation("Load result: {StatusCode}", (int)res.StatusCode);
+                try
+                {
+                    await RefreshSelectedLocationAsync();
+                }
+                catch (Exception refreshEx)
+                {
+                    Logger.LogWarning(refreshEx, "Failed to refresh location after load");
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"LoadSelectedRobot failed: {ex}");
+                Logger.LogError(ex, "LoadSelectedRobot failed");
             }
         }
 
@@ -279,11 +293,36 @@ namespace Nexus.Portal.Components.Pages.Monitoring
                 string baseUrl = GetGatewayBaseUrl().TrimEnd('/');
                 var payload = new { ToLocationId = _selectedLocationId };
                 HttpResponseMessage res = await client.PostAsJsonAsync($"{baseUrl}/api/v1/robots/{_selectedRobotId}/unload", payload);
-                Console.WriteLine($"Unload result: {(int)res.StatusCode}");
+                Logger.LogInformation("Unload result: {StatusCode}", (int)res.StatusCode);
+                try
+                {
+                    await RefreshSelectedLocationAsync();
+                }
+                catch (Exception refreshEx)
+                {
+                    Logger.LogWarning(refreshEx, "Failed to refresh location after unload");
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"UnloadSelectedRobot failed: {ex}");
+                Logger.LogError(ex, "UnloadSelectedRobot failed");
+            }
+        }
+
+        private async Task RefreshSelectedLocationAsync()
+        {
+            try
+            {
+                Location? updated = await LocationRepository.GetByIdAsync(_selectedLocationId);
+                if (updated != null)
+                {
+                    LocationDto dto = MapLocationToDto(updated);
+                    await JS.InvokeVoidAsync("nexus3d.updateLocation3D", dto);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "RefreshSelectedLocationAsync failed");
             }
         }
 

@@ -215,7 +215,7 @@
                 themeDto.Add("surface", palette.Surface.ToString());
                 themeDto.Add("background", palette.Background.ToString());
 
-                await JS.InvokeVoidAsync("pixiGame.setTheme", themeDto);
+                await JS.InvokeVoidAsync("nexus3d.setTheme", themeDto);
             }
             catch
             {

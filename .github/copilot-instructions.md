@@ -1,4 +1,4 @@
-ï»¿## C# Coding Conventions
+## C# Coding Conventions
 
 ### Core Principles
 
@@ -6,6 +6,15 @@
     * In most cases, the code itself should serve as its own documentation.
 * **Follow the IDE's automatic formatting unless there is a specific reason not to.**
     * (e.g., Visual Studio's "Ctrl + K + D" function).
+
+---
+
+### Domain Conventions (Nexus)
+
+- Robot AMR port locations use the robot ID prefix.
+  - Format: [RobotId].CP01 (e.g., RBT01.CP01), not AMR.CP01.
+  - Always derive AMR marker/location IDs from the active robot context when creating plans or simulating.
+  - Keep consistent across Portal, Orchestrator, and Infrastructure code.
 
 ---
 
@@ -141,25 +150,25 @@
 8.  **Object Initializers:**
     * Try to avoid using object initializers.
 
-# MCS-ACS  í†µì‹  ì‚¬ì–‘ì„œ v1.4.1
+# MCS-ACS  Åë½Å »ç¾ç¼­ v1.4.1
 
 
 
 [TOC]
 
-## 1. ê°œìš”
+## 1. °³¿ä
 
-ë³¸ ë¬¸ì„œëŠ” MCS(Manufacturing Control System)ë¥¼ **ì„œë²„**, ACS(Automatic Control System)ë¥¼ **í´ë¼ì´ì–¸íŠ¸**ë¡œ í•˜ì—¬ WebSocket ê¸°ë°˜ìœ¼ë¡œ í†µì‹ í•˜ëŠ” ì‹œìŠ¤í…œì˜ ê¸°ë³¸ ì‚¬ì–‘ì„ ì •ì˜í•©ë‹ˆë‹¤.
+º» ¹®¼­´Â MCS(Manufacturing Control System)¸¦ **¼­¹ö**, ACS(Automatic Control System)¸¦ **Å¬¶óÀÌ¾ðÆ®**·Î ÇÏ¿© WebSocket ±â¹ÝÀ¸·Î Åë½ÅÇÏ´Â ½Ã½ºÅÛÀÇ ±âº» »ç¾çÀ» Á¤ÀÇÇÕ´Ï´Ù.
 
 ---
 
 
 
-## 2. ì‹œìŠ¤í…œ êµ¬ì„±
+## 2. ½Ã½ºÅÛ ±¸¼º
 
-- **MCS (ì„œë²„)**: ì¤‘ì•™ í†µí•© ì œì–´ ì‹œìŠ¤í…œ, WebSocket ì„œë²„ ì—­í•  ìˆ˜í–‰
+- **MCS (¼­¹ö)**: Áß¾Ó ÅëÇÕ Á¦¾î ½Ã½ºÅÛ, WebSocket ¼­¹ö ¿ªÇÒ ¼öÇà
 
-- **ACS (í´ë¼ì´ì–¸íŠ¸)**: ê° ì„¤ë¹„ ì œì–´ ì‹œìŠ¤í…œ, WebSocket í´ë¼ì´ì–¸íŠ¸ë¡œ MCSì— ì—°ê²°
+- **ACS (Å¬¶óÀÌ¾ðÆ®)**: °¢ ¼³ºñ Á¦¾î ½Ã½ºÅÛ, WebSocket Å¬¶óÀÌ¾ðÆ®·Î MCS¿¡ ¿¬°á
 
   
 
@@ -167,76 +176,76 @@
 
 
 
-## 3. ìš©ì–´ ì •ë¦¬
+## 3. ¿ë¾î Á¤¸®
 
-| ìš©ì–´                          | ì„¤ëª…                                                         | ì‹ë³„ìž ì˜ˆì‹œ      |
+| ¿ë¾î                          | ¼³¸í                                                         | ½Äº°ÀÚ ¿¹½Ã      |
 | ----------------------------- | ------------------------------------------------------------ | ---------------- |
-| **ìŠ¤í† ì»¤(Stocker)**           | ì—¬ëŸ¬ ê°œì˜ ì¹´ì„¸íŠ¸ë¥¼ ì ìž¬í•  ìˆ˜ ìžˆëŠ” í¬íŠ¸(ìž…ì¶œêµ¬)ë¥¼ ê°€ì§„ ì„¤ë¹„ (í¬íŠ¸ ê°œìˆ˜ ì¶”í›„ í™•ì •) | `ST01`, `ST02`   |
-| **ì¹´ì„¸íŠ¸ í¬íŠ¸(CP)**           | ì¹´ì„¸íŠ¸ë¥¼ ë‹´ì„ ìˆ˜ ìžˆëŠ” í¬íŠ¸                                   | `CP01`, `CP02`   |
-| **íŠ¸ë ˆì´ í¬íŠ¸(TP)**           | íŠ¸ë ˆì´ë¥¼ ë‹´ì„ ìˆ˜ ìžˆëŠ” í¬íŠ¸                                   | `TP01`, `TP15`   |
-| **ë©”ëª¨ë¦¬ í¬íŠ¸(MP)**           | ì‹œë£Œë¥¼ ë‹´ì„ ìˆ˜ ìžˆëŠ” í¬íŠ¸                                     | `MP01`, `MP25`   |
-| **ì—ì–´ë¦¬ì–´(Area)**            | 6ê°œì˜ ì¹´ì„¸íŠ¸ ì ìž¬ í¬íŠ¸ë¥¼ ê°€ì§„ ê³µê°„ ë‹¨ìœ„ (í¬íŠ¸ ê°œìˆ˜, êµ¬ì¡° ì¶”í›„ í™•ì •) | `A01`, `A02`     |
-| **ì„¸íŠ¸(Set)**                 | 32ê°œì˜ ì‹œë£Œ(Memory) í…ŒìŠ¤íŠ¸ê°€ ê°€ëŠ¥í•œ ê²€ì‚¬ê¸°                   | `SET01`, `SET12` |
-| **ë¬¼ë¥˜ë¡œë´‡(Logistics Robot)** | í•œ ê°œì˜ ì¹´ì„¸íŠ¸ ì ìž¬ í¬íŠ¸ë¥¼ ê°€ì§„ ë¬¼ë¥˜ ìš´ë°˜ ë¡œë´‡               |                  |
-| **ìž‘ì—…ë¡œë´‡(Control Robot)**   | ì—¬ëŸ¬ ê°œì˜ íŠ¸ë ˆì´ë¥¼ ë‹¤ë£° ìˆ˜ ìžˆëŠ” í¬íŠ¸ë¥¼ ê°€ì§„ ìž‘ì—… ì „ìš© ë¡œë´‡   |                  |
+| **½ºÅäÄ¿(Stocker)**           | ¿©·¯ °³ÀÇ Ä«¼¼Æ®¸¦ ÀûÀçÇÒ ¼ö ÀÖ´Â Æ÷Æ®(ÀÔÃâ±¸)¸¦ °¡Áø ¼³ºñ (Æ÷Æ® °³¼ö ÃßÈÄ È®Á¤) | `ST01`, `ST02`   |
+| **Ä«¼¼Æ® Æ÷Æ®(CP)**           | Ä«¼¼Æ®¸¦ ´ãÀ» ¼ö ÀÖ´Â Æ÷Æ®                                   | `CP01`, `CP02`   |
+| **Æ®·¹ÀÌ Æ÷Æ®(TP)**           | Æ®·¹ÀÌ¸¦ ´ãÀ» ¼ö ÀÖ´Â Æ÷Æ®                                   | `TP01`, `TP15`   |
+| **¸Þ¸ð¸® Æ÷Æ®(MP)**           | ½Ã·á¸¦ ´ãÀ» ¼ö ÀÖ´Â Æ÷Æ®                                     | `MP01`, `MP25`   |
+| **¿¡¾î¸®¾î(Area)**            | 6°³ÀÇ Ä«¼¼Æ® ÀûÀç Æ÷Æ®¸¦ °¡Áø °ø°£ ´ÜÀ§ (Æ÷Æ® °³¼ö, ±¸Á¶ ÃßÈÄ È®Á¤) | `A01`, `A02`     |
+| **¼¼Æ®(Set)**                 | 32°³ÀÇ ½Ã·á(Memory) Å×½ºÆ®°¡ °¡´ÉÇÑ °Ë»ç±â                   | `SET01`, `SET12` |
+| **¹°·ù·Îº¿(Logistics Robot)** | ÇÑ °³ÀÇ Ä«¼¼Æ® ÀûÀç Æ÷Æ®¸¦ °¡Áø ¹°·ù ¿î¹Ý ·Îº¿               |                  |
+| **ÀÛ¾÷·Îº¿(Control Robot)**   | ¿©·¯ °³ÀÇ Æ®·¹ÀÌ¸¦ ´Ù·ê ¼ö ÀÖ´Â Æ÷Æ®¸¦ °¡Áø ÀÛ¾÷ Àü¿ë ·Îº¿   |                  |
 
 
 
-### 3.1 ìœ„ì¹˜ì •ë³´ í‘œê¸°
+### 3.1 À§Ä¡Á¤º¸ Ç¥±â
 
-**ì£¼ìš” í¬íŠ¸/ìŠ¬ë¡¯ë³„ ìœ„ì¹˜ì •ë³´ í‘œê¸°**
+**ÁÖ¿ä Æ÷Æ®/½½·Ôº° À§Ä¡Á¤º¸ Ç¥±â**
 
-- **ì¹´ì„¸íŠ¸ í¬íŠ¸(Cassette Port, CP)**
+- **Ä«¼¼Æ® Æ÷Æ®(Cassette Port, CP)**
 
-  - ì„¤ëª…: ì¹´ì„¸íŠ¸ë¥¼ ì ìž¬/ì´ì†¡í•˜ëŠ” ìž…ì¶œêµ¬ í¬íŠ¸
-  - í‘œê¸° ì˜ˆì‹œ:  
-    - ì—ì–´ë¦¬ì–´1ì˜ 2ë²ˆ ì¹´ì„¸íŠ¸ í¬íŠ¸ â†’ `A01.CP02`
-    - ìŠ¤í† ì»¤2ì˜ 5ë²ˆ ì¹´ì„¸íŠ¸ í¬íŠ¸ â†’ `ST02.CP05`
+  - ¼³¸í: Ä«¼¼Æ®¸¦ ÀûÀç/ÀÌ¼ÛÇÏ´Â ÀÔÃâ±¸ Æ÷Æ®
+  - Ç¥±â ¿¹½Ã:  
+    - ¿¡¾î¸®¾î1ÀÇ 2¹ø Ä«¼¼Æ® Æ÷Æ® ¡æ `A01.CP02`
+    - ½ºÅäÄ¿2ÀÇ 5¹ø Ä«¼¼Æ® Æ÷Æ® ¡æ `ST02.CP05`
 
-- **íŠ¸ë ˆì´ í¬íŠ¸(Tray Port, TP)**
+- **Æ®·¹ÀÌ Æ÷Æ®(Tray Port, TP)**
 
-  - ì„¤ëª…: íŠ¸ë ˆì´ë¥¼ ì ìž¬/ì´ì†¡í•˜ëŠ” í¬íŠ¸
+  - ¼³¸í: Æ®·¹ÀÌ¸¦ ÀûÀç/ÀÌ¼ÛÇÏ´Â Æ÷Æ®
 
-  - í‘œê¸° ì˜ˆì‹œ:  
+  - Ç¥±â ¿¹½Ã:  
 
-    - ìž‘ì—…ë¡œë´‡ì˜ 3ë²ˆ íŠ¸ë ˆì´ í¬íŠ¸ â†’ `AMR.TP03`
+    - ÀÛ¾÷·Îº¿ÀÇ 3¹ø Æ®·¹ÀÌ Æ÷Æ® ¡æ `AMR.TP03`
 
       
 
-- **ë©”ëª¨ë¦¬ í¬íŠ¸(Memory Port, MP)**
+- **¸Þ¸ð¸® Æ÷Æ®(Memory Port, MP)**
 
-  - ì„¤ëª…: ë©”ëª¨ë¦¬(ì‹œë£Œ)ë¥¼ ì ìž¬í•˜ëŠ” ìŠ¬ë¡¯(í¬íŠ¸)
-  - í‘œê¸° ì˜ˆì‹œ:  
-    - ì„¸íŠ¸2ì˜ 15ë²ˆ ë©”ëª¨ë¦¬ í¬íŠ¸ â†’ `SET02.MP15`
+  - ¼³¸í: ¸Þ¸ð¸®(½Ã·á)¸¦ ÀûÀçÇÏ´Â ½½·Ô(Æ÷Æ®)
+  - Ç¥±â ¿¹½Ã:  
+    - ¼¼Æ®2ÀÇ 15¹ø ¸Þ¸ð¸® Æ÷Æ® ¡æ `SET02.MP15`
 
-**ìœ„ì¹˜ì •ë³´(í¬íŠ¸, ì„¸íŠ¸, íŠ¸ë ˆì´ ë“±)ì˜ ë²ˆí˜¸ ë¶€ì—¬ ì›ì¹™**
+**À§Ä¡Á¤º¸(Æ÷Æ®, ¼¼Æ®, Æ®·¹ÀÌ µî)ÀÇ ¹øÈ£ ºÎ¿© ¿øÄ¢**
 
-- **ì„¤ë¹„ ê³µì‹ ë„ë©´(Top View)** ê¸°ì¤€ìœ¼ë¡œ í•œë‹¤.
+- **¼³ºñ °ø½Ä µµ¸é(Top View)** ±âÁØÀ¸·Î ÇÑ´Ù.
 
-- **ë‹¨ì¼ í–‰(1ë‹¨) ë°°ì—´**
-  ì¢Œìƒë‹¨ì—ì„œ ì˜¤ë¥¸ìª½ìœ¼ë¡œ 1ë²ˆë¶€í„° në²ˆê¹Œì§€ ìˆœì°¨ ë¶€ì—¬ (ì˜ˆ: `CP01`, `SET01`)
+- **´ÜÀÏ Çà(1´Ü) ¹è¿­**
+  ÁÂ»ó´Ü¿¡¼­ ¿À¸¥ÂÊÀ¸·Î 1¹øºÎÅÍ n¹ø±îÁö ¼øÂ÷ ºÎ¿© (¿¹: `CP01`, `SET01`)
   
-- **ë‹¤ë‹¨(2ë‹¨ ì´ìƒ) ë°°ì—´**
-  ìƒë‹¨ í–‰ë¶€í„° ì•„ëž˜ë¡œ(Top to Bottom), ê° í–‰ì€ ì¢Œì¸¡ì—ì„œ ìš°ì¸¡(Left to Right)ìœ¼ë¡œ 1ë²ˆë¶€í„° ë¶€ì—¬  
-  (ì˜ˆ: 2í–‰ 3ì—´ ì„¸íŠ¸ì˜ ê²½ìš°)
+- **´Ù´Ü(2´Ü ÀÌ»ó) ¹è¿­**
+  »ó´Ü ÇàºÎÅÍ ¾Æ·¡·Î(Top to Bottom), °¢ ÇàÀº ÁÂÃø¿¡¼­ ¿ìÃø(Left to Right)À¸·Î 1¹øºÎÅÍ ºÎ¿©  
+  (¿¹: 2Çà 3¿­ ¼¼Æ®ÀÇ °æ¿ì)
   
   ```
-  1í–‰: SET01 SET02 SET03
-  2í–‰: SET04 SET05 SET06
+  1Çà: SET01 SET02 SET03
+  2Çà: SET04 SET05 SET06
   ```
   
-- í•œ ìžë¦¬ ìˆ«ìžë„ í•­ìƒ 2ìžë¦¬ë¡œ 0ì„ íŒ¨ë”©í•˜ì—¬ í‘œê¸°í•©ë‹ˆë‹¤. (ì˜ˆ: `CP01`, `SET04`)
+- ÇÑ ÀÚ¸® ¼ýÀÚµµ Ç×»ó 2ÀÚ¸®·Î 0À» ÆÐµùÇÏ¿© Ç¥±âÇÕ´Ï´Ù. (¿¹: `CP01`, `SET04`)
 
-- ë‹¤ë¥¸ ìœ„ì¹˜ ìš”ì†Œë„ ë™ì¼ ì›ì¹™ ì ìš©
+- ´Ù¸¥ À§Ä¡ ¿ä¼Òµµ µ¿ÀÏ ¿øÄ¢ Àû¿ë
 
-- **ì¡°í•© ì˜ˆì‹œ**
-    - ì—ì–´ë¦¬ì–´1ì˜ 2ë²ˆì§¸ ì¹´ì„¸íŠ¸í¬íŠ¸: `A01.CP02`
-- ë²ˆí˜¸ ë¶€ì—¬ ë°©ì‹ì€ **ì„¤ë¹„ ë„ë©´ ë° ìš´ì˜ì‹œìŠ¤í…œ í™”ë©´ê³¼ ìµœëŒ€í•œ ì¼ì¹˜ì‹œí‚µë‹ˆë‹¤.**
-- ë³µìž¡í•œ êµ¬ì¡°(3ë‹¨ ì´ìƒ, ë¶ˆê·œì¹™ ë°°ì—´ ë“±)ëŠ” ë³„ë„ ë„ë©´/ì„¤ëª… ì¶”ê°€ ê°€ëŠ¥
+- **Á¶ÇÕ ¿¹½Ã**
+    - ¿¡¾î¸®¾î1ÀÇ 2¹øÂ° Ä«¼¼Æ®Æ÷Æ®: `A01.CP02`
+- ¹øÈ£ ºÎ¿© ¹æ½ÄÀº **¼³ºñ µµ¸é ¹× ¿î¿µ½Ã½ºÅÛ È­¸é°ú ÃÖ´ëÇÑ ÀÏÄ¡½ÃÅµ´Ï´Ù.**
+- º¹ÀâÇÑ ±¸Á¶(3´Ü ÀÌ»ó, ºÒ±ÔÄ¢ ¹è¿­ µî)´Â º°µµ µµ¸é/¼³¸í Ãß°¡ °¡´É
 
 
 
-> ëª¨ë“  ìœ„ì¹˜ì •ë³´ í‘œê¸°ëŠ” ìœ„ ì›ì¹™ì„ ë”°ë¼ ì¼ê´€ì„± ìžˆê²Œ ë¶€ì—¬í•©ë‹ˆë‹¤.
+> ¸ðµç À§Ä¡Á¤º¸ Ç¥±â´Â À§ ¿øÄ¢À» µû¶ó ÀÏ°ü¼º ÀÖ°Ô ºÎ¿©ÇÕ´Ï´Ù.
 
 
 
@@ -244,116 +253,116 @@
 
 
 
-## 4. í†µì‹  í”„ë¡œí† ì½œ
+## 4. Åë½Å ÇÁ·ÎÅäÄÝ
 
-- **í”„ë¡œí† ì½œ**: WebSocket (ws://, wss://)
-- **í†µì‹  ë°©í–¥**:  
-  - ê° ACS(í´ë¼ì´ì–¸íŠ¸) íŒŒíŠ¸(ë¬¼ë¥˜ë¡œë´‡/ìž‘ì—…ë¡œë´‡)ê°€ MCS(ì„œë²„)ì— ê°œë³„ì ìœ¼ë¡œ ì ‘ì†  
-  - ì—°ê²° í›„ ì–‘ë°©í–¥ ì‹¤ì‹œê°„ ë©”ì‹œì§€ ì†¡ìˆ˜ì‹  ì§€ì›
+- **ÇÁ·ÎÅäÄÝ**: WebSocket (ws://, wss://)
+- **Åë½Å ¹æÇâ**:  
+  - °¢ ACS(Å¬¶óÀÌ¾ðÆ®) ÆÄÆ®(¹°·ù·Îº¿/ÀÛ¾÷·Îº¿)°¡ MCS(¼­¹ö)¿¡ °³º°ÀûÀ¸·Î Á¢¼Ó  
+  - ¿¬°á ÈÄ ¾ç¹æÇâ ½Ç½Ã°£ ¸Þ½ÃÁö ¼Û¼ö½Å Áö¿ø
 
 ---
 
 
 
-## 5. ê¸°ë³¸ í†µì‹  ì ˆì°¨
+## 5. ±âº» Åë½Å ÀýÂ÷
 
-1. **ACS(í´ë¼ì´ì–¸íŠ¸) íŒŒíŠ¸(ë¬¼ë¥˜ë¡œë´‡/ìž‘ì—…ë¡œë´‡)**ê°€ MCS(ì„œë²„)ë¡œ WebSocket ì—°ê²° ìš”ì²­
-2. ì—°ê²° ì„±ê³µ ì‹œ, ACSëŠ” **ì´ˆê¸° ì¸ì¦ ë©”ì‹œì§€**ë¥¼ ì „ì†¡
-3. MCSê°€ ì¸ì¦ì„ í™•ì¸í•˜ê³ , í•„ìš”ì‹œ ì´ˆê¸° ì„¤ì •/ì‘ë‹µì„ ì „ì†¡
-4. ì´í›„ ì‹¤ì‹œê°„ ë°ì´í„°/ëª…ë ¹/ì´ë²¤íŠ¸ë¥¼ ì–‘ë°©í–¥ìœ¼ë¡œ ì†¡ìˆ˜ì‹ 
+1. **ACS(Å¬¶óÀÌ¾ðÆ®) ÆÄÆ®(¹°·ù·Îº¿/ÀÛ¾÷·Îº¿)**°¡ MCS(¼­¹ö)·Î WebSocket ¿¬°á ¿äÃ»
+2. ¿¬°á ¼º°ø ½Ã, ACS´Â **ÃÊ±â ÀÎÁõ ¸Þ½ÃÁö**¸¦ Àü¼Û
+3. MCS°¡ ÀÎÁõÀ» È®ÀÎÇÏ°í, ÇÊ¿ä½Ã ÃÊ±â ¼³Á¤/ÀÀ´äÀ» Àü¼Û
+4. ÀÌÈÄ ½Ç½Ã°£ µ¥ÀÌÅÍ/¸í·É/ÀÌº¥Æ®¸¦ ¾ç¹æÇâÀ¸·Î ¼Û¼ö½Å
 
 
 
 ### 5.1 MCS Request Commands (MCS -> ACS)
 
-| Command                 | ì„¤ëª…                                                       |
+| Command                 | ¼³¸í                                                       |
 | ----------------------- | ---------------------------------------------------------- |
-| `ExecutionPlan`         | Lot ë‹¨ìœ„ ìž‘ì—… íë¦„ ì „ë‹¬. ë³µìˆ˜ Step í¬í•¨                    |
-| `CancelPlan`            | ìž‘ì—… ëŒ€ê¸° ì¤‘ì¸ í”Œëžœ ì·¨ì†Œ ìš”ì²­                              |
-| `AbortPlan`             | ì¦‰ì‹œ ì¤‘ë‹¨ ë° ì •ì§€ ìš”ì²­ (ê¸´ê¸‰ ì¤‘ë‹¨)                         |
-| `PausePlan`             | ìž‘ì—… ì¼ì‹œ ì •ì§€ ìš”ì²­                                        |
-| `ResumePlan`            | ìž‘ì—… ìž¬ê°œ ìš”ì²­                                             |
-| `SyncConfig`            | ê³µì • êµ¬ì„±, í¬íŠ¸, íŠ¸ë ˆì´ ë§¤í•‘ ë“± ì •ë³´ ì „ë‹¬                  |
-| `RequestAcsPlans`       | ACSì˜ í˜„ìž¬ í• ë‹¹ ëœ í”Œëžœ í˜„í™© ìš”ì²­                          |
-| `RequestAcsPlanHistory` | ACSì—ì„œ ì™„ë£Œ ëœ í”Œëžœ ê²°ê³¼ ì¡°íšŒ (Offline to Online ì‹œ ì‚¬ìš©) |
-| `RequestAcsErrorList`   | ACSì˜ í˜„ìž¬ ë°œìƒ í•œ ì—ëŸ¬/ì•ŒëžŒ ìš”ì²­                          |
+| `ExecutionPlan`         | Lot ´ÜÀ§ ÀÛ¾÷ Èå¸§ Àü´Þ. º¹¼ö Step Æ÷ÇÔ                    |
+| `CancelPlan`            | ÀÛ¾÷ ´ë±â ÁßÀÎ ÇÃ·£ Ãë¼Ò ¿äÃ»                              |
+| `AbortPlan`             | Áï½Ã Áß´Ü ¹× Á¤Áö ¿äÃ» (±ä±Þ Áß´Ü)                         |
+| `PausePlan`             | ÀÛ¾÷ ÀÏ½Ã Á¤Áö ¿äÃ»                                        |
+| `ResumePlan`            | ÀÛ¾÷ Àç°³ ¿äÃ»                                             |
+| `SyncConfig`            | °øÁ¤ ±¸¼º, Æ÷Æ®, Æ®·¹ÀÌ ¸ÅÇÎ µî Á¤º¸ Àü´Þ                  |
+| `RequestAcsPlans`       | ACSÀÇ ÇöÀç ÇÒ´ç µÈ ÇÃ·£ ÇöÈ² ¿äÃ»                          |
+| `RequestAcsPlanHistory` | ACS¿¡¼­ ¿Ï·á µÈ ÇÃ·£ °á°ú Á¶È¸ (Offline to Online ½Ã »ç¿ë) |
+| `RequestAcsErrorList`   | ACSÀÇ ÇöÀç ¹ß»ý ÇÑ ¿¡·¯/¾Ë¶÷ ¿äÃ»                          |
 
 
 
 ### 5.2 ACS Request Commands (ACS -> MCS)
 
-| Command              | ì„¤ëª…                                             |
+| Command              | ¼³¸í                                             |
 | -------------------- | ------------------------------------------------ |
-| `Registration`       | ì´ˆê¸° MCS ì„œë²„ ì—°ê²° ë©”ì„¸ì§€                        |
-| `PlanReport`         | Plan ìƒíƒœ ë³´ê³                                    |
-| `StepReport`         | Step ìƒíƒœ ë³´ê³                                    |
-| `JobReport`          | Job ìƒíƒœ ë³´ê³                                     |
-| `ErrorReport`        | ì—ëŸ¬ ë˜ëŠ” ê²½ê³  ì´ë²¤íŠ¸ ë°œìƒ ë³´ê³                   |
-| `RobotStatusUpdate`  | Robotì˜ í˜„ìž¬ ìƒíƒœ ì •ë³´ (ì£¼ê¸°ì  ë˜ëŠ” ì´ë²¤íŠ¸ ê¸°ë°˜) |
-| `TscStateUpdate`     | TSC ìƒíƒœ ë³€ê²½ ì‹œ ë³´ê³                             |
-| `CancelResultReport` | ìž‘ì—… ì·¨ì†Œ ìš”ì²­ ê²°ê³¼ ë°˜í™˜                         |
-| `AbortResultReport`  | ê¸´ê¸‰ ì¤‘ë‹¨ ìš”ì²­ ê²°ê³¼ ë°˜í™˜                         |
-| `PauseResultReport`  | ì¼ì‹œ ì¤‘ì§€ ìš”ì²­ ê²°ê³¼ ë°˜í™˜                         |
-| `ResumeResultReport` | ìž‘ì—… ìž¬ê°œ ìš”ì²­ ê²°ê³¼ ë°˜í™˜                         |
-| `AcsCommStateUpdate` | ACSì˜ ì—°ê²° ìƒíƒœ ë³´ê³                              |
+| `Registration`       | ÃÊ±â MCS ¼­¹ö ¿¬°á ¸Þ¼¼Áö                        |
+| `PlanReport`         | Plan »óÅÂ º¸°í                                   |
+| `StepReport`         | Step »óÅÂ º¸°í                                   |
+| `JobReport`          | Job »óÅÂ º¸°í                                    |
+| `ErrorReport`        | ¿¡·¯ ¶Ç´Â °æ°í ÀÌº¥Æ® ¹ß»ý º¸°í                  |
+| `RobotStatusUpdate`  | RobotÀÇ ÇöÀç »óÅÂ Á¤º¸ (ÁÖ±âÀû ¶Ç´Â ÀÌº¥Æ® ±â¹Ý) |
+| `TscStateUpdate`     | TSC »óÅÂ º¯°æ ½Ã º¸°í                            |
+| `CancelResultReport` | ÀÛ¾÷ Ãë¼Ò ¿äÃ» °á°ú ¹ÝÈ¯                         |
+| `AbortResultReport`  | ±ä±Þ Áß´Ü ¿äÃ» °á°ú ¹ÝÈ¯                         |
+| `PauseResultReport`  | ÀÏ½Ã ÁßÁö ¿äÃ» °á°ú ¹ÝÈ¯                         |
+| `ResumeResultReport` | ÀÛ¾÷ Àç°³ ¿äÃ» °á°ú ¹ÝÈ¯                         |
+| `AcsCommStateUpdate` | ACSÀÇ ¿¬°á »óÅÂ º¸°í                             |
 
 
 
 ### 5.3 ACS Periodic Reporting Commands (ACS -> MCS)
 
-| Command               | ì„¤ëª…                                                         |
+| Command               | ¼³¸í                                                         |
 | --------------------- | ------------------------------------------------------------ |
-| `RobotPositionUpdate` | ë¡œë´‡ ìœ„ì¹˜ ì •ë³´ë¥¼ 0.2(200msec)ì´ˆë§ˆë‹¤ ì£¼ê¸°ì ìœ¼ë¡œ MCSë¡œ ì „ì†¡í•©ë‹ˆë‹¤. |
+| `RobotPositionUpdate` | ·Îº¿ À§Ä¡ Á¤º¸¸¦ 0.2(200msec)ÃÊ¸¶´Ù ÁÖ±âÀûÀ¸·Î MCS·Î Àü¼ÛÇÕ´Ï´Ù. |
 
 ---
 
 
 
-## 6. ë©”ì‹œì§€ êµ¬ì¡°
+## 6. ¸Þ½ÃÁö ±¸Á¶
 
-- ëª¨ë“  ë©”ì‹œì§€ëŠ” **JSON í¬ë§·**ì„ ì‚¬ìš©í•˜ë©°,  ë©”ì‹œì§€ íƒ€ìž… ë° ë°ì´í„° êµ¬ì¡°ëŠ” ë‹¤ìŒê³¼ ê°™ìŠµë‹ˆë‹¤.
-- ëª¨ë“  JSON ë©”ì‹œì§€ì˜ í•„ë“œëª…ì€ camelCase(ì†Œë¬¸ìžë¡œ ì‹œìž‘, ë‹¨ì–´ êµ¬ë¶„ ì‹œ ëŒ€ë¬¸ìž)ë¡œ í‘œê¸°í•©ë‹ˆë‹¤.
+- ¸ðµç ¸Þ½ÃÁö´Â **JSON Æ÷¸Ë**À» »ç¿ëÇÏ¸ç,  ¸Þ½ÃÁö Å¸ÀÔ ¹× µ¥ÀÌÅÍ ±¸Á¶´Â ´ÙÀ½°ú °°½À´Ï´Ù.
+- ¸ðµç JSON ¸Þ½ÃÁöÀÇ ÇÊµå¸íÀº camelCase(¼Ò¹®ÀÚ·Î ½ÃÀÛ, ´Ü¾î ±¸ºÐ ½Ã ´ë¹®ÀÚ)·Î Ç¥±âÇÕ´Ï´Ù.
 
 
 
-### 6.1 ê³µí†µ ë©”ì‹œì§€ í¬ë§·
+### 6.1 °øÅë ¸Þ½ÃÁö Æ÷¸Ë
 
 ```json
-// ëª¨ë“  ìš”ì²­(request) ë©”ì‹œì§€ëŠ” ì•„ëž˜ì™€ ê°™ì€ ê³µí†µ í¬ë§·ì„ ê³µí†µ JSON í¬ë§·ì„ ì‚¬ìš©í•œë‹¤.
+// ¸ðµç ¿äÃ»(request) ¸Þ½ÃÁö´Â ¾Æ·¡¿Í °°Àº °øÅë Æ÷¸ËÀ» °øÅë JSON Æ÷¸ËÀ» »ç¿ëÇÑ´Ù.
 
 {
-  "command": "ëª…ë ¹ì–´ ë˜ëŠ” ì´ë²¤íŠ¸ íƒ€ìž…",
+  "command": "¸í·É¾î ¶Ç´Â ÀÌº¥Æ® Å¸ÀÔ",
   "transactionId": "3f0f8b9e-095d-4dbf-bb13-1e8f4c1875a1",  // UUID (string),
-  "timestamp": "2025-07-02T21:00:00.123+09:00", // ISO 8601 í¬ë§·ì˜ í˜„ì§€ ì‹œê°„
+  "timestamp": "2025-07-02T21:00:00.123+09:00", // ISO 8601 Æ÷¸ËÀÇ ÇöÁö ½Ã°£
   "payload": { 
-    // ëª…ë ¹/ì´ë²¤íŠ¸ë³„ ìƒì„¸ ë°ì´í„° ê°ì²´ 
+    // ¸í·É/ÀÌº¥Æ®º° »ó¼¼ µ¥ÀÌÅÍ °´Ã¼ 
   }
 }
 
 ```
 
 ```json
-// ëª¨ë“  ì‘ë‹µ(response) ë©”ì‹œì§€ëŠ” ì•„ëž˜ì™€ ê°™ì€ ê³µí†µ í¬ë§·ì„ ì‚¬ìš©í•œë‹¤.
-// ëª¨ë“  ì»¤ë§¨ë“œ(command) ìš”ì²­ì— ëŒ€í•´, ì‹¤ì œ ì‹¤í–‰ ê°€ëŠ¥ ì—¬ë¶€(ì„±ê³µ/ì‹¤íŒ¨)ì— ê´€ê³„ì—†ì´ ë°˜ë“œì‹œ ì‘ë‹µ ë©”ì‹œì§€(ACK)ë¥¼ ë°˜í™˜í•´ì•¼ í•œë‹¤.
+// ¸ðµç ÀÀ´ä(response) ¸Þ½ÃÁö´Â ¾Æ·¡¿Í °°Àº °øÅë Æ÷¸ËÀ» »ç¿ëÇÑ´Ù.
+// ¸ðµç Ä¿¸Çµå(command) ¿äÃ»¿¡ ´ëÇØ, ½ÇÁ¦ ½ÇÇà °¡´É ¿©ºÎ(¼º°ø/½ÇÆÐ)¿¡ °ü°è¾øÀÌ ¹Ýµå½Ã ÀÀ´ä ¸Þ½ÃÁö(ACK)¸¦ ¹ÝÈ¯ÇØ¾ß ÇÑ´Ù.
 
 {
-  "command": "ìš”ì²­ì— ëŒ€í•œ ì‘ë‹µ ëª…ë ¹ì–´",
+  "command": "¿äÃ»¿¡ ´ëÇÑ ÀÀ´ä ¸í·É¾î",
   "transactionId": "3f0f8b9e-095d-4dbf-bb13-1e8f4c1875a1",
   "timestamp": "2025-07-02T21:00:00.456+09:00",
   "result": "Success",   // "Success", "Fail" 
-  "message": "ì‘ë‹µ/ì—ëŸ¬ ìƒì„¸ ì„¤ëª… (í•„ìš” ì‹œ)",
+  "message": "ÀÀ´ä/¿¡·¯ »ó¼¼ ¼³¸í (ÇÊ¿ä ½Ã)",
   "payload": {
-    // ì‘ë‹µë³„ ìƒì„¸ ë°ì´í„° ê°ì²´ (í•„ìš” ì‹œ)
+    // ÀÀ´äº° »ó¼¼ µ¥ÀÌÅÍ °´Ã¼ (ÇÊ¿ä ½Ã)
   }
 }
 ```
 
-`* ì •ì˜ë˜ì§€ ì•Šì€ payloadê°€ ìˆ˜ì‹  ëœ ê²½ìš° "result" : "Fail"`
+`* Á¤ÀÇµÇÁö ¾ÊÀº payload°¡ ¼ö½Å µÈ °æ¿ì "result" : "Fail"`
 
-### 6.2 ì´ˆê¸° ì—°ê²° (Registration)
+### 6.2 ÃÊ±â ¿¬°á (Registration)
 
 ```json
-// [ACS â†’ MCS] ì´ˆê¸° ì—°ê²°/ë¡œë´‡ ë“±ë¡ ë©”ì‹œì§€ ì˜ˆì‹œ
+// [ACS ¡æ MCS] ÃÊ±â ¿¬°á/·Îº¿ µî·Ï ¸Þ½ÃÁö ¿¹½Ã
 {
   "command": "Registration",
   "transactionId": "e8e497a9-03e9-4b52-bb9a-43c83deac3b4",
@@ -366,13 +375,13 @@
 ```
 
 ```json
-// [MCS â†’ ACS] Registration ì‘ë‹µ(ACK) ë©”ì‹œì§€
+// [MCS ¡æ ACS] Registration ÀÀ´ä(ACK) ¸Þ½ÃÁö
 {
   "command": "RegistrationAck",
-  "transactionId": "d4f56d67-965e-42c1-b125-4e7be5e2a6a3", // ìš”ì²­ê³¼ ë™ì¼í•˜ê²Œ ë°˜í™˜
+  "transactionId": "d4f56d67-965e-42c1-b125-4e7be5e2a6a3", // ¿äÃ»°ú µ¿ÀÏÇÏ°Ô ¹ÝÈ¯
   "timestamp": "2025-07-02T18:30:01.200+09:00",
   "result": "Success",
-  "message": "ë“±ë¡ì´ ì™„ë£Œë˜ì—ˆìŠµë‹ˆë‹¤.",
+  "message": "µî·ÏÀÌ ¿Ï·áµÇ¾ú½À´Ï´Ù.",
   "payload": {}
 }
 
@@ -380,11 +389,11 @@
 
 ```mermaid
 sequenceDiagram
-    participant LR_ACS as ACS(ë¡œë´‡ í´ë¼ì´ì–¸íŠ¸)
-    participant MCS as MCS(ì„œë²„)
+    participant LR_ACS as ACS(·Îº¿ Å¬¶óÀÌ¾ðÆ®)
+    participant MCS as MCS(¼­¹ö)
 
     rect rgb(230,247,255)
-        note right of LR_ACS: ë¬¼ë¥˜ë¡œë´‡ ACS<br/>
+        note right of LR_ACS: ¹°·ù·Îº¿ ACS<br/>
         LR_ACS->>MCS: Registration
         MCS-->>LR_ACS: RegistrationAck
     end
@@ -395,13 +404,13 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant ACS as ACS(ë¡œë´‡ í´ë¼ì´ì–¸íŠ¸)
-    participant MCS as MCS(ì„œë²„)
+    participant ACS as ACS(·Îº¿ Å¬¶óÀÌ¾ðÆ®)
+    participant MCS as MCS(¼­¹ö)
 
     ACS->>MCS: Registration 
     MCS-->>ACS: RegistrationAck
 
-    Note over ACS,MCS: ðŸŸ¦ ì´ˆê¸° ì—°ê²° í›„ ACSì—ì„œ <br>í˜„ìž¬ ê°€ì§€ê³ ìžˆëŠ” í”Œëžœ í˜„í™© ì •ë³´ ì—…ë°ì´íŠ¸
+    Note over ACS,MCS: ?? ÃÊ±â ¿¬°á ÈÄ ACS¿¡¼­ <br>ÇöÀç °¡Áö°íÀÖ´Â ÇÃ·£ ÇöÈ² Á¤º¸ ¾÷µ¥ÀÌÆ®
 
     MCS->>ACS: RequestAcsPlans
     ACS-->>MCS: RequestAcsPlansAck(plans)
@@ -414,41 +423,41 @@ sequenceDiagram
 
 
 
-### 6.3 ë¬¼ë¥˜ ë¡œë´‡ ì‹¤í–‰ ëª…ë ¹ (ExecutionPlan)
+### 6.3 ¹°·ù ·Îº¿ ½ÇÇà ¸í·É (ExecutionPlan)
 
-| ì•¡ì…˜ëª…         | ì„¤ëª…                                                         | ì˜ˆì‹œ from | ì˜ˆì‹œ to  |
+| ¾×¼Ç¸í         | ¼³¸í                                                         | ¿¹½Ã from | ¿¹½Ã to  |
 | -------------- | ------------------------------------------------------------ | --------- | -------- |
-| CassetteLoad   | ì¹´ì„¸íŠ¸ë¥¼ ë¬¼ë¥˜ë¡œë´‡ì˜ CPë¡œ ì ìž¬                                | ST01.CP02 | AMR.CP01 |
-| CassetteUnload | ë¬¼ë¥˜ë¡œë´‡ì—ì„œ ìŠ¤í† ì»¤ ë˜ëŠ” ì—ì–´ë¦¬ì–´ì˜ CP ë“±ìœ¼ë¡œ ì¹´ì„¸íŠ¸ ì–¸ë¡œë“œ(ë°˜ë‚©) | AMR.CP01  | A02.CP04 |
+| CassetteLoad   | Ä«¼¼Æ®¸¦ ¹°·ù·Îº¿ÀÇ CP·Î ÀûÀç                                | ST01.CP02 | AMR.CP01 |
+| CassetteUnload | ¹°·ù·Îº¿¿¡¼­ ½ºÅäÄ¿ ¶Ç´Â ¿¡¾î¸®¾îÀÇ CP µîÀ¸·Î Ä«¼¼Æ® ¾ð·Îµå(¹Ý³³) | AMR.CP01  | A02.CP04 |
 
 ```json
-// [MCS â†’ ACS] ExecutionPlan ë©”ì‹œì§€ ì˜ˆì‹œ 
+// [MCS ¡æ ACS] ExecutionPlan ¸Þ½ÃÁö ¿¹½Ã 
 {
   "command": "ExecutionPlan",
   "transactionId": "e2a97f63-4ed2-4d85-a2b3-11a51c188111",
   "timestamp": "2025-07-02T18:45:00.000+09:00",
   "payload": {
-    "planId": "PLAN-20250702-001", // ìž‘ì—… ê³„íš(Plan) ê³ ìœ ID
-    "lotId": "LOTSAMPLE_0001",     // LOT ì‹ë³„ìž
-    "priority": 10,                // (ì˜µì…˜) ìš°ì„ ìˆœìœ„
+    "planId": "PLAN-20250702-001", // ÀÛ¾÷ °èÈ¹(Plan) °íÀ¯ID
+    "lotId": "LOTSAMPLE_0001",     // LOT ½Äº°ÀÚ
+    "priority": 10,                // (¿É¼Ç) ¿ì¼±¼øÀ§
     "steps": [
       {
         "stepNo": 1,
-        "action": "CassetteLoad",     // íŠ¸ë ˆì´ ì ìž¬ ëŒ€ì‹  ì¹´ì„¸íŠ¸ ì ìž¬
-        "position": "A01.CP01",       // ì—ì–´ë¦¬ì–´1ì˜ ì¹´ì„¸íŠ¸í¬íŠ¸1 (CP)
+        "action": "CassetteLoad",     // Æ®·¹ÀÌ ÀûÀç ´ë½Å Ä«¼¼Æ® ÀûÀç
+        "position": "A01.CP01",       // ¿¡¾î¸®¾î1ÀÇ Ä«¼¼Æ®Æ÷Æ®1 (CP)
         "carrierIds": ["CASSETTE_01"],          
         "jobs": [
           {
             "jobId": "a4184b0d-bc13-4eb2-b9e2-2ab3a150a1c1",
-            "from": "A01.CP01",        // ì„¤ë¹„ì˜ ì¹´ì„¸íŠ¸í¬íŠ¸1 (CP)
-            "to": "AMR.CP01"          // ë¬¼ë¥˜ë¡œë´‡ì˜ Cassette Port (ì˜ˆì‹œ)
+            "from": "A01.CP01",        // ¼³ºñÀÇ Ä«¼¼Æ®Æ÷Æ®1 (CP)
+            "to": "AMR.CP01"          // ¹°·ù·Îº¿ÀÇ Cassette Port (¿¹½Ã)
           }
         ]
       },
       {
         "stepNo": 2,
-        "action": "CassetteUnload",   // ì–¸ë¡œë“œ(ë°˜ë‚©) ìž‘ì—…
-        "position": "A02.CP03",       // ë°˜ë‚© ëŒ€ìƒ ìœ„ì¹˜ (ì˜ˆì‹œ: ì—ì–´ë¦¬ì–´2, CP03)
+        "action": "CassetteUnload",   // ¾ð·Îµå(¹Ý³³) ÀÛ¾÷
+        "position": "A02.CP03",       // ¹Ý³³ ´ë»ó À§Ä¡ (¿¹½Ã: ¿¡¾î¸®¾î2, CP03)
         "carrierIds": ["CASSETTE_01"],          
         "jobs": [
           {
@@ -465,17 +474,17 @@ sequenceDiagram
 ```
 
 ```json
-// [ACS â†’ MCS] ExecutionPlanAck ë©”ì‹œì§€ ì˜ˆì‹œ 
+// [ACS ¡æ MCS] ExecutionPlanAck ¸Þ½ÃÁö ¿¹½Ã 
 
 {
   "command": "ExecutionPlanAck", 
-  "transactionId": "e2a97f63-4ed2-4d85-a2b3-11a51c188111", // ìš”ì²­ê³¼ ë™ì¼í•˜ê²Œ ë°˜í™˜
+  "transactionId": "e2a97f63-4ed2-4d85-a2b3-11a51c188111", // ¿äÃ»°ú µ¿ÀÏÇÏ°Ô ¹ÝÈ¯
   "timestamp": "2025-07-02T18:45:01.025+09:00", 
-  "result": "Success",          // "Success" ë˜ëŠ” "Fail"
-  "message": "Plan registered Successfully.", // ì„±ê³µ/ì‹¤íŒ¨ ë©”ì‹œì§€
+  "result": "Success",          // "Success" ¶Ç´Â "Fail"
+  "message": "Plan registered Successfully.", // ¼º°ø/½ÇÆÐ ¸Þ½ÃÁö
   "payload": {
-    "planId": "PLAN-20250702-001",  // ë“±ë¡ëœ(í˜¹ì€ ê±°ë¶€ëœ) Plan ID
-    // ì¶”ê°€ë¡œ í•„ìš”í•œ ì‘ë‹µ ë°ì´í„°ê°€ ìžˆë‹¤ë©´ ì—¬ê¸°ì— ì‚½ìž…
+    "planId": "PLAN-20250702-001",  // µî·ÏµÈ(È¤Àº °ÅºÎµÈ) Plan ID
+    // Ãß°¡·Î ÇÊ¿äÇÑ ÀÀ´ä µ¥ÀÌÅÍ°¡ ÀÖ´Ù¸é ¿©±â¿¡ »ðÀÔ
   }
 }
 
@@ -483,25 +492,25 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant MCS as MCS(ì„œë²„)
-    participant ACS as ACS(ë¡œë´‡ í´ë¼ì´ì–¸íŠ¸)
+    participant MCS as MCS(¼­¹ö)
+    participant ACS as ACS(·Îº¿ Å¬¶óÀÌ¾ðÆ®)
 
-    %% ExecutionPlan - ðŸŸª
-    Note over MCS,ACS: ðŸŸª ExecutionPlan 
+    %% ExecutionPlan - ??
+    Note over MCS,ACS: ?? ExecutionPlan 
     MCS->>ACS: ExecutionPlan
     ACS-->>MCS: ExecutionPlanAck
 
 	loop 
 
-    %% JobReport - ðŸŸ§
-    Note over ACS,MCS: ðŸŸ§ JobReport 
-    ACS-->>MCS: JobReport (Job 01 ì™„ë£Œ)
-    ACS-->>MCS: JobReport (Job 02 ì™„ë£Œ)
-    ACS-->>MCS: JobReport (Job 03 ì™„ë£Œ)
+    %% JobReport - ??
+    Note over ACS,MCS: ?? JobReport 
+    ACS-->>MCS: JobReport (Job 01 ¿Ï·á)
+    ACS-->>MCS: JobReport (Job 02 ¿Ï·á)
+    ACS-->>MCS: JobReport (Job 03 ¿Ï·á)
 
-    %% StepReport - ðŸŸ¦
-    Note over ACS,MCS: ðŸŸ¦ StepReport 
-    ACS-->>MCS: StepReport (Step 01 ì™„ë£Œ)
+    %% StepReport - ??
+    Note over ACS,MCS: ?? StepReport 
+    ACS-->>MCS: StepReport (Step 01 ¿Ï·á)
     
 	end
 
@@ -509,36 +518,36 @@ sequenceDiagram
 ```
 
 ```apl
-// MCS ì¸¡ JobReport / StepReportì˜ AckëŠ” ìœ„ ë‹¤ì´ì–´ê·¸ëž¨ì—ì„œëŠ” ìƒëžµë˜ì—ˆìŒ. 
+// MCS Ãø JobReport / StepReportÀÇ Ack´Â À§ ´ÙÀÌ¾î±×·¥¿¡¼­´Â »ý·«µÇ¾úÀ½. 
 ```
 
 
 
-### 6.4 ìž‘ì—… ë¡œë´‡ ì‹¤í–‰ ëª…ë ¹ (ExecutionPlan)
+### 6.4 ÀÛ¾÷ ·Îº¿ ½ÇÇà ¸í·É (ExecutionPlan)
 
-| ì•¡ì…˜ëª…             | ì„¤ëª…                                        | ì˜ˆì‹œ from     | ì˜ˆì‹œ to        |
+| ¾×¼Ç¸í             | ¼³¸í                                        | ¿¹½Ã from     | ¿¹½Ã to        |
 | ------------------ | ------------------------------------------- | ------------- | -------------- |
-| TrayLoad           | íŠ¸ë ˆì´ë¥¼ ìž‘ì—…ë¡œë´‡ì˜ TPë¡œ ì ìž¬               | A01.CP01.TP01 | AMR.TP01       |
-| MemoryPickAndPlace | ì‹œë£Œë¥¼ íŠ¸ë ˆì´ ë‚´ MP â†” SET ë‚´ MPë¡œ ì´ë™      | AMR.TP01.MP01 | A01.SET01.MP01 |
-| TrayUnload         | ìž‘ì—… ë¡œë´‡ì—ì„œ ë‹¤ë¥¸ TPë¡œ íŠ¸ë ˆì´ ì–¸ë¡œë“œ(ë°˜ë‚©) | AMR.TP03      | A01.CP01.TP01  |
-| CloseSetCover      | ì„¸íŠ¸ ì»¤ë²„ Close                             |               |                |
-| OpenSetCover       | ì„¸íŠ¸ ì»¤ë²„ Open                              |               |                |
-| Start              | ì‹œìž‘ ë²„íŠ¼ Push                              |               |                |
+| TrayLoad           | Æ®·¹ÀÌ¸¦ ÀÛ¾÷·Îº¿ÀÇ TP·Î ÀûÀç               | A01.CP01.TP01 | AMR.TP01       |
+| MemoryPickAndPlace | ½Ã·á¸¦ Æ®·¹ÀÌ ³» MP ¡ê SET ³» MP·Î ÀÌµ¿      | AMR.TP01.MP01 | A01.SET01.MP01 |
+| TrayUnload         | ÀÛ¾÷ ·Îº¿¿¡¼­ ´Ù¸¥ TP·Î Æ®·¹ÀÌ ¾ð·Îµå(¹Ý³³) | AMR.TP03      | A01.CP01.TP01  |
+| CloseSetCover      | ¼¼Æ® Ä¿¹ö Close                             |               |                |
+| OpenSetCover       | ¼¼Æ® Ä¿¹ö Open                              |               |                |
+| Start              | ½ÃÀÛ ¹öÆ° Push                              |               |                |
 
 ```json
-// [MCS â†’ ACS] ExecutionPlan ë©”ì‹œì§€ ì˜ˆì‹œ
+// [MCS ¡æ ACS] ExecutionPlan ¸Þ½ÃÁö ¿¹½Ã
 
 {
   "command": "ExecutionPlan",
   "transactionId": "e2a97f63-4ed2-4d85-a2b3-11a51c188111",
   "timestamp": "2025-07-02T18:45:00.000+09:00",
   "payload": {
-    "planId": "PLAN-20250702-001", // ìž‘ì—… ê³„íš(Plan) ê³ ìœ ID
-    "lotId": "LOTSAMPLE_0001",             // LOT ì‹ë³„ìž
-    "priority": 10,                // (ì˜µì…˜) ìš°ì„ ìˆœìœ„
+    "planId": "PLAN-20250702-001", // ÀÛ¾÷ °èÈ¹(Plan) °íÀ¯ID
+    "lotId": "LOTSAMPLE_0001",             // LOT ½Äº°ÀÚ
+    "priority": 10,                // (¿É¼Ç) ¿ì¼±¼øÀ§
     "steps": [
       {
-        "stepNo": 1, // 1ë²ˆ step (ìˆœì„œëŒ€ë¡œ)
+        "stepNo": 1, // 1¹ø step (¼ø¼­´ë·Î)
         "action": "TrayLoad",
         "carrierIds": ["TRAY_01", "TRAY_02"],
         "position": "A01.CP01",
@@ -559,7 +568,7 @@ sequenceDiagram
         "stepNo": 2,
         "action": "MemoryPickAndPlace",
         "position": "A01.SET01",
-        "carrierIds": [], // MemoryPickAndPlaceì—ì„œëŠ” ë³´ë‚´ì§€ ì•ŠìŒ.
+        "carrierIds": [], // MemoryPickAndPlace¿¡¼­´Â º¸³»Áö ¾ÊÀ½.
         "jobs": [
           {
             "jobId": "f34c1ea4-0fa2-4c0f-9f2e-0702b2d2671d",
@@ -598,17 +607,17 @@ sequenceDiagram
 ```
 
 ```json
-// [ACS â†’ MCS] ExecutionPlanAck ë©”ì‹œì§€ ì˜ˆì‹œ 
+// [ACS ¡æ MCS] ExecutionPlanAck ¸Þ½ÃÁö ¿¹½Ã 
 
 {
   "command": "ExecutionPlanAck", 
-  "transactionId": "e2a97f63-4ed2-4d85-a2b3-11a51c188111", // ìš”ì²­ê³¼ ë™ì¼í•˜ê²Œ ë°˜í™˜
+  "transactionId": "e2a97f63-4ed2-4d85-a2b3-11a51c188111", // ¿äÃ»°ú µ¿ÀÏÇÏ°Ô ¹ÝÈ¯
   "timestamp": "2025-07-02T18:45:01.025+09:00", 
-  "result": "Success",          // "Success" ë˜ëŠ” "Fail"
-  "message": "Plan registered Successfully.", // ì„±ê³µ/ì‹¤íŒ¨ ë©”ì‹œì§€
+  "result": "Success",          // "Success" ¶Ç´Â "Fail"
+  "message": "Plan registered Successfully.", // ¼º°ø/½ÇÆÐ ¸Þ½ÃÁö
   "payload": {
-    "planId": "PLAN-20250702-001",  // ë“±ë¡ëœ(í˜¹ì€ ê±°ë¶€ëœ) Plan ID
-    // ì¶”ê°€ë¡œ í•„ìš”í•œ ì‘ë‹µ ë°ì´í„°ê°€ ìžˆë‹¤ë©´ ì—¬ê¸°ì— ì‚½ìž…
+    "planId": "PLAN-20250702-001",  // µî·ÏµÈ(È¤Àº °ÅºÎµÈ) Plan ID
+    // Ãß°¡·Î ÇÊ¿äÇÑ ÀÀ´ä µ¥ÀÌÅÍ°¡ ÀÖ´Ù¸é ¿©±â¿¡ »ðÀÔ
   }
 }
 
@@ -616,30 +625,30 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant MCS as MCS(ì„œë²„)
-    participant ACS as ACS(ë¡œë´‡ í´ë¼ì´ì–¸íŠ¸)
+    participant MCS as MCS(¼­¹ö)
+    participant ACS as ACS(·Îº¿ Å¬¶óÀÌ¾ðÆ®)
 
-    Note over MCS,ACS: ðŸ“ ExecutionPlan : ìž‘ì—… ê³„íš ì „ë‹¬ (planId)
+    Note over MCS,ACS: ?? ExecutionPlan : ÀÛ¾÷ °èÈ¹ Àü´Þ (planId)
 
-    alt ë“±ë¡ì´ ì„±ê³µí•˜ëŠ” ê²½ìš°
-        MCS->>ACS: ðŸŸ¦ ExecutionPlan(planId)
-        ACS-->>MCS: ðŸŸ© ExecutionPlanAck(result: Success, message: "Plan accepted")
-        Note right of ACS: Plan ì •ìƒ ë“±ë¡, íì— ì¶”ê°€
-    else ë¹„ì •ìƒ(Abnormal) - ë“±ë¡ ê±°ë¶€/ì‹¤íŒ¨
-        MCS->>ACS: ðŸŸ¦ ExecutionPlan(planId)
-        ACS-->>MCS: ðŸŸ¥ ExecutionPlanAck(result: Fail, message: "Queue Full or Duplicated Plan")
-        Note right of ACS: Plan ë“±ë¡ ì‹¤íŒ¨, ì‚¬ìœ  ì‘ë‹µ 
+    alt µî·ÏÀÌ ¼º°øÇÏ´Â °æ¿ì
+        MCS->>ACS: ?? ExecutionPlan(planId)
+        ACS-->>MCS: ?? ExecutionPlanAck(result: Success, message: "Plan accepted")
+        Note right of ACS: Plan Á¤»ó µî·Ï, Å¥¿¡ Ãß°¡
+    else ºñÁ¤»ó(Abnormal) - µî·Ï °ÅºÎ/½ÇÆÐ
+        MCS->>ACS: ?? ExecutionPlan(planId)
+        ACS-->>MCS: ?? ExecutionPlanAck(result: Fail, message: "Queue Full or Duplicated Plan")
+        Note right of ACS: Plan µî·Ï ½ÇÆÐ, »çÀ¯ ÀÀ´ä 
     end
 
 ```
 
 
 
-### 6.5 ìž‘ì—… ì·¨ì†Œ (CancelPlan) 
+### 6.5 ÀÛ¾÷ Ãë¼Ò (CancelPlan) 
 
 ```json
-// [MCS â†’ ACS] ì‹¤í–‰ ì¤‘ ìž‘ì—…(Plan) ì¤‘ë‹¨ ìš”ì²­(CancelPlan)
-// AMR ë„ì°© ì „ ê¹Œì§€ ì·¨ì†Œ ê°€ëŠ¥
+// [MCS ¡æ ACS] ½ÇÇà Áß ÀÛ¾÷(Plan) Áß´Ü ¿äÃ»(CancelPlan)
+// AMR µµÂø Àü ±îÁö Ãë¼Ò °¡´É
 {
   "command": "CancelPlan",
   "transactionId": "4f9a5e50-8b6f-4f0d-b41f-38791bc3ee8a",
@@ -653,7 +662,7 @@ sequenceDiagram
 ```
 
 ```json
-// [ACS â†’ MCS] ìž‘ì—… ì¤‘ë‹¨ ìš”ì²­ì— ëŒ€í•œ ì‘ë‹µ(CancelPlanAck)
+// [ACS ¡æ MCS] ÀÛ¾÷ Áß´Ü ¿äÃ»¿¡ ´ëÇÑ ÀÀ´ä(CancelPlanAck)
 {
   "command": "CancelPlanAck",
   "transactionId": "4f9a5e50-8b6f-4f0d-b41f-38791bc3ee8a",
@@ -668,32 +677,32 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant MCS as MCS (ì„œë²„)
-    participant ACS as ACS (ë¡œë´‡ í´ë¼ì´ì–¸íŠ¸)
+    participant MCS as MCS (¼­¹ö)
+    participant ACS as ACS (·Îº¿ Å¬¶óÀÌ¾ðÆ®)
 
-    Note over MCS,ACS: ðŸ” Plan ì·¨ì†Œ ì ˆì°¨
+    Note over MCS,ACS: ?? Plan Ãë¼Ò ÀýÂ÷
 
-    MCS->>ACS: ðŸŸ¥ CancelPlan(planId)
-    ACS-->>MCS: ðŸŸ© CancelPlanAck(result: Success)
+    MCS->>ACS: ?? CancelPlan(planId)
+    ACS-->>MCS: ?? CancelPlanAck(result: Success)
 
-    Note right of ACS: Cancel ê°€ëŠ¥ ì—¬ë¶€ íŒë‹¨ (ACS)
+    Note right of ACS: Cancel °¡´É ¿©ºÎ ÆÇ´Ü (ACS)
 
-    ACS-->>MCS: ðŸŸ© CancelResultReport(planId, status: Success)
-    MCS-->>ACS: ðŸŸ© CancelResultReportAck
+    ACS-->>MCS: ?? CancelResultReport(planId, status: Success)
+    MCS-->>ACS: ?? CancelResultReportAck
 
 ```
 
-#### 6.5.A ìž‘ì—… ì·¨ì†Œ ê²°ê³¼ ë³´ê³  (CancelResultReport) 
+#### 6.5.A ÀÛ¾÷ Ãë¼Ò °á°ú º¸°í (CancelResultReport) 
 
 ```json
-// [ACS â†’ MCS] CancelPlan ìš”ì²­ ì´í›„ ì‹¤ì œ Plan ìƒíƒœ ë³´ê³ 
+// [ACS ¡æ MCS] CancelPlan ¿äÃ» ÀÌÈÄ ½ÇÁ¦ Plan »óÅÂ º¸°í
 {
   "command": "CancelResultReport",
   "transactionId": "a83f4e2b-d54a-4baf-9b88-fc888d7d4321",
   "timestamp": "2025-08-07T10:22:00.000+09:00",
   "payload": {
     "planId": "PLAN-20250702-002",
-    "result": "Success", // ì‹¤ì œ Cancel ì™„ë£Œë˜ë©´ "Success"
+    "result": "Success", // ½ÇÁ¦ Cancel ¿Ï·áµÇ¸é "Success"
     "message": "Plan has been successfully cancelled."
   }
 }
@@ -701,7 +710,7 @@ sequenceDiagram
 ```
 
 ```json
-// [MCS â†’ ACS] CancelResultReportì— ëŒ€í•œ ì‘ë‹µ(CancelResultReportAck)
+// [MCS ¡æ ACS] CancelResultReport¿¡ ´ëÇÑ ÀÀ´ä(CancelResultReportAck)
 {
   "command": "CancelResultReportAck",
   "transactionId": "a83f4e2b-d54a-4baf-9b88-fc888d7d4321",
@@ -713,18 +722,18 @@ sequenceDiagram
 
 ```
 
-#### Abnormal Case 01. ìž‘ì—… ì¤‘ CancelPlan ìš”ì²­ ì‹œ,
+#### Abnormal Case 01. ÀÛ¾÷ Áß CancelPlan ¿äÃ» ½Ã,
 
-- í”Œëžœì´ ì´ë¯¸ ìž‘ì—… ì¤‘ `CancelPlan` ë°œìƒí•  ê²½ìš°,  `CancelResultReport`ì˜ ì‘ë‹µì„ `Failed` ì²˜ë¦¬
+- ÇÃ·£ÀÌ ÀÌ¹Ì ÀÛ¾÷ Áß `CancelPlan` ¹ß»ýÇÒ °æ¿ì,  `CancelResultReport`ÀÇ ÀÀ´äÀ» `Failed` Ã³¸®
 
   
 
 
 
-### 6.6 ê¸´ê¸‰ ì¤‘ë‹¨ (AbortPlan) 
+### 6.6 ±ä±Þ Áß´Ü (AbortPlan) 
 
 ```json
-// [MCS â†’ ACS] ê¸´ê¸‰ ê°•ì œ ì¤‘ë‹¨ ìš”ì²­(AbortPlan)
+// [MCS ¡æ ACS] ±ä±Þ °­Á¦ Áß´Ü ¿äÃ»(AbortPlan)
 {
   "command": "AbortPlan",
   "transactionId": "ee327ea6-845a-4fd5-ae89-96011e69a6df",
@@ -738,7 +747,7 @@ sequenceDiagram
 ```
 
 ```json
-// [ACS â†’ MCS] ê¸´ê¸‰ ì¤‘ë‹¨ ìš”ì²­ì— ëŒ€í•œ ì‘ë‹µ(AbortPlanAck)
+// [ACS ¡æ MCS] ±ä±Þ Áß´Ü ¿äÃ»¿¡ ´ëÇÑ ÀÀ´ä(AbortPlanAck)
 {
   "command": "AbortPlanAck",
   "transactionId": "ee327ea6-845a-4fd5-ae89-96011e69a6df",
@@ -753,10 +762,10 @@ sequenceDiagram
 
 
 
-#### 6.6.A Abort ê²°ê³¼ ë³´ê³  (AbortResultReport)
+#### 6.6.A Abort °á°ú º¸°í (AbortResultReport)
 
 ```json
-// [ACS â†’ MCS] AbortPlan ìš”ì²­ ì²˜ë¦¬ ê²°ê³¼ ë³´ê³  
+// [ACS ¡æ MCS] AbortPlan ¿äÃ» Ã³¸® °á°ú º¸°í 
 {
   "command": "AbortResultReport",
   "transactionId": "7adcf771-3b6e-4de2-90a5-d91d23f14152",
@@ -771,7 +780,7 @@ sequenceDiagram
 ```
 
 ```json
-// [MCS â†’ ACS] AbortResultReportAck
+// [MCS ¡æ ACS] AbortResultReportAck
 {
   "command": "AbortResultReportAck",
   "transactionId": "7adcf771-3b6e-4de2-90a5-d91d23f14152",
@@ -784,10 +793,10 @@ sequenceDiagram
 
 
 
-### 6.7 ìž‘ì—… ì¼ì‹œ ì •ì§€ (PausePlan)
+### 6.7 ÀÛ¾÷ ÀÏ½Ã Á¤Áö (PausePlan)
 
 ```json
-// [MCS â†’ ACS] ìž‘ì—… ì¼ì‹œ ì •ì§€ ìš”ì²­(PausePlan)
+// [MCS ¡æ ACS] ÀÛ¾÷ ÀÏ½Ã Á¤Áö ¿äÃ»(PausePlan)
 {
   "command": "PausePlan",
   "transactionId": "8bca2d62-df39-4c60-9c4c-57f4bdf6e09f",
@@ -801,7 +810,7 @@ sequenceDiagram
 ```
 
 ```json
-// [ACS â†’ MCS] ìž‘ì—… ì¼ì‹œ ì •ì§€ ìš”ì²­ì— ëŒ€í•œ ì‘ë‹µ(PausePlanAck)
+// [ACS ¡æ MCS] ÀÛ¾÷ ÀÏ½Ã Á¤Áö ¿äÃ»¿¡ ´ëÇÑ ÀÀ´ä(PausePlanAck)
 {
   "command": "PausePlanAck",
   "transactionId": "8bca2d62-df39-4c60-9c4c-57f4bdf6e09f",
@@ -814,10 +823,10 @@ sequenceDiagram
 }
 ```
 
-#### 6.7.A Pause ê²°ê³¼ ë³´ê³  (PauseResultReport)
+#### 6.7.A Pause °á°ú º¸°í (PauseResultReport)
 
 ```json
-// [ACS â†’ MCS] PausePlan ìš”ì²­ ì²˜ë¦¬ ê²°ê³¼ ë³´ê³  
+// [ACS ¡æ MCS] PausePlan ¿äÃ» Ã³¸® °á°ú º¸°í 
 {
   "command": "PauseResultReport",
   "transactionId": "3b8c1294-6ac6-4a85-9565-e4624aa44b82",
@@ -832,7 +841,7 @@ sequenceDiagram
 ```
 
 ```json
-// [MCS â†’ ACS] PauseResultReportAck
+// [MCS ¡æ ACS] PauseResultReportAck
 {
   "command": "PauseResultReportAck",
   "transactionId": "3b8c1294-6ac6-4a85-9565-e4624aa44b82",
@@ -844,26 +853,26 @@ sequenceDiagram
 
 ```
 
-ðŸ”¹ Planì´ ì‹¤ì œë¡œ `Paused` ìƒíƒœë¡œ ì „í™˜ëœ ê²½ìš°, ACSëŠ” ì•„ëž˜ ë©”ì‹œì§€ë¥¼ **í•„ìˆ˜ì ìœ¼ë¡œ ë³´ê³ **í•´ì•¼ í•©ë‹ˆë‹¤:
+?? PlanÀÌ ½ÇÁ¦·Î `Paused` »óÅÂ·Î ÀüÈ¯µÈ °æ¿ì, ACS´Â ¾Æ·¡ ¸Þ½ÃÁö¸¦ **ÇÊ¼öÀûÀ¸·Î º¸°í**ÇØ¾ß ÇÕ´Ï´Ù:
 
-- `RobotStatusUpdate`: ë¡œë´‡ì˜ ë™ìž‘ ì¤‘ë‹¨ ìƒíƒœ ë³´ê³  
-- `PlanReport(status: Paused)`: Plan ìƒíƒœ ë³€ê²½ ë³´ê³ 
-- `PauseResultReport`: Pause ì‹¤í–‰ ê²°ê³¼ ë³´ê³ 
+- `RobotStatusUpdate`: ·Îº¿ÀÇ µ¿ÀÛ Áß´Ü »óÅÂ º¸°í 
+- `PlanReport(status: Paused)`: Plan »óÅÂ º¯°æ º¸°í
+- `PauseResultReport`: Pause ½ÇÇà °á°ú º¸°í
 
 ```mermaid
 sequenceDiagram
-    participant MCS as MCS (ì„œë²„)
-    participant ACS as ACS (ë¡œë´‡ í´ë¼ì´ì–¸íŠ¸)
+    participant MCS as MCS (¼­¹ö)
+    participant ACS as ACS (·Îº¿ Å¬¶óÀÌ¾ðÆ®)
 
-    MCS->>ACS: â¸ï¸ PausePlan(planId)
+    MCS->>ACS: ?? PausePlan(planId)
     ACS-->>MCS: PausePlanAck    
 
-    Note right of ACS: ë‚´ë¶€ ìž‘ì—… ì •ì§€ â†’ ë¡œë´‡ ìƒíƒœ ë³€ê²½ ë³´ê³ 
+    Note right of ACS: ³»ºÎ ÀÛ¾÷ Á¤Áö ¡æ ·Îº¿ »óÅÂ º¯°æ º¸°í
 
-    ACS-->>MCS: ðŸ”„ RobotStatusUpdate(robotStatus: Stopped)
-    ACS-->>MCS: ðŸŸ© PlanReport(status: Paused)
-    ACS-->>MCS: ðŸŸ¦ PauseResultReport(status: Paused)
-    MCS->>ACS: â¸ï¸ PauseResultReportAck
+    ACS-->>MCS: ?? RobotStatusUpdate(robotStatus: Stopped)
+    ACS-->>MCS: ?? PlanReport(status: Paused)
+    ACS-->>MCS: ?? PauseResultReport(status: Paused)
+    MCS->>ACS: ?? PauseResultReportAck
 
 ```
 
@@ -871,10 +880,10 @@ sequenceDiagram
 
 
 
-### 6.8 ìž‘ì—… ìž¬ê°œ (ResumePlan)
+### 6.8 ÀÛ¾÷ Àç°³ (ResumePlan)
 
 ```json
-// [MCS â†’ ACS] ìž‘ì—… ìž¬ê°œ ìš”ì²­(ResumePlan)
+// [MCS ¡æ ACS] ÀÛ¾÷ Àç°³ ¿äÃ»(ResumePlan)
 {
   "command": "ResumePlan",
   "transactionId": "e0b6c644-2851-4b17-853e-6766f6e81f1b",
@@ -887,7 +896,7 @@ sequenceDiagram
 ```
 
 ```json
-// [ACS â†’ MCS] ìž‘ì—… ìž¬ê°œ ìš”ì²­ì— ëŒ€í•œ ì‘ë‹µ(ResumePlanAck)
+// [ACS ¡æ MCS] ÀÛ¾÷ Àç°³ ¿äÃ»¿¡ ´ëÇÑ ÀÀ´ä(ResumePlanAck)
 {
   "command": "ResumePlanAck",
   "transactionId": "e0b6c644-2851-4b17-853e-6766f6e81f1b",
@@ -900,10 +909,10 @@ sequenceDiagram
 }
 ```
 
-#### 6.8.A Resume ê²°ê³¼ ë³´ê³  (ResumeResultReport)
+#### 6.8.A Resume °á°ú º¸°í (ResumeResultReport)
 
 ```json
-// [ACS â†’ MCS] ResumePlan ìš”ì²­ ì²˜ë¦¬ ê²°ê³¼ ë³´ê³  (ì‹¤ì œ ìž¬ê°œ ì™„ë£Œ ì‹œì )
+// [ACS ¡æ MCS] ResumePlan ¿äÃ» Ã³¸® °á°ú º¸°í (½ÇÁ¦ Àç°³ ¿Ï·á ½ÃÁ¡)
 {
   "command": "ResumeResultReport",
   "transactionId": "fbf125f4-d8d1-49c1-802d-dbd22728c55b",
@@ -918,7 +927,7 @@ sequenceDiagram
 ```
 
 ```json
-// [MCS â†’ ACS] ResumeResultReportAck
+// [MCS ¡æ ACS] ResumeResultReportAck
 {
   "command": "ResumeResultReportAck",
   "transactionId": "fbf125f4-d8d1-49c1-802d-dbd22728c55b",
@@ -934,16 +943,16 @@ sequenceDiagram
 
 
 
-### 6.9 ~~êµ¬ì„± ë™ê¸°í™” (SyncConfig) <span style="color: red;">Â Â </span>~~
+### 6.9 ~~±¸¼º µ¿±âÈ­ (SyncConfig) <span style="color: red;">??</span>~~
 
 ```json
-// [MCS â†’ ACS] êµ¬ì„± ì •ë³´ ë™ê¸°í™” ìš”ì²­(SyncConfig)
-// ì‚¬ìš© ì†ì„± ì •ë³´ ê²€í†  ì¤‘..
+// [MCS ¡æ ACS] ±¸¼º Á¤º¸ µ¿±âÈ­ ¿äÃ»(SyncConfig)
+// »ç¿ë ¼Ó¼º Á¤º¸ °ËÅä Áß..
 
 ```
 
 ```json
-// [ACS â†’ MCS] êµ¬ì„± ë™ê¸°í™” ìš”ì²­ì— ëŒ€í•œ ì‘ë‹µ(SyncConfigAck)
+// [ACS ¡æ MCS] ±¸¼º µ¿±âÈ­ ¿äÃ»¿¡ ´ëÇÑ ÀÀ´ä(SyncConfigAck)
 {
   "command": "SyncConfigAck",
   "transactionId": "6c1e4b86-69a1-4e1f-bc93-4e6c1ef4de0c",
@@ -956,16 +965,16 @@ sequenceDiagram
 
 
 
-### 6.10 í”Œëžœ í˜„í™© ìš”ì²­ (RequestAcsPlans)
+### 6.10 ÇÃ·£ ÇöÈ² ¿äÃ» (RequestAcsPlans)
 
-| í”Œëžœ ìƒíƒœ  | ì„¤ëª…                                     |
+| ÇÃ·£ »óÅÂ  | ¼³¸í                                     |
 | ---------- | ---------------------------------------- |
-| Pending    | ì‹¤í–‰ ëŒ€ê¸° ì¤‘. ì•„ì§ ì‹œìž‘ë˜ì§€ ì•ŠìŒ         |
-| InProgress | í˜„ìž¬ ì‹¤í–‰ ì¤‘ì¸ Stepì´ ìžˆìŒ               |
-| Paused     | ì™¸ë¶€ ì¡°ê±´ ë˜ëŠ” ìˆ˜ë™ ì¡°ìž‘ìœ¼ë¡œ ì¼ì‹œ ì¤‘ë‹¨ë¨ |
+| Pending    | ½ÇÇà ´ë±â Áß. ¾ÆÁ÷ ½ÃÀÛµÇÁö ¾ÊÀ½         |
+| InProgress | ÇöÀç ½ÇÇà ÁßÀÎ StepÀÌ ÀÖÀ½               |
+| Paused     | ¿ÜºÎ Á¶°Ç ¶Ç´Â ¼öµ¿ Á¶ÀÛÀ¸·Î ÀÏ½Ã Áß´ÜµÊ |
 
 ```json
-// [MCS â†’ ACS] ACSì˜ í˜„ìž¬ í• ë‹¹ ëœ í”Œëžœ í˜„í™© ì§ˆì˜
+// [MCS ¡æ ACS] ACSÀÇ ÇöÀç ÇÒ´ç µÈ ÇÃ·£ ÇöÈ² ÁúÀÇ
 {
   "command": "RequestAcsPlans",
   "transactionId": "e731223b-b1a6-4e0d-8e7c-f8c8774a0fa7",
@@ -977,7 +986,7 @@ sequenceDiagram
 ```
 
 ```json
-// [ACS â†’ MCS] ìƒíƒœ ìš”ì²­ì— ëŒ€í•œ ì‘ë‹µ(RequestAcsStatusAck)
+// [ACS ¡æ MCS] »óÅÂ ¿äÃ»¿¡ ´ëÇÑ ÀÀ´ä(RequestAcsStatusAck)
 {
   "command": "RequestAcsPlansAck",
   "transactionId": "a211ba25-24e2-47c2-bda2-2d8e3a1bbd77",
@@ -999,7 +1008,7 @@ sequenceDiagram
       {
         "planId": "PLAN-20250703-201",
         "robotId": "CR02",
-        "status": "InProgress",    // (ìœ„ì™€ ë™ì¼)
+        "status": "InProgress",    // (À§¿Í µ¿ÀÏ)
         "stepNo": 2,
         "jobId": "4311ba25-24e2-47ab-bda2-2d8e3a1b5687",
         "currentAction": "MemoryPickAndPlace",
@@ -1013,42 +1022,42 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant MCS as MCS(ì„œë²„)
-    participant ACS as ACS(í´ë¼ì´ì–¸íŠ¸)
+    participant MCS as MCS(¼­¹ö)
+    participant ACS as ACS(Å¬¶óÀÌ¾ðÆ®)
 
-    Note over MCS,ACS: ðŸ”Ž RequestAcsStatus : ACS ìƒíƒœ ë° í”Œëžœ í˜„í™© ì‹¤ì‹œê°„ ì§ˆì˜
+    Note over MCS,ACS: ?? RequestAcsStatus : ACS »óÅÂ ¹× ÇÃ·£ ÇöÈ² ½Ç½Ã°£ ÁúÀÇ
 
    
-        MCS->>ACS: ðŸŸ¦ RequestAcsStatus()
-        ACS-->>MCS: ðŸŸ© RequestAcsStatusAck(connectedRobots, plans)
-        Note right of ACS: í˜„ìž¬ ì—°ê²°ëœ CR ëª©ë¡ ë° ê° Planì˜ ìƒíƒœ ì •ë³´(Pending, InProgress ë“±) ë°˜í™˜
+        MCS->>ACS: ?? RequestAcsStatus()
+        ACS-->>MCS: ?? RequestAcsStatusAck(connectedRobots, plans)
+        Note right of ACS: ÇöÀç ¿¬°áµÈ CR ¸ñ·Ï ¹× °¢ PlanÀÇ »óÅÂ Á¤º¸(Pending, InProgress µî) ¹ÝÈ¯
   
   
 
 ```
 
-* **statusê°€ `Pending`ì¸ ê²½ìš°** `stepNo`ì™€ `jobId`ëŠ” í”Œëžœì˜ **ì²« ë²ˆì§¸ Stepê³¼ í•´ë‹¹ Stepì˜ ì²« ë²ˆì§¸ Job**ì„ í‘œê¸°í•©ë‹ˆë‹¤.
+* **status°¡ `Pending`ÀÎ °æ¿ì** `stepNo`¿Í `jobId`´Â ÇÃ·£ÀÇ **Ã¹ ¹øÂ° Step°ú ÇØ´ç StepÀÇ Ã¹ ¹øÂ° Job**À» Ç¥±âÇÕ´Ï´Ù.
 
-* **statusê°€ `InProgress`ì¸ ê²½ìš°** `stepNo`ì™€ `jobId`ëŠ” **ì§„í–‰ ì¤‘ì¸ Step (InProgress)ê³¼ ì§„í–‰ ì¤‘ì¸ Job (InProgress)**ì„ í‘œê¸°í•©ë‹ˆë‹¤.
+* **status°¡ `InProgress`ÀÎ °æ¿ì** `stepNo`¿Í `jobId`´Â **ÁøÇà ÁßÀÎ Step (InProgress)°ú ÁøÇà ÁßÀÎ Job (InProgress)**À» Ç¥±âÇÕ´Ï´Ù.
 
-* **statusê°€ `Paused`ì¸ ê²½ìš°** `stepNo`ëŠ” **ì§„í–‰ ì¤‘ì´ë˜ Step (InProgress)**, `jobId`ëŠ” **ì¼ì‹œ ì¤‘ì§€ (Paused)ëœ Job**ì„ í‘œê¸°í•©ë‹ˆë‹¤.
+* **status°¡ `Paused`ÀÎ °æ¿ì** `stepNo`´Â **ÁøÇà ÁßÀÌ´ø Step (InProgress)**, `jobId`´Â **ÀÏ½Ã ÁßÁö (Paused)µÈ Job**À» Ç¥±âÇÕ´Ï´Ù.
 
 
 
-### 6.11 ACS í”Œëžœ ì´ë ¥ ì¡°íšŒ (RequestAcsPlanHistory)
+### 6.11 ACS ÇÃ·£ ÀÌ·Â Á¶È¸ (RequestAcsPlanHistory)
 
-| í”Œëžœ ìƒíƒœ  | ì„¤ëª…                                                         |
+| ÇÃ·£ »óÅÂ  | ¼³¸í                                                         |
 | ---------- | ------------------------------------------------------------ |
-| Pending    | ì‹¤í–‰ ëŒ€ê¸° ì¤‘. ì•„ì§ ì‹œìž‘ë˜ì§€ ì•ŠìŒ                             |
-| InProgress | í˜„ìž¬ ì‹¤í–‰ ì¤‘ì¸ Stepì´ ìžˆìŒ                                   |
-| Paused     | ì™¸ë¶€ ì¡°ê±´ ë˜ëŠ” ìˆ˜ë™ ì¡°ìž‘ìœ¼ë¡œ ì¼ì‹œ ì¤‘ë‹¨ë¨                     |
-| Completed  | ëª¨ë“  Stepì´ ì •ìƒì ìœ¼ë¡œ ì™„ë£Œë¨                                |
-| Failed     | í•˜ë‚˜ ì´ìƒì˜ Stepì—ì„œ ì˜¤ë¥˜ê°€ ë°œìƒí•˜ì—¬ Plan ì „ì²´ê°€ ì‹¤íŒ¨        |
-| Cancelled  | ì™¸ë¶€ì—ì„œ ìž‘ì—…ì´ ì·¨ì†Œë¨ (ì‚¬ìš©ìž/ìƒìœ„ ì‹œìŠ¤í…œ ë“±)               |
-| Aborted    | ê¸´ê¸‰/ë¹„ì •ìƒ ìƒí™©ì—ì„œ ì¦‰ì‹œ ì¤‘ë‹¨ë¨ (ë¹„ìƒ ì¤‘ë‹¨, ì‹œìŠ¤í…œ ë³´í˜¸ ë“±) |
+| Pending    | ½ÇÇà ´ë±â Áß. ¾ÆÁ÷ ½ÃÀÛµÇÁö ¾ÊÀ½                             |
+| InProgress | ÇöÀç ½ÇÇà ÁßÀÎ StepÀÌ ÀÖÀ½                                   |
+| Paused     | ¿ÜºÎ Á¶°Ç ¶Ç´Â ¼öµ¿ Á¶ÀÛÀ¸·Î ÀÏ½Ã Áß´ÜµÊ                     |
+| Completed  | ¸ðµç StepÀÌ Á¤»óÀûÀ¸·Î ¿Ï·áµÊ                                |
+| Failed     | ÇÏ³ª ÀÌ»óÀÇ Step¿¡¼­ ¿À·ù°¡ ¹ß»ýÇÏ¿© Plan ÀüÃ¼°¡ ½ÇÆÐ        |
+| Cancelled  | ¿ÜºÎ¿¡¼­ ÀÛ¾÷ÀÌ Ãë¼ÒµÊ (»ç¿ëÀÚ/»óÀ§ ½Ã½ºÅÛ µî)               |
+| Aborted    | ±ä±Þ/ºñÁ¤»ó »óÈ²¿¡¼­ Áï½Ã Áß´ÜµÊ (ºñ»ó Áß´Ü, ½Ã½ºÅÛ º¸È£ µî) |
 
 ```json
-// [MCS â†’ ACS] íŠ¹ì • Plan ID(ë“¤)ë¡œ ì™„ë£Œëœ í”Œëžœ ê²°ê³¼ ì´ë ¥ ì¡°íšŒ
+// [MCS ¡æ ACS] Æ¯Á¤ Plan ID(µé)·Î ¿Ï·áµÈ ÇÃ·£ °á°ú ÀÌ·Â Á¶È¸
 {
   "command": "RequestAcsPlanHistory",
   "transactionId": "fbc1b890-b173-4f71-b4d8-093e8d8a8f73",
@@ -1065,7 +1074,7 @@ sequenceDiagram
 ```
 
 ```json
-// [ACS â†’ MCS] í•´ë‹¹ planIdì˜ ì™„ë£Œ ì´ë ¥(ë°°ì—´) ì‘ë‹µ
+// [ACS ¡æ MCS] ÇØ´ç planIdÀÇ ¿Ï·á ÀÌ·Â(¹è¿­) ÀÀ´ä
 
 {
   "command": "RequestAcsPlanHistoryAck",
@@ -1103,34 +1112,34 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant MCS as MCS (ì„œë²„)
-    participant ACS as ACS (ë¡œë´‡ í´ë¼ì´ì–¸íŠ¸)
+    participant MCS as MCS (¼­¹ö)
+    participant ACS as ACS (·Îº¿ Å¬¶óÀÌ¾ðÆ®)
 
-    Note over MCS,ACS: ðŸ“œ RequestAcsPlanHistory : íŠ¹ì • planIdë¡œ ì™„ë£Œ ì´ë ¥ ì¡°íšŒ
+    Note over MCS,ACS: ?? RequestAcsPlanHistory : Æ¯Á¤ planId·Î ¿Ï·á ÀÌ·Â Á¶È¸
 
-    MCS->>ACS: ðŸŸ¦ RequestAcsPlanHistory(planIds)
-    ACS-->>MCS: ðŸŸ© RequestAcsPlanHistoryAck(plans)
+    MCS->>ACS: ?? RequestAcsPlanHistory(planIds)
+    ACS-->>MCS: ?? RequestAcsPlanHistoryAck(plans)
 
 ```
 
-* **status**ê°€ **` Completed`ì¼ ë•** `stepNo`ëŠ” 0, `jobId`ëŠ” `null`ë¡œ í‘œê¸°í•©ë‹ˆë‹¤.
+* **status**°¡ **` Completed`ÀÏ ¶©** `stepNo`´Â 0, `jobId`´Â `null`·Î Ç¥±âÇÕ´Ï´Ù.
 
-* **statusê°€ `Failed`ì¸ ê²½ìš°** `stepNo`ì™€ `jobId`ëŠ” **ì‹¤íŒ¨ê°€ ë°œìƒí•œ ë‹¨ê³„(step)ì™€ í•´ë‹¹ ìž‘ì—…(job)ì˜ ì‹ë³„ìž**ë¥¼ í‘œê¸°í•©ë‹ˆë‹¤. 
+* **status°¡ `Failed`ÀÎ °æ¿ì** `stepNo`¿Í `jobId`´Â **½ÇÆÐ°¡ ¹ß»ýÇÑ ´Ü°è(step)¿Í ÇØ´ç ÀÛ¾÷(job)ÀÇ ½Äº°ÀÚ**¸¦ Ç¥±âÇÕ´Ï´Ù. 
 
-### 6.12 Plan ìƒíƒœ ë³´ê³  (PlanReport)
+### 6.12 Plan »óÅÂ º¸°í (PlanReport)
 
-| í”Œëžœ ìƒíƒœ  | ì„¤ëª…                                                         |
+| ÇÃ·£ »óÅÂ  | ¼³¸í                                                         |
 | ---------- | ------------------------------------------------------------ |
-| Pending    | ì‹¤í–‰ ëŒ€ê¸° ì¤‘. ì•„ì§ ì‹œìž‘ë˜ì§€ ì•ŠìŒ                             |
-| InProgress | í˜„ìž¬ ì‹¤í–‰ ì¤‘ì¸ Stepì´ ìžˆìŒ                                   |
-| Paused     | ì™¸ë¶€ ì¡°ê±´ ë˜ëŠ” ìˆ˜ë™ ì¡°ìž‘ìœ¼ë¡œ ì¼ì‹œ ì¤‘ë‹¨ë¨                     |
-| Completed  | ëª¨ë“  Stepì´ ì •ìƒì ìœ¼ë¡œ ì™„ë£Œë¨                                |
-| Failed     | í•˜ë‚˜ ì´ìƒì˜ Stepì—ì„œ ì˜¤ë¥˜ê°€ ë°œìƒí•˜ì—¬ Plan ì „ì²´ê°€ ì‹¤íŒ¨        |
-| Cancelled  | ì™¸ë¶€ì—ì„œ ìž‘ì—…ì´ ì·¨ì†Œë¨ (ì‚¬ìš©ìž/ìƒìœ„ ì‹œìŠ¤í…œ ë“±)               |
-| Aborted    | ê¸´ê¸‰/ë¹„ì •ìƒ ìƒí™©ì—ì„œ ì¦‰ì‹œ ì¤‘ë‹¨ë¨ (ë¹„ìƒ ì¤‘ë‹¨, ì‹œìŠ¤í…œ ë³´í˜¸ ë“±) |
+| Pending    | ½ÇÇà ´ë±â Áß. ¾ÆÁ÷ ½ÃÀÛµÇÁö ¾ÊÀ½                             |
+| InProgress | ÇöÀç ½ÇÇà ÁßÀÎ StepÀÌ ÀÖÀ½                                   |
+| Paused     | ¿ÜºÎ Á¶°Ç ¶Ç´Â ¼öµ¿ Á¶ÀÛÀ¸·Î ÀÏ½Ã Áß´ÜµÊ                     |
+| Completed  | ¸ðµç StepÀÌ Á¤»óÀûÀ¸·Î ¿Ï·áµÊ                                |
+| Failed     | ÇÏ³ª ÀÌ»óÀÇ Step¿¡¼­ ¿À·ù°¡ ¹ß»ýÇÏ¿© Plan ÀüÃ¼°¡ ½ÇÆÐ        |
+| Cancelled  | ¿ÜºÎ¿¡¼­ ÀÛ¾÷ÀÌ Ãë¼ÒµÊ (»ç¿ëÀÚ/»óÀ§ ½Ã½ºÅÛ µî)               |
+| Aborted    | ±ä±Þ/ºñÁ¤»ó »óÈ²¿¡¼­ Áï½Ã Áß´ÜµÊ (ºñ»ó Áß´Ü, ½Ã½ºÅÛ º¸È£ µî) |
 
 ```json
-// [ACS â†’ MCS] Plan ìƒíƒœ ë³€ê²½ ì‹œ ë³´ê³ (PlanReport)
+// [ACS ¡æ MCS] Plan »óÅÂ º¯°æ ½Ã º¸°í(PlanReport)
 {
   "command": "PlanReport",
   "transactionId": "f7e1b865-552f-4d18-8d0c-cd330f2821f7",
@@ -1138,19 +1147,19 @@ sequenceDiagram
   "payload": {
     "planId": "PLAN-20250703-200",
     "status": "Completed",   
-    "message": "Plan ëª¨ë“  Stepì´ ì •ìƒ ì™„ë£Œë¨.",
+    "message": "Plan ¸ðµç StepÀÌ Á¤»ó ¿Ï·áµÊ.",
   }
 }
 
 ```
 
 ```json
-// [MCS â†’ ACS] PlanReportAck (ì •ìƒ/ë¹„ì •ìƒ)
+// [MCS ¡æ ACS] PlanReportAck (Á¤»ó/ºñÁ¤»ó)
 {
   "command": "PlanReportAck",
   "transactionId": "f7e1b865-552f-4d18-8d0c-cd330f2821f7",
   "timestamp": "2025-07-03T11:45:00.050+09:00",
-  "result": "Success", // ë˜ëŠ” "fail"
+  "result": "Success", // ¶Ç´Â "fail"
   "message": "PlanReport received.",
   "payload": {}
 }
@@ -1158,14 +1167,14 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant ACS as ACS(ë¡œë´‡ í´ë¼ì´ì–¸íŠ¸)
-    participant MCS as MCS(ì„œë²„)
+    participant ACS as ACS(·Îº¿ Å¬¶óÀÌ¾ðÆ®)
+    participant MCS as MCS(¼­¹ö)
 
-    Note over ACS,MCS: ðŸ“ PlanReport : í”Œëžœ ìƒíƒœ ë³€ê²½ ì‹œ MCSì— ë³´ê³ 
+    Note over ACS,MCS: ?? PlanReport : ÇÃ·£ »óÅÂ º¯°æ ½Ã MCS¿¡ º¸°í
 
-    ACS-->>MCS: ðŸŸ© PlanReport(status: Completed/Failed/Cancelled/Aborted)
-    MCS-->>ACS: ðŸŸ© PlanReportAck(result: success)
-    Note right of MCS: PlanReport ì •ìƒ ìˆ˜ì‹ /ì²˜ë¦¬
+    ACS-->>MCS: ?? PlanReport(status: Completed/Failed/Cancelled/Aborted)
+    MCS-->>ACS: ?? PlanReportAck(result: success)
+    Note right of MCS: PlanReport Á¤»ó ¼ö½Å/Ã³¸®
    
 
 ```
@@ -1174,19 +1183,19 @@ sequenceDiagram
 
 
 
-### 6.13 Step ìƒíƒœ ë³´ê³  (StepReport)
+### 6.13 Step »óÅÂ º¸°í (StepReport)
 
-| ìƒíƒœ       | ì„¤ëª…                                                         |
+| »óÅÂ       | ¼³¸í                                                         |
 | ---------- | ------------------------------------------------------------ |
-| Pending    | ì´ì „ Stepì´ ì™„ë£Œë  ë•Œê¹Œì§€ ëŒ€ê¸°(Ready ìƒíƒœ), ëŒ€ê¸°ì—´ì— ìžˆìŒ    |
-| Dispatched | í•´ë‹¹ Stepì´ AMR ë˜ëŠ” Robotì—ê²Œ ì „ë‹¬(í• ë‹¹)ëœ ìƒíƒœ             |
-| InProgress | í•´ë‹¹ Stepì´ ì‹¤ì œë¡œ ì‹¤í–‰(ìˆ˜í–‰) ì¤‘ (ì´ë™, í”½/í”Œë ˆì´ìŠ¤ ë“± í¬í•¨) |
-| Completed  | Step ë‚´ ëª¨ë“  Jobì´ ì„±ê³µì ìœ¼ë¡œ ì™„ë£Œëœ ìƒíƒœ                    |
-| Failed     | í•˜ë‚˜ ì´ìƒì˜ Jobì´ ì‹¤íŒ¨í•˜ì—¬ Step ì „ì²´ê°€ ì‹¤íŒ¨ ì²˜ë¦¬ë¨           |
-| Skipped    | ì¡°ê±´ ë¶„ê¸°, ì˜ˆì™¸ ì²˜ë¦¬, ìˆ˜ë™ ì˜¤í¼ë ˆì´ì…˜ ë“±ìœ¼ë¡œ ê±´ë„ˆëœ€          |
+| Pending    | ÀÌÀü StepÀÌ ¿Ï·áµÉ ¶§±îÁö ´ë±â(Ready »óÅÂ), ´ë±â¿­¿¡ ÀÖÀ½    |
+| Dispatched | ÇØ´ç StepÀÌ AMR ¶Ç´Â Robot¿¡°Ô Àü´Þ(ÇÒ´ç)µÈ »óÅÂ             |
+| InProgress | ÇØ´ç StepÀÌ ½ÇÁ¦·Î ½ÇÇà(¼öÇà) Áß (ÀÌµ¿, ÇÈ/ÇÃ·¹ÀÌ½º µî Æ÷ÇÔ) |
+| Completed  | Step ³» ¸ðµç JobÀÌ ¼º°øÀûÀ¸·Î ¿Ï·áµÈ »óÅÂ                    |
+| Failed     | ÇÏ³ª ÀÌ»óÀÇ JobÀÌ ½ÇÆÐÇÏ¿© Step ÀüÃ¼°¡ ½ÇÆÐ Ã³¸®µÊ           |
+| Skipped    | Á¶°Ç ºÐ±â, ¿¹¿Ü Ã³¸®, ¼öµ¿ ¿ÀÆÛ·¹ÀÌ¼Ç µîÀ¸·Î °Ç³Ê¶Ü          |
 
 ```json
-// [ACS â†’ MCS] Step ìƒíƒœ ë³´ê³ (StepReport)
+// [ACS ¡æ MCS] Step »óÅÂ º¸°í(StepReport)
 {
   "command": "StepReport",
   "transactionId": "7b591b54-6f8d-47cc-9e39-6ed2a88f7a9d",
@@ -1203,7 +1212,7 @@ sequenceDiagram
 ```
 
 ```json
-// [MCS â†’ ACS] Step ìƒíƒœ ë³´ê³ ì— ëŒ€í•œ ì‘ë‹µ(StepReportAck)
+// [MCS ¡æ ACS] Step »óÅÂ º¸°í¿¡ ´ëÇÑ ÀÀ´ä(StepReportAck)
 {
   "command": "StepReportAck",
   "transactionId": "7b591b54-6f8d-47cc-9e39-6ed2a88f7a9d",
@@ -1216,33 +1225,33 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant ACS as ACS(í´ë¼ì´ì–¸íŠ¸)
-    participant MCS as MCS(ì„œë²„)
+    participant ACS as ACS(Å¬¶óÀÌ¾ðÆ®)
+    participant MCS as MCS(¼­¹ö)
 
-    Note over ACS,MCS: ðŸ“„ StepReport : Step ìƒíƒœ ë³€ê²½ ì‹œ 
+    Note over ACS,MCS: ?? StepReport : Step »óÅÂ º¯°æ ½Ã 
 
    
-    ACS-->>MCS: ðŸŸ© StepReport(stepNo, status)
+    ACS-->>MCS: ?? StepReport(stepNo, status)
    
 
 ```
 
 
 
-### 6.14 Job ìƒíƒœ ë³´ê³  (JobReport)
+### 6.14 Job »óÅÂ º¸°í (JobReport)
 
-| ìƒíƒœ         | ì„¤ëª…                                       |
+| »óÅÂ         | ¼³¸í                                       |
 | ------------ | ------------------------------------------ |
-| Pending      | ì•„ì§ ë¡œë´‡ì—ê²Œ ì „ë‹¬ë˜ì§€ ì•ŠìŒ                |
-| Instructed   | ë¡œë´‡ì—ê²Œ ëª…ë ¹ ì „ë‹¬ ì™„ë£Œ                    |
-| InProgress   | ë¡œë´‡ì´ í•´ë‹¹ ìž‘ì—…ì„ ìˆ˜í–‰ ì¤‘                 |
-| Completed    | ìž‘ì—…ì´ ì •ìƒì ìœ¼ë¡œ ì™„ë£Œë¨                   |
-| Failed       | ìž‘ì—… ë„ì¤‘ ì˜¤ë¥˜ ë°œìƒ                        |
-| ~~Retrying~~ | ~~ì‹¤íŒ¨í•œ ìž‘ì—…ì„ ìž¬ì‹œë„ ì¤‘~~                |
-| ~~Timeout~~  | ~~ì œí•œ ì‹œê°„ ë‚´ ì™„ë£Œë˜ì§€ ì•Šì•„ ì‹¤íŒ¨ ì²˜ë¦¬ë¨~~ |
+| Pending      | ¾ÆÁ÷ ·Îº¿¿¡°Ô Àü´ÞµÇÁö ¾ÊÀ½                |
+| Instructed   | ·Îº¿¿¡°Ô ¸í·É Àü´Þ ¿Ï·á                    |
+| InProgress   | ·Îº¿ÀÌ ÇØ´ç ÀÛ¾÷À» ¼öÇà Áß                 |
+| Completed    | ÀÛ¾÷ÀÌ Á¤»óÀûÀ¸·Î ¿Ï·áµÊ                   |
+| Failed       | ÀÛ¾÷ µµÁß ¿À·ù ¹ß»ý                        |
+| ~~Retrying~~ | ~~½ÇÆÐÇÑ ÀÛ¾÷À» Àç½Ãµµ Áß~~                |
+| ~~Timeout~~  | ~~Á¦ÇÑ ½Ã°£ ³» ¿Ï·áµÇÁö ¾Ê¾Æ ½ÇÆÐ Ã³¸®µÊ~~ |
 
 ```json
-// [ACS â†’ MCS] Job ìƒíƒœ ë³´ê³ (JobReport)
+// [ACS ¡æ MCS] Job »óÅÂ º¸°í(JobReport)
 {
   "command": "JobReport",
   "transactionId": "0a62528f-0b32-4c15-b45e-60b3e1ef9b6f",
@@ -1260,7 +1269,7 @@ sequenceDiagram
 ```
 
 ```json
-// [MCS â†’ ACS] Job ìƒíƒœ ë³´ê³ ì— ëŒ€í•œ ì‘ë‹µ(JobReportAck)
+// [MCS ¡æ ACS] Job »óÅÂ º¸°í¿¡ ´ëÇÑ ÀÀ´ä(JobReportAck)
 {
   "command": "JobReportAck",
   "transactionId": "0a62528f-0b32-4c15-b45e-60b3e1ef9b6f",
@@ -1275,58 +1284,58 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant ACS as ACS (ë¡œë´‡ í´ë¼ì´ì–¸íŠ¸)
-    participant MCS as MCS (ì„œë²„)
+    participant ACS as ACS (·Îº¿ Å¬¶óÀÌ¾ðÆ®)
+    participant MCS as MCS (¼­¹ö)
 
-    Note over ACS,MCS: ðŸ“ JobReport : ê°œë³„ ìž‘ì—…(Job)ì˜ <br>ìƒíƒœë¥¼ MCSì— ë³´ê³ 
+    Note over ACS,MCS: ?? JobReport : °³º° ÀÛ¾÷(Job)ÀÇ <br>»óÅÂ¸¦ MCS¿¡ º¸°í
 
    
-    ACS-->>MCS: ðŸŸ© JobReport
-    Note right of ACS: Job ìƒíƒœ ë³€ê²½ ì‹œ 
+    ACS-->>MCS: ?? JobReport
+    Note right of ACS: Job »óÅÂ º¯°æ ½Ã 
  
 
 ```
 
 #### Abnormal Case 01. Job Failed
 
-- ìž‘ì—… ì¤‘ í•˜ë‚˜ ì´ìƒì˜ Jobì—ì„œ `Failed` ìƒíƒœê°€ ë°œìƒí•  ê²½ìš°, í•´ë‹¹ Stepì€ ì¦‰ì‹œ `Failed` ìƒíƒœë¡œ ë³´ê³ ë¨  
-- Stepì´ ì‹¤íŒ¨í•˜ë©´, í•´ë‹¹ Stepì´ í¬í•¨ëœ ì „ì²´ Planë„ `Failed` ìƒíƒœë¡œ ì¦‰ì‹œ ì „í™˜  `StepReport / PlanReport (status: Failed)`
-- ì•„ì§ ì‹¤í–‰ë˜ì§€ ì•Šì€ ë‚˜ë¨¸ì§€ Step ë° Jobì€ **ë³„ë„ ìƒíƒœ ë³´ê³  ì—†ì´** **ì¤‘ë‹¨ ì²˜ë¦¬**
-- ì¡°ì¹˜ í›„  **ìƒˆë¡œìš´ Planìœ¼ë¡œ ìž¬ì „ë‹¬**
+- ÀÛ¾÷ Áß ÇÏ³ª ÀÌ»óÀÇ Job¿¡¼­ `Failed` »óÅÂ°¡ ¹ß»ýÇÒ °æ¿ì, ÇØ´ç StepÀº Áï½Ã `Failed` »óÅÂ·Î º¸°íµÊ  
+- StepÀÌ ½ÇÆÐÇÏ¸é, ÇØ´ç StepÀÌ Æ÷ÇÔµÈ ÀüÃ¼ Planµµ `Failed` »óÅÂ·Î Áï½Ã ÀüÈ¯  `StepReport / PlanReport (status: Failed)`
+- ¾ÆÁ÷ ½ÇÇàµÇÁö ¾ÊÀº ³ª¸ÓÁö Step ¹× JobÀº **º°µµ »óÅÂ º¸°í ¾øÀÌ** **Áß´Ü Ã³¸®**
+- Á¶Ä¡ ÈÄ  **»õ·Î¿î PlanÀ¸·Î ÀçÀü´Þ**
 
 ```mermaid
 sequenceDiagram
-    participant ACS as ACS(ë¡œë´‡ í´ë¼ì´ì–¸íŠ¸)
-    participant MCS as MCS(ì„œë²„)
+    participant ACS as ACS(·Îº¿ Å¬¶óÀÌ¾ðÆ®)
+    participant MCS as MCS(¼­¹ö)
 
-    Note over ACS,MCS: ðŸ”´ Job 3 ì‹¤íŒ¨ â†’ Step ì‹¤íŒ¨ â†’ Plan ì‹¤íŒ¨ ì²˜ë¦¬
+    Note over ACS,MCS: ?? Job 3 ½ÇÆÐ ¡æ Step ½ÇÆÐ ¡æ Plan ½ÇÆÐ Ã³¸®
 
-    ACS-->>MCS: ðŸŸ¥ JobReport(jobId: ..., status: Failed)
-    ACS-->>MCS: ðŸŸ¥ StepReport(stepNo: ..., status: Failed)
-    ACS-->>MCS: ðŸŸ¥ PlanReport(planId: ..., status: Failed)
+    ACS-->>MCS: ?? JobReport(jobId: ..., status: Failed)
+    ACS-->>MCS: ?? StepReport(stepNo: ..., status: Failed)
+    ACS-->>MCS: ?? PlanReport(planId: ..., status: Failed)
 
 ```
 
 #### Abnormal Case 02. Plan Aborted
 
-- MCSë¡œë¶€í„° `AbortPlan` ëª…ë ¹ì„ ìˆ˜ì‹ í•œ ê²½ìš°, íŠ¹ì´ ì‚¬í•­ì´ ì—†ëŠ” ê²½ìš°, í•´ë‹¹ Planì€ ì¦‰ì‹œ **Aborted ìƒíƒœ**ë¡œ ì „í™˜.
-- ë‹¨, **ì´ë¯¸ InProgress ìƒíƒœë¡œ ì‹¤í–‰ ì¤‘ì¸ Job**ì´ ì¡´ìž¬í•˜ëŠ” ê²½ìš°ì—ëŠ”,
-  â†’ í•´ë‹¹ Jobì€ ì¤‘ë‹¨í•˜ì§€ ì•Šê³  **ì •ìƒ ì™„ë£Œë  ë•Œê¹Œì§€ ì‹¤í–‰**ì„ ê³„ì†í•¨
-- InProgress Jobì´ ëª¨ë‘ ì™„ë£Œëœ ì´í›„, ACSëŠ” Plan ìƒíƒœë¥¼ `Aborted`ë¡œ ë³´ê³ í•¨
-- **ë‚˜ë¨¸ì§€ ì•„ì§ ì‹¤í–‰ë˜ì§€ ì•Šì€ Step ë° Job(Pending ìƒíƒœ)**ì— ëŒ€í•´ì„œëŠ” **ë³„ë„ì˜ ìƒíƒœ ë³´ê³  ì—†ì´ ì¤‘ë‹¨**
-- ì¤‘ë‹¨ëœ Job/Stepì— ëŒ€í•´ `JobReport`, `StepReport` ë“±ì€ **ì†¡ì‹ í•˜ì§€ ì•ŠìŒ**
-- ìµœì¢…ì ìœ¼ë¡œ ë‹¤ìŒ ë©”ì‹œì§€ë§Œ ë³´ê³ ë¨:
-  1. `JobReport(status: Completed)` â€” ì´ë¯¸ ì§„í–‰ ì¤‘ì´ë˜ Jobì´ ì™„ë£Œëœ ê²½ìš°
-  2. `PlanReport(status: Aborted)` â€” Plan ì „ì²´ ì¤‘ë‹¨ ì™„ë£Œ ë³´ê³ 
+- MCS·ÎºÎÅÍ `AbortPlan` ¸í·ÉÀ» ¼ö½ÅÇÑ °æ¿ì, Æ¯ÀÌ »çÇ×ÀÌ ¾ø´Â °æ¿ì, ÇØ´ç PlanÀº Áï½Ã **Aborted »óÅÂ**·Î ÀüÈ¯.
+- ´Ü, **ÀÌ¹Ì InProgress »óÅÂ·Î ½ÇÇà ÁßÀÎ Job**ÀÌ Á¸ÀçÇÏ´Â °æ¿ì¿¡´Â,
+  ¡æ ÇØ´ç JobÀº Áß´ÜÇÏÁö ¾Ê°í **Á¤»ó ¿Ï·áµÉ ¶§±îÁö ½ÇÇà**À» °è¼ÓÇÔ
+- InProgress JobÀÌ ¸ðµÎ ¿Ï·áµÈ ÀÌÈÄ, ACS´Â Plan »óÅÂ¸¦ `Aborted`·Î º¸°íÇÔ
+- **³ª¸ÓÁö ¾ÆÁ÷ ½ÇÇàµÇÁö ¾ÊÀº Step ¹× Job(Pending »óÅÂ)**¿¡ ´ëÇØ¼­´Â **º°µµÀÇ »óÅÂ º¸°í ¾øÀÌ Áß´Ü**
+- Áß´ÜµÈ Job/Step¿¡ ´ëÇØ `JobReport`, `StepReport` µîÀº **¼Û½ÅÇÏÁö ¾ÊÀ½**
+- ÃÖÁ¾ÀûÀ¸·Î ´ÙÀ½ ¸Þ½ÃÁö¸¸ º¸°íµÊ:
+  1. `JobReport(status: Completed)` ? ÀÌ¹Ì ÁøÇà ÁßÀÌ´ø JobÀÌ ¿Ï·áµÈ °æ¿ì
+  2. `PlanReport(status: Aborted)` ? Plan ÀüÃ¼ Áß´Ü ¿Ï·á º¸°í
 
 
 
 
 
-### 6.15 ì—ëŸ¬/ì•ŒëžŒ ì´ë²¤íŠ¸ ë³´ê³  (ErrorReport) <span style="color: red;">*ìƒì„¸ ì •ì˜ í•„ìš”</span>
+### 6.15 ¿¡·¯/¾Ë¶÷ ÀÌº¥Æ® º¸°í (ErrorReport) <span style="color: red;">*»ó¼¼ Á¤ÀÇ ÇÊ¿ä</span>
 
 ```json
-// [ACS â†’ MCS] ì—ëŸ¬ ë˜ëŠ” ê²½ê³  ì´ë²¤íŠ¸ ë°œìƒ ë³´ê³ (ErrorReport) 
+// [ACS ¡æ MCS] ¿¡·¯ ¶Ç´Â °æ°í ÀÌº¥Æ® ¹ß»ý º¸°í(ErrorReport) 
 {
   "command": "ErrorReport",
   "transactionId": "d6c22da8-98bc-4e76-bdd9-6c89e1e3c8fa",
@@ -1334,10 +1343,10 @@ sequenceDiagram
   "payload": {
     "robotId": "CR01",
     "planId": "PLAN-20250702-010",
-    "state" : true, // trueì¸ ê²½ìš° ë°œìƒ, falseì¸ ê²½ìš° ì—ëŸ¬ í•´ì œ 
+    "state" : true, // trueÀÎ °æ¿ì ¹ß»ý, falseÀÎ °æ¿ì ¿¡·¯ ÇØÁ¦ 
     "stepNo": 2,
-    "jobId": "fa6bdb41-60ee-4b52-8c6f-8a6222b2b5c1", // í•„ìš”ì‹œ
-    "errorCode": "ì¶”í›„ ì •ì˜",
+    "jobId": "fa6bdb41-60ee-4b52-8c6f-8a6222b2b5c1", // ÇÊ¿ä½Ã
+    "errorCode": "ÃßÈÄ Á¤ÀÇ",
     "level" : "heavy",		// "heavy", "light"
     "message": "Tray is not detected in port."
   }
@@ -1346,7 +1355,7 @@ sequenceDiagram
 ```
 
 ```json
-// [MCS â†’ ACS] ì—ëŸ¬/ê²½ê³  ì´ë²¤íŠ¸ ë³´ê³ ì— ëŒ€í•œ ì‘ë‹µ(ErrorReportAck)
+// [MCS ¡æ ACS] ¿¡·¯/°æ°í ÀÌº¥Æ® º¸°í¿¡ ´ëÇÑ ÀÀ´ä(ErrorReportAck)
 {
   "command": "ErrorReportAck",
   "transactionId": "d6c22da8-98bc-4e76-bdd9-6c89e1e3c8fa",
@@ -1359,64 +1368,64 @@ sequenceDiagram
 
 
 
-### 6.16 ë¡œë´‡ ìƒíƒœ ì •ë³´ ê°±ì‹  (RobotStatusUpdate)
+### 6.16 ·Îº¿ »óÅÂ Á¤º¸ °»½Å (RobotStatusUpdate)
 
-| robotStatus  | ì˜ë¯¸                       |
+| robotStatus  | ÀÇ¹Ì                       |
 | ------------ | -------------------------- |
-| Init         | ì´ˆê¸°í™” ì¤‘                  |
-| Disconnected | í†µì‹  ëŠê¹€                  |
-| Manual       | ìˆ˜ë™ ì œì–´ ìƒíƒœ             |
-| Idle         | ìœ íœ´ ìƒíƒœ (í• ë‹¹ ìž‘ì—… ì—†ìŒ) |
-| Moving       | ì´ë™ ì¤‘                    |
-| Arrival      | ëª©ì ì§€/í¬íŠ¸ ë„ì°©í•¨         |
-| Docking      | í¬íŠ¸ì— ë„í‚¹ ì¤‘             |
-| UnDocking    | ë„í‚¹ í•´ì œ ì¤‘               |
-| Working      | ë¡œë´‡ ìž‘ì—… ìˆ˜í–‰ ì¤‘          |
-| Charging     | ì¶©ì „ ì¤‘                    |
-| Error        | ìž¥ì•  ë˜ëŠ” ì´ìƒ ë°œìƒ        |
-| Stopped      | ì™¸ë¶€ ì¤‘ì§€ ë˜ëŠ” ìˆ˜ë™ ì •ì§€   |
+| Init         | ÃÊ±âÈ­ Áß                  |
+| Disconnected | Åë½Å ²÷±è                  |
+| Manual       | ¼öµ¿ Á¦¾î »óÅÂ             |
+| Idle         | À¯ÈÞ »óÅÂ (ÇÒ´ç ÀÛ¾÷ ¾øÀ½) |
+| Moving       | ÀÌµ¿ Áß                    |
+| Arrival      | ¸ñÀûÁö/Æ÷Æ® µµÂøÇÔ         |
+| Docking      | Æ÷Æ®¿¡ µµÅ· Áß             |
+| UnDocking    | µµÅ· ÇØÁ¦ Áß               |
+| Working      | ·Îº¿ ÀÛ¾÷ ¼öÇà Áß          |
+| Charging     | ÃæÀü Áß                    |
+| Error        | Àå¾Ö ¶Ç´Â ÀÌ»ó ¹ß»ý        |
+| Stopped      | ¿ÜºÎ ÁßÁö ¶Ç´Â ¼öµ¿ Á¤Áö   |
 
 ```json
-// [ACS â†’ MCS] robot status,position ë˜ëŠ” Port ì ìž¬ ìœ ë¬´ ë“±ì˜ ë¡œë´‡ ìƒíƒœê°€ ë³€ê²½ ë  ê²½ìš°,
+// [ACS ¡æ MCS] robot status,position ¶Ç´Â Port ÀûÀç À¯¹« µîÀÇ ·Îº¿ »óÅÂ°¡ º¯°æ µÉ °æ¿ì,
 
-// ë¬¼ë¥˜ë¡œë´‡ì˜ ìƒíƒœ ë³€í™”
+// ¹°·ù·Îº¿ÀÇ »óÅÂ º¯È­
 {
   "command": "RobotStatusUpdate",
   "transactionId": "b332fcbe-8916-4cd8-9ebc-2d6c76082b2c",
   "timestamp": "2025-07-02T22:36:00.000+09:00",
   "payload": {
     "robotId": "LR01",
-    "robotType": "LR",          // ë¬¼ë¥˜ ë¡œë´‡ì¸ ê²½ìš° "LR"   
+    "robotType": "LR",          // ¹°·ù ·Îº¿ÀÎ °æ¿ì "LR"   
     "robotStatus": "Docking",
     "position": "A01.CP03",
     "carrierIds": ["CASSETTE_01"],
     "planId": null,
     "stepNo": null,
     "jobId": null,
-    "message": "í¬íŠ¸ ë„í‚¹ ì¤‘"
+    "message": "Æ÷Æ® µµÅ· Áß"
   }
 }
 
-// ìž‘ì—…ë¡œë´‡
+// ÀÛ¾÷·Îº¿
 {
   "command": "RobotStatusUpdate",
   "transactionId": "d322ff09-23b8-4e3a-8c0a-ff1cd7c8123a",
   "timestamp": "2025-07-02T22:38:00.000+09:00",
   "payload": {
     "robotId": "CR01",
-    "robotType": "CR",              // ìž‘ì—… ë¡œë´‡ì¸ ê²½ìš° "CR"   
+    "robotType": "CR",              // ÀÛ¾÷ ·Îº¿ÀÎ °æ¿ì "CR"   
     "robotStatus": "Working",
     "position": "A01.SET03",
     "carrierIds": ["TRAY_01", "TRAY_02", "TRAY_03"],
     "planId": "PLAN-20250703-110",
     "stepNo": 2,
     "jobId": "d3324f09-00b8-1e3a-2c0a-aa1cd7c8123a3",
-    "message": "íŠ¸ë ˆì´ í•¸ë“¤ë§ ìž‘ì—… ì¤‘"
+    "message": "Æ®·¹ÀÌ ÇÚµé¸µ ÀÛ¾÷ Áß"
   }
 }
 
 
-// ìž‘ì—…ë¡œë´‡ (carrierIds TP02/TP03ë§Œ ì¡´ìž¬í•˜ëŠ” ê²½ìš°) [v1.2.0 ì„¤ëª… ì¶”ê°€]
+// ÀÛ¾÷·Îº¿ (carrierIds TP02/TP03¸¸ Á¸ÀçÇÏ´Â °æ¿ì) [v1.2.0 ¼³¸í Ãß°¡]
 {
   "command": "RobotStatusUpdate",
   "transactionId": "d322ff09-23b8-4e3a-8c0a-ff1cd7c8123a",
@@ -1426,17 +1435,17 @@ sequenceDiagram
     "robotType": "CR",   
     "robotStatus": "Working",
     "position": "A01.SET03",
-    "carrierIds": [null, "TRAY_02", "TRAY_03"], // íŠ¸ë ˆì´í¬íŠ¸(TP)ê°€ ë¹„ì–´ìžˆëŠ” ê²½ìš° nullë¡œ ì „ë‹¬. 
+    "carrierIds": [null, "TRAY_02", "TRAY_03"], // Æ®·¹ÀÌÆ÷Æ®(TP)°¡ ºñ¾îÀÖ´Â °æ¿ì null·Î Àü´Þ. 
     "planId": "PLAN-20250703-110",
     "stepNo": 2,
     "jobId": "d3324f09-00b8-1e3a-2c0a-aa1cd7c8123a3",
-    "message": "íŠ¸ë ˆì´ í•¸ë“¤ë§ ìž‘ì—… ì¤‘"
+    "message": "Æ®·¹ÀÌ ÇÚµé¸µ ÀÛ¾÷ Áß"
   }
 }
 ```
 
 ```json
-// [MCS â†’ ACS] RobotStatusUpdateì— ëŒ€í•œ ì‘ë‹µ (RobotStatusUpdateAck)
+// [MCS ¡æ ACS] RobotStatusUpdate¿¡ ´ëÇÑ ÀÀ´ä (RobotStatusUpdateAck)
 {
   "command": "RobotStatusUpdateAck",
   "transactionId": "fda3335e-013b-4b0a-b01b-ec01a0cfa399",
@@ -1449,31 +1458,31 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant ACS as ACS(ë¡œë´‡ í´ë¼ì´ì–¸íŠ¸)
-    participant MCS as MCS(ì„œë²„)
+    participant ACS as ACS(·Îº¿ Å¬¶óÀÌ¾ðÆ®)
+    participant MCS as MCS(¼­¹ö)
 
-    Note over ACS,MCS: ðŸ”„ RobotStatusUpdate : ë¡œë´‡ ìƒíƒœê°€ ë³€ê²½ ë  ê²½ìš° MCSì— ì¦‰ì‹œ ë³´ê³ 
+    Note over ACS,MCS: ?? RobotStatusUpdate : ·Îº¿ »óÅÂ°¡ º¯°æ µÉ °æ¿ì MCS¿¡ Áï½Ã º¸°í
     
-    ACS-->>MCS: ðŸŸ© RobotStatusUpdate(robotId, robotStatus: Arrival â†’ Docking)
-    ACS-->>MCS: ðŸŸ© RobotStatusUpdate(robotId, position: A01.SET02 â†’ A01.SET03)
-    ACS-->>MCS: ðŸŸ© RobotStatusUpdate(robotId, hasTray: false â†’ true)
-    ACS-->>MCS: ðŸŸ¥ RobotStatusUpdate(robotId, robotStatus: Alarm)
+    ACS-->>MCS: ?? RobotStatusUpdate(robotId, robotStatus: Arrival ¡æ Docking)
+    ACS-->>MCS: ?? RobotStatusUpdate(robotId, position: A01.SET02 ¡æ A01.SET03)
+    ACS-->>MCS: ?? RobotStatusUpdate(robotId, hasTray: false ¡æ true)
+    ACS-->>MCS: ?? RobotStatusUpdate(robotId, robotStatus: Alarm)
    
 
-    Note right of ACS: ìƒíƒœê°’(robotStatus, position) ë³€í™”ë§ˆë‹¤<br>ì¦‰ì‹œ/ì´ë²¤íŠ¸ì„± ì†¡ì‹ 
+    Note right of ACS: »óÅÂ°ª(robotStatus, position) º¯È­¸¶´Ù<br>Áï½Ã/ÀÌº¥Æ®¼º ¼Û½Å
 
 ```
 
 ```apl
-// MCS ì¸¡ JobReport / StepReportì˜ AckëŠ” ìœ„ ë‹¤ì´ì–´ê·¸ëž¨ì—ì„œëŠ” ìƒëžµë˜ì—ˆìŒ. 
+// MCS Ãø JobReport / StepReportÀÇ Ack´Â À§ ´ÙÀÌ¾î±×·¥¿¡¼­´Â »ý·«µÇ¾úÀ½. 
 ```
 
 
 
-### 6.17 ì—ëŸ¬/ì•ŒëžŒ í˜„í™© ìš”ì²­ (RequestAcsErrorList)
+### 6.17 ¿¡·¯/¾Ë¶÷ ÇöÈ² ¿äÃ» (RequestAcsErrorList)
 
 ```json
-// [MCS â†’ ACS] ACSì˜ í˜„ìž¬ ë°œìƒ ëœ ì—ëŸ¬/ì•ŒëžŒ í˜„í™© ì§ˆì˜
+// [MCS ¡æ ACS] ACSÀÇ ÇöÀç ¹ß»ý µÈ ¿¡·¯/¾Ë¶÷ ÇöÈ² ÁúÀÇ
 {
   "command": "RequestAcsErrorList",
   "transactionId": "e731223b-b1a6-4e0d-8e7c-f8c8774a0fa7",
@@ -1485,7 +1494,7 @@ sequenceDiagram
 ```
 
 ```json
-// [ACS â†’ MCS] ìƒíƒœ ìš”ì²­ì— ëŒ€í•œ ì‘ë‹µ(RequestAcsStatusAck)
+// [ACS ¡æ MCS] »óÅÂ ¿äÃ»¿¡ ´ëÇÑ ÀÀ´ä(RequestAcsStatusAck)
 {
   "command": "RequestAcsErrorListAck",
   "transactionId": "a211ba25-24e2-47c2-bda2-2d8e3a1bbd77",
@@ -1497,17 +1506,17 @@ sequenceDiagram
      {
 	    "robotId": "CR01",
     	"planId": "PLAN-20250702-010",
-	    "state" : true, // trueì¸ ê²½ìš° ë°œìƒ, falseì¸ ê²½ìš° ì—ëŸ¬ í•´ì œ 
+	    "state" : true, // trueÀÎ °æ¿ì ¹ß»ý, falseÀÎ °æ¿ì ¿¡·¯ ÇØÁ¦ 
     	"stepNo": 2,
-	    "jobId": "fa6bdb41-60ee-4b52-8c6f-8a6222b2b5c1", // í•„ìš”ì‹œ
-    	"errorCode": "ì¶”í›„ ì •ì˜",
+	    "jobId": "fa6bdb41-60ee-4b52-8c6f-8a6222b2b5c1", // ÇÊ¿ä½Ã
+    	"errorCode": "ÃßÈÄ Á¤ÀÇ",
 	    "level" : "heavy",		// "heavy", "light"
     	"message": "Tray is not detected in port."
 	  },
       {
 	    "robotId": "CR01",
-	    "state" : true, // trueì¸ ê²½ìš° ë°œìƒ, falseì¸ ê²½ìš° ì—ëŸ¬ í•´ì œ 
-    	"errorCode": "ì¶”í›„ ì •ì˜",
+	    "state" : true, // trueÀÎ °æ¿ì ¹ß»ý, falseÀÎ °æ¿ì ¿¡·¯ ÇØÁ¦ 
+    	"errorCode": "ÃßÈÄ Á¤ÀÇ",
 	    "level" : "light",		// "heavy", "light"
     	"message": "low battery"
 	  },
@@ -1518,7 +1527,7 @@ sequenceDiagram
 
 
 
-### 6.19 ë¡œë´‡ ìœ„ì¹˜ ì •ë³´ ê°±ì‹  (RobotPositionUpdate)
+### 6.19 ·Îº¿ À§Ä¡ Á¤º¸ °»½Å (RobotPositionUpdate)
 
 ```json
 {
@@ -1547,24 +1556,24 @@ sequenceDiagram
 
 ```
 
-| í•„ë“œëª…  | íƒ€ìž…   | ì„¤ëª…      |
+| ÇÊµå¸í  | Å¸ÀÔ   | ¼³¸í      |
 | ------- | ------ | --------- |
-| robotId | string | ë¡œë´‡ ID   |
-| x       | number | X ì¢Œí‘œ    |
-| y       | number | Y ì¢Œí‘œ    |
-| angle   | number | ê°ë„      |
-| battery | number | ë°°í„°ë¦¬(%) |
+| robotId | string | ·Îº¿ ID   |
+| x       | number | X ÁÂÇ¥    |
+| y       | number | Y ÁÂÇ¥    |
+| angle   | number | °¢µµ      |
+| battery | number | ¹èÅÍ¸®(%) |
 
-> â±ï¸ RobotPositionUpdate ë©”ì‹œì§€ëŠ” 200ë°€ë¦¬ì´ˆ(0.2ì´ˆ) ê°„ê²©ìœ¼ë¡œ ê³„ì† ì—…ë°ì´íŠ¸ë©ë‹ˆë‹¤.
+> ?? RobotPositionUpdate ¸Þ½ÃÁö´Â 200¹Ð¸®ÃÊ(0.2ÃÊ) °£°ÝÀ¸·Î °è¼Ó ¾÷µ¥ÀÌÆ®µË´Ï´Ù.
 >
-> âš ï¸ RobotPositionUpdate ë©”ì‹œì§€ì— ëŒ€í•´ ì„œë²„ëŠ” ë³„ë„ì˜ Ack(í™•ì¸) ë©”ì‹œì§€ë¥¼ ì „ë‹¬í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.
+> ?? RobotPositionUpdate ¸Þ½ÃÁö¿¡ ´ëÇØ ¼­¹ö´Â º°µµÀÇ Ack(È®ÀÎ) ¸Þ½ÃÁö¸¦ Àü´ÞÇÏÁö ¾Ê½À´Ï´Ù.
 
 
 
-### 6.20 TSC ìƒíƒœ ë³´ê³  (TscStateUpdate)
+### 6.20 TSC »óÅÂ º¸°í (TscStateUpdate)
 
 ```json
-// [ACS â†’ MCS] í˜„ìž¬ TSC ìƒíƒœ ë³€ê²½ ì‹œ
+// [ACS ¡æ MCS] ÇöÀç TSC »óÅÂ º¯°æ ½Ã
 {
   "command": "TscStateUpdate",
   "transactionId": "9f13f236-2c4b-42af-b94b-1e47b4de2f1a",
@@ -1576,7 +1585,7 @@ sequenceDiagram
 ```
 
 ```json
-// [MCS â†’ ACS] TSC ìƒíƒœ ì—…ë°ì´íŠ¸ ìˆ˜ì‹ ì— ëŒ€í•œ ì‘ë‹µ
+// [MCS ¡æ ACS] TSC »óÅÂ ¾÷µ¥ÀÌÆ® ¼ö½Å¿¡ ´ëÇÑ ÀÀ´ä
 {
   "command": "TscStateUpdateAck",
   "transactionId": "9f13f236-2c4b-42af-b94b-1e47b4de2f1a", 
@@ -1587,35 +1596,35 @@ sequenceDiagram
 }
 ```
 
-| state   | ì˜ë¯¸                                      |
+| state   | ÀÇ¹Ì                                      |
 | ------- | ----------------------------------------- |
-| Auto    | Planì„ ìˆ˜í–‰ í•  ìˆ˜ ìžˆëŠ” ìƒíƒœ               |
-| Paused  | Plan ìˆ˜í–‰ì´ ì¼ì‹œ ì¤‘ì§€ ëœ ìƒíƒœ             |
-| Pausing | Paused ë³€ê²½ ì‹œë„ í›„ ì™„ë£Œí•˜ê¸° ì „ ëŒ€ê¸° ìƒíƒœ |
+| Auto    | PlanÀ» ¼öÇà ÇÒ ¼ö ÀÖ´Â »óÅÂ               |
+| Paused  | Plan ¼öÇàÀÌ ÀÏ½Ã ÁßÁö µÈ »óÅÂ             |
+| Pausing | Paused º¯°æ ½Ãµµ ÈÄ ¿Ï·áÇÏ±â Àü ´ë±â »óÅÂ |
 
-âš ï¸ TscStateUpdate ë©”ì‹œì§€ë¥¼ ì´ˆê¸° ì—°ê²° ì‹œ í•œë²ˆ, ì´í›„ë¡œëŠ” ìƒíƒœ ë³€ê²½ ì‹œì— ë³´ëƒ…ë‹ˆë‹¤.
+?? TscStateUpdate ¸Þ½ÃÁö¸¦ ÃÊ±â ¿¬°á ½Ã ÇÑ¹ø, ÀÌÈÄ·Î´Â »óÅÂ º¯°æ ½Ã¿¡ º¸³À´Ï´Ù.
 
 ---
 
 
 
-### 6.21 ACS í†µì‹  ìƒíƒœ ë³´ê³  (AcsCommStateUpdate)
+### 6.21 ACS Åë½Å »óÅÂ º¸°í (AcsCommStateUpdate)
 
 ```json
-// [ACS â†’ MCS] ACS í†µì‹  ì—°ê²° ìƒíƒœ ë³´ê³ 
+// [ACS ¡æ MCS] ACS Åë½Å ¿¬°á »óÅÂ º¸°í
 {
   "command": "AcsCommStateUpdate",
   "transactionId": "c7c8c9ae-3aa5-4f9e-bbfa-8140a59c94b6",
   "timestamp": "2025-08-07T11:10:00.000+09:00",
   "payload": {
-    "isConnected": true    // true: ì—°ê²°ë¨, false: ì—°ê²° ëŠê¹€ ë˜ëŠ” ë³µêµ¬ ëŒ€ê¸° ì¤‘
+    "isConnected": true    // true: ¿¬°áµÊ, false: ¿¬°á ²÷±è ¶Ç´Â º¹±¸ ´ë±â Áß
   }
 }
 
 ```
 
 ```json
-// [MCS â†’ ACS] AcsCommStateUpdateì— ëŒ€í•œ ì‘ë‹µ
+// [MCS ¡æ ACS] AcsCommStateUpdate¿¡ ´ëÇÑ ÀÀ´ä
 {
   "command": "AcsCommStateUpdateAck",
   "transactionId": "c7c8c9ae-3aa5-4f9e-bbfa-8140a59c94b6",
@@ -1629,9 +1638,9 @@ sequenceDiagram
 
 #### Abnormal Case 01. isConnected = false
 
-- `isConnected`ê°€ `false`ë¡œ ë³´ê³ ëœ ê²½ìš°, í•´ë‹¹ ACSëŠ” í†µì‹ ì´ ë¶ˆì•ˆì •í•˜ê±°ë‚˜ ì—°ê²°ì´ ëŠê¸´ ìƒíƒœë¡œ ê°„ì£¼í•¨
-- ì´ ìƒíƒœì—ì„œëŠ” **MCSëŠ” í•´ë‹¹ ACSë¡œ Planì„ ì „ë‹¬í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤**
-- ì—°ê²°ì´ ë³µêµ¬ë˜ì–´ `isConnected = true`ë¡œ ì „í™˜ë˜ê¸° ì „ê¹Œì§€ëŠ” Plan ìƒì„± ë˜ëŠ” ìž¬ì „ì†¡ì„ ë³´ë¥˜í•¨
+- `isConnected`°¡ `false`·Î º¸°íµÈ °æ¿ì, ÇØ´ç ACS´Â Åë½ÅÀÌ ºÒ¾ÈÁ¤ÇÏ°Å³ª ¿¬°áÀÌ ²÷±ä »óÅÂ·Î °£ÁÖÇÔ
+- ÀÌ »óÅÂ¿¡¼­´Â **MCS´Â ÇØ´ç ACS·Î PlanÀ» Àü´ÞÇÏÁö ¾Ê½À´Ï´Ù**
+- ¿¬°áÀÌ º¹±¸µÇ¾î `isConnected = true`·Î ÀüÈ¯µÇ±â Àü±îÁö´Â Plan »ý¼º ¶Ç´Â ÀçÀü¼ÛÀ» º¸·ùÇÔ
 
 
 
@@ -1641,179 +1650,179 @@ sequenceDiagram
 
 
 
-## 7. í™•ìž¥ ë° ìƒì„¸ ì •ì˜
+## 7. È®Àå ¹× »ó¼¼ Á¤ÀÇ
 
-ì‹¤ì œ ì ìš© ì‹œ ê° ë©”ì‹œì§€ íƒ€ìž…, ì‹œë‚˜ë¦¬ì˜¤, ìƒì„¸ ë°ì´í„° êµ¬ì¡°ëŠ” ì¶”ê°€ ì •ì˜ í•„ìš”
+½ÇÁ¦ Àû¿ë ½Ã °¢ ¸Þ½ÃÁö Å¸ÀÔ, ½Ã³ª¸®¿À, »ó¼¼ µ¥ÀÌÅÍ ±¸Á¶´Â Ãß°¡ Á¤ÀÇ ÇÊ¿ä
 
 ---
 
 
 
-## 8.ì°¸ê³ 
+## 8.Âü°í
 
-* ëª¨ë“  CP, TP, MP ë“± Port ì •ë³´ëŠ” ê° ì„¤ë¹„(ìŠ¤í† ì»¤, ë¡œë´‡ ë“±) ìƒíƒœ ë° ì´ë²¤íŠ¸ ë©”ì‹œì§€ì—ì„œ ì‚¬ìš©ë¨
+* ¸ðµç CP, TP, MP µî Port Á¤º¸´Â °¢ ¼³ºñ(½ºÅäÄ¿, ·Îº¿ µî) »óÅÂ ¹× ÀÌº¥Æ® ¸Þ½ÃÁö¿¡¼­ »ç¿ëµÊ
 
-* ë¬¸ì„œì˜ ë‚´ìš©ì€ ê³ ê°ì‚¬ ìš”êµ¬, í”„ë¡œì íŠ¸ ìƒí™© ë“±ì— ë”°ë¼ ë³€ê²½ë  ìˆ˜ ìžˆìŒ
-
-
-
-### 8.1 ê²½ë¡œ ë§µ ì°¸ê³ ìžë£Œ 
-
-**<span style="color: red;">* ì‹¤ì œ ìˆ˜ëŸ‰ê³¼ ë‹¤ë¥¼ ìˆ˜ ìžˆìŒ.</span>**
-
-- **ìŠ¤í† ì»¤(ST)**: 1ê°œ
-  - **ì¹´ì„¸íŠ¸ í¬íŠ¸(CP)**: 6ê°œ
-
-- **ì—ì–´ë¦¬ì–´:** 1ê°œ 
-  - **ì¹´ì„¸íŠ¸ í¬íŠ¸(CP)**: 6ê°œ
-    - **íŠ¸ë ˆì´ í¬íŠ¸(TP)**: 4ê°œ
-  - **ì„¸íŠ¸(SET):** 12ê°œ
-    - **ë©”ëª¨ë¦¬ í¬íŠ¸(MP)**: 32ê°œ
-- **ë¬¼ë¥˜ë¡œë´‡:** 1ê°œ 
-  - **ì¹´ì„¸íŠ¸ í¬íŠ¸(CP)**: 1ê°œ
-- **ìž‘ì—…ë¡œë´‡:** 1ê°œ 
-  - **íŠ¸ë ˆì´ í¬íŠ¸(TP)**: 3ê°œ
-    - **ë©”ëª¨ë¦¬ í¬íŠ¸(MP)**: 25ê°œ
+* ¹®¼­ÀÇ ³»¿ëÀº °í°´»ç ¿ä±¸, ÇÁ·ÎÁ§Æ® »óÈ² µî¿¡ µû¶ó º¯°æµÉ ¼ö ÀÖÀ½
 
 
 
-| No   | êµ¬ë¶„                     | FullPath            | ë¹„ê³                                  |
+### 8.1 °æ·Î ¸Ê Âü°íÀÚ·á 
+
+**<span style="color: red;">* ½ÇÁ¦ ¼ö·®°ú ´Ù¸¦ ¼ö ÀÖÀ½.</span>**
+
+- **½ºÅäÄ¿(ST)**: 1°³
+  - **Ä«¼¼Æ® Æ÷Æ®(CP)**: 6°³
+
+- **¿¡¾î¸®¾î:** 1°³ 
+  - **Ä«¼¼Æ® Æ÷Æ®(CP)**: 6°³
+    - **Æ®·¹ÀÌ Æ÷Æ®(TP)**: 4°³
+  - **¼¼Æ®(SET):** 12°³
+    - **¸Þ¸ð¸® Æ÷Æ®(MP)**: 32°³
+- **¹°·ù·Îº¿:** 1°³ 
+  - **Ä«¼¼Æ® Æ÷Æ®(CP)**: 1°³
+- **ÀÛ¾÷·Îº¿:** 1°³ 
+  - **Æ®·¹ÀÌ Æ÷Æ®(TP)**: 3°³
+    - **¸Þ¸ð¸® Æ÷Æ®(MP)**: 25°³
+
+
+
+| No   | ±¸ºÐ                     | FullPath            | ºñ°í                                 |
 | ---- | ------------------------ | ------------------- | ------------------------------------ |
-| 1    | ìŠ¤í† ì»¤-ì¹´ì„¸íŠ¸í¬íŠ¸        | ST01.CP01           | ìŠ¤í† ì»¤1-ì¹´ì„¸íŠ¸í¬íŠ¸1                  |
-| 2    | ìŠ¤í† ì»¤-ì¹´ì„¸íŠ¸í¬íŠ¸        | ST01.CP02           | ìŠ¤í† ì»¤1-ì¹´ì„¸íŠ¸í¬íŠ¸2                  |
-| 3    | ìŠ¤í† ì»¤-ì¹´ì„¸íŠ¸í¬íŠ¸        | ST01.CP03           | ìŠ¤í† ì»¤1-ì¹´ì„¸íŠ¸í¬íŠ¸3                  |
-| 4    | ìŠ¤í† ì»¤-ì¹´ì„¸íŠ¸í¬íŠ¸        | ST01.CP04           | ìŠ¤í† ì»¤1-ì¹´ì„¸íŠ¸í¬íŠ¸4                  |
-| 5    | ìŠ¤í† ì»¤-ì¹´ì„¸íŠ¸í¬íŠ¸        | ST01.CP05           | ìŠ¤í† ì»¤1-ì¹´ì„¸íŠ¸í¬íŠ¸5                  |
-| 6    | ìŠ¤í† ì»¤-ì¹´ì„¸íŠ¸í¬íŠ¸        | ST01.CP06           | ìŠ¤í† ì»¤1-ì¹´ì„¸íŠ¸í¬íŠ¸6                  |
-| 7    | ì—ì–´ë¦¬ì–´-ì¹´ì„¸íŠ¸í¬íŠ¸      | A01.CP01            | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸1                |
-| 8    | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP01.TP01       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸1-íŠ¸ë ˆì´í¬íŠ¸1    |
-| 9    | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP01.TP02       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸1-íŠ¸ë ˆì´í¬íŠ¸2    |
-| 10   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP01.TP03       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸1-íŠ¸ë ˆì´í¬íŠ¸3    |
-| 11   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP01.TP04       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸1-íŠ¸ë ˆì´í¬íŠ¸4    |
-| 12   | ì—ì–´ë¦¬ì–´-ì¹´ì„¸íŠ¸í¬íŠ¸      | A01.CP02            | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸2                |
-| 13   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP02.TP01       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸2-íŠ¸ë ˆì´í¬íŠ¸1    |
-| 14   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP02.TP02       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸2-íŠ¸ë ˆì´í¬íŠ¸2    |
-| 15   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP02.TP03       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸2-íŠ¸ë ˆì´í¬íŠ¸3    |
-| 16   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP02.TP04       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸2-íŠ¸ë ˆì´í¬íŠ¸4    |
-| 17   | ì—ì–´ë¦¬ì–´-ì¹´ì„¸íŠ¸í¬íŠ¸      | A01.CP03            | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸3                |
-| 18   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP03.TP01       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸3-íŠ¸ë ˆì´í¬íŠ¸1    |
-| 19   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP03.TP02       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸3-íŠ¸ë ˆì´í¬íŠ¸2    |
-| 20   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP03.TP03       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸3-íŠ¸ë ˆì´í¬íŠ¸3    |
-| 21   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP03.TP04       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸3-íŠ¸ë ˆì´í¬íŠ¸4    |
-| 22   | ì—ì–´ë¦¬ì–´-ì¹´ì„¸íŠ¸í¬íŠ¸      | A01.CP04            | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸4                |
-| 23   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP04.TP01       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸4-íŠ¸ë ˆì´í¬íŠ¸1    |
-| 24   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP04.TP02       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸4-íŠ¸ë ˆì´í¬íŠ¸2    |
-| 25   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP04.TP03       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸4-íŠ¸ë ˆì´í¬íŠ¸3    |
-| 26   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP04.TP04       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸4-íŠ¸ë ˆì´í¬íŠ¸4    |
-| 27   | ì—ì–´ë¦¬ì–´-ì¹´ì„¸íŠ¸í¬íŠ¸      | A01.CP05            | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸5                |
-| 28   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP05.TP01       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸5-íŠ¸ë ˆì´í¬íŠ¸1    |
-| 29   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP05.TP02       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸5-íŠ¸ë ˆì´í¬íŠ¸2    |
-| 30   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP05.TP03       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸5-íŠ¸ë ˆì´í¬íŠ¸3    |
-| 31   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP05.TP04       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸5-íŠ¸ë ˆì´í¬íŠ¸4    |
-| 32   | ì—ì–´ë¦¬ì–´-ì¹´ì„¸íŠ¸í¬íŠ¸      | A01.CP06            | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸6                |
-| 33   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP06.TP01       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸6-íŠ¸ë ˆì´í¬íŠ¸1    |
-| 34   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP06.TP02       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸6-íŠ¸ë ˆì´í¬íŠ¸2    |
-| 35   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP06.TP03       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸6-íŠ¸ë ˆì´í¬íŠ¸3    |
-| 36   | ì—ì–´ë¦¬ì–´-íŠ¸ë ˆì´í¬íŠ¸      | A01.CP06.TP04       | ì—ì–´ë¦¬ì–´1-ì¹´ì„¸íŠ¸í¬íŠ¸6-íŠ¸ë ˆì´í¬íŠ¸4    |
-| 37   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸            | A01.SET01           | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸1                      |
-| 38   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸-ë©”ëª¨ë¦¬í¬íŠ¸ | A01.SET01.MP01~MP32 | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸1-ë©”ëª¨ë¦¬í¬íŠ¸1~32       |
-| 39   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸            | A01.SET02           | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸2                      |
-| 40   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸-ë©”ëª¨ë¦¬í¬íŠ¸ | A01.SET02.MP01~MP32 | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸2-ë©”ëª¨ë¦¬í¬íŠ¸1~32       |
-| 41   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸            | A01.SET03           | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸3                      |
-| 42   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸-ë©”ëª¨ë¦¬í¬íŠ¸ | A01.SET03.MP01~MP32 | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸3-ë©”ëª¨ë¦¬í¬íŠ¸1~32       |
-| 43   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸            | A01.SET04           | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸4                      |
-| 44   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸-ë©”ëª¨ë¦¬í¬íŠ¸ | A01.SET04.MP01~MP32 | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸4-ë©”ëª¨ë¦¬í¬íŠ¸1~32       |
-| 45   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸            | A01.SET05           | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸5                      |
-| 46   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸-ë©”ëª¨ë¦¬í¬íŠ¸ | A01.SET05.MP01~MP32 | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸5-ë©”ëª¨ë¦¬í¬íŠ¸1~32       |
-| 47   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸            | A01.SET06           | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸6                      |
-| 48   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸-ë©”ëª¨ë¦¬í¬íŠ¸ | A01.SET06.MP01~MP32 | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸6-ë©”ëª¨ë¦¬í¬íŠ¸1~32       |
-| 49   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸            | A01.SET07           | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸7                      |
-| 50   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸-ë©”ëª¨ë¦¬í¬íŠ¸ | A01.SET07.MP01~MP32 | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸7-ë©”ëª¨ë¦¬í¬íŠ¸1~32       |
-| 51   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸            | A01.SET08           | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸8                      |
-| 52   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸-ë©”ëª¨ë¦¬í¬íŠ¸ | A01.SET08.MP01~MP32 | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸8-ë©”ëª¨ë¦¬í¬íŠ¸1~32       |
-| 53   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸            | A01.SET09           | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸9                      |
-| 54   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸-ë©”ëª¨ë¦¬í¬íŠ¸ | A01.SET09.MP01~MP32 | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸9-ë©”ëª¨ë¦¬í¬íŠ¸1~32       |
-| 55   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸            | A01.SET10           | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸10                     |
-| 56   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸-ë©”ëª¨ë¦¬í¬íŠ¸ | A01.SET10.MP01~MP32 | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸10-ë©”ëª¨ë¦¬í¬íŠ¸1~32      |
-| 57   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸            | A01.SET11           | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸11                     |
-| 58   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸-ë©”ëª¨ë¦¬í¬íŠ¸ | A01.SET11.MP01~MP32 | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸11-ë©”ëª¨ë¦¬í¬íŠ¸1~32      |
-| 59   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸            | A01.SET12           | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸12                     |
-| 60   | ì—ì–´ë¦¬ì–´-ì„¸íŠ¸-ë©”ëª¨ë¦¬í¬íŠ¸ | A01.SET12.MP01~MP32 | ì—ì–´ë¦¬ì–´1-ì„¸íŠ¸12-ë©”ëª¨ë¦¬í¬íŠ¸1~32      |
-| 61   | ë¬¼ë¥˜ë¡œë´‡-ì¹´ì„¸íŠ¸í¬íŠ¸      | AMR.CP01            | ë¬¼ë¥˜ë¡œë´‡1-ì¹´ì„¸íŠ¸í¬íŠ¸1                |
-| 62   | ìž‘ì—…ë¡œë´‡-íŠ¸ë ˆì´í¬íŠ¸      | AMR.TP01            | ìž‘ì—…ë¡œë´‡1-íŠ¸ë ˆì´í¬íŠ¸1                |
-| 63   | ìž‘ì—…ë¡œë´‡-ë©”ëª¨ë¦¬í¬íŠ¸      | AMR.TP01.MP01~MP25  | ìž‘ì—…ë¡œë´‡1-íŠ¸ë ˆì´í¬íŠ¸1-ë©”ëª¨ë¦¬í¬íŠ¸1~25 |
-| 64   | ìž‘ì—…ë¡œë´‡-íŠ¸ë ˆì´í¬íŠ¸      | AMR.TP02            | ìž‘ì—…ë¡œë´‡1-íŠ¸ë ˆì´í¬íŠ¸2                |
-| 65   | ìž‘ì—…ë¡œë´‡-ë©”ëª¨ë¦¬í¬íŠ¸      | AMR.TP02.MP01~MP25  | ìž‘ì—…ë¡œë´‡1-íŠ¸ë ˆì´í¬íŠ¸2-ë©”ëª¨ë¦¬í¬íŠ¸1~25 |
-| 66   | ìž‘ì—…ë¡œë´‡-íŠ¸ë ˆì´í¬íŠ¸      | AMR.TP03            | ìž‘ì—…ë¡œë´‡1-íŠ¸ë ˆì´í¬íŠ¸3                |
-| 67   | ìž‘ì—…ë¡œë´‡-ë©”ëª¨ë¦¬í¬íŠ¸      | AMR.TP03.MP01~MP25  | ìž‘ì—…ë¡œë´‡1-íŠ¸ë ˆì´í¬íŠ¸3-ë©”ëª¨ë¦¬í¬íŠ¸1~25 |
+| 1    | ½ºÅäÄ¿-Ä«¼¼Æ®Æ÷Æ®        | ST01.CP01           | ½ºÅäÄ¿1-Ä«¼¼Æ®Æ÷Æ®1                  |
+| 2    | ½ºÅäÄ¿-Ä«¼¼Æ®Æ÷Æ®        | ST01.CP02           | ½ºÅäÄ¿1-Ä«¼¼Æ®Æ÷Æ®2                  |
+| 3    | ½ºÅäÄ¿-Ä«¼¼Æ®Æ÷Æ®        | ST01.CP03           | ½ºÅäÄ¿1-Ä«¼¼Æ®Æ÷Æ®3                  |
+| 4    | ½ºÅäÄ¿-Ä«¼¼Æ®Æ÷Æ®        | ST01.CP04           | ½ºÅäÄ¿1-Ä«¼¼Æ®Æ÷Æ®4                  |
+| 5    | ½ºÅäÄ¿-Ä«¼¼Æ®Æ÷Æ®        | ST01.CP05           | ½ºÅäÄ¿1-Ä«¼¼Æ®Æ÷Æ®5                  |
+| 6    | ½ºÅäÄ¿-Ä«¼¼Æ®Æ÷Æ®        | ST01.CP06           | ½ºÅäÄ¿1-Ä«¼¼Æ®Æ÷Æ®6                  |
+| 7    | ¿¡¾î¸®¾î-Ä«¼¼Æ®Æ÷Æ®      | A01.CP01            | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®1                |
+| 8    | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP01.TP01       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®1-Æ®·¹ÀÌÆ÷Æ®1    |
+| 9    | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP01.TP02       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®1-Æ®·¹ÀÌÆ÷Æ®2    |
+| 10   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP01.TP03       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®1-Æ®·¹ÀÌÆ÷Æ®3    |
+| 11   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP01.TP04       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®1-Æ®·¹ÀÌÆ÷Æ®4    |
+| 12   | ¿¡¾î¸®¾î-Ä«¼¼Æ®Æ÷Æ®      | A01.CP02            | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®2                |
+| 13   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP02.TP01       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®2-Æ®·¹ÀÌÆ÷Æ®1    |
+| 14   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP02.TP02       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®2-Æ®·¹ÀÌÆ÷Æ®2    |
+| 15   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP02.TP03       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®2-Æ®·¹ÀÌÆ÷Æ®3    |
+| 16   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP02.TP04       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®2-Æ®·¹ÀÌÆ÷Æ®4    |
+| 17   | ¿¡¾î¸®¾î-Ä«¼¼Æ®Æ÷Æ®      | A01.CP03            | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®3                |
+| 18   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP03.TP01       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®3-Æ®·¹ÀÌÆ÷Æ®1    |
+| 19   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP03.TP02       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®3-Æ®·¹ÀÌÆ÷Æ®2    |
+| 20   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP03.TP03       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®3-Æ®·¹ÀÌÆ÷Æ®3    |
+| 21   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP03.TP04       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®3-Æ®·¹ÀÌÆ÷Æ®4    |
+| 22   | ¿¡¾î¸®¾î-Ä«¼¼Æ®Æ÷Æ®      | A01.CP04            | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®4                |
+| 23   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP04.TP01       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®4-Æ®·¹ÀÌÆ÷Æ®1    |
+| 24   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP04.TP02       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®4-Æ®·¹ÀÌÆ÷Æ®2    |
+| 25   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP04.TP03       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®4-Æ®·¹ÀÌÆ÷Æ®3    |
+| 26   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP04.TP04       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®4-Æ®·¹ÀÌÆ÷Æ®4    |
+| 27   | ¿¡¾î¸®¾î-Ä«¼¼Æ®Æ÷Æ®      | A01.CP05            | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®5                |
+| 28   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP05.TP01       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®5-Æ®·¹ÀÌÆ÷Æ®1    |
+| 29   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP05.TP02       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®5-Æ®·¹ÀÌÆ÷Æ®2    |
+| 30   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP05.TP03       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®5-Æ®·¹ÀÌÆ÷Æ®3    |
+| 31   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP05.TP04       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®5-Æ®·¹ÀÌÆ÷Æ®4    |
+| 32   | ¿¡¾î¸®¾î-Ä«¼¼Æ®Æ÷Æ®      | A01.CP06            | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®6                |
+| 33   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP06.TP01       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®6-Æ®·¹ÀÌÆ÷Æ®1    |
+| 34   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP06.TP02       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®6-Æ®·¹ÀÌÆ÷Æ®2    |
+| 35   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP06.TP03       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®6-Æ®·¹ÀÌÆ÷Æ®3    |
+| 36   | ¿¡¾î¸®¾î-Æ®·¹ÀÌÆ÷Æ®      | A01.CP06.TP04       | ¿¡¾î¸®¾î1-Ä«¼¼Æ®Æ÷Æ®6-Æ®·¹ÀÌÆ÷Æ®4    |
+| 37   | ¿¡¾î¸®¾î-¼¼Æ®            | A01.SET01           | ¿¡¾î¸®¾î1-¼¼Æ®1                      |
+| 38   | ¿¡¾î¸®¾î-¼¼Æ®-¸Þ¸ð¸®Æ÷Æ® | A01.SET01.MP01~MP32 | ¿¡¾î¸®¾î1-¼¼Æ®1-¸Þ¸ð¸®Æ÷Æ®1~32       |
+| 39   | ¿¡¾î¸®¾î-¼¼Æ®            | A01.SET02           | ¿¡¾î¸®¾î1-¼¼Æ®2                      |
+| 40   | ¿¡¾î¸®¾î-¼¼Æ®-¸Þ¸ð¸®Æ÷Æ® | A01.SET02.MP01~MP32 | ¿¡¾î¸®¾î1-¼¼Æ®2-¸Þ¸ð¸®Æ÷Æ®1~32       |
+| 41   | ¿¡¾î¸®¾î-¼¼Æ®            | A01.SET03           | ¿¡¾î¸®¾î1-¼¼Æ®3                      |
+| 42   | ¿¡¾î¸®¾î-¼¼Æ®-¸Þ¸ð¸®Æ÷Æ® | A01.SET03.MP01~MP32 | ¿¡¾î¸®¾î1-¼¼Æ®3-¸Þ¸ð¸®Æ÷Æ®1~32       |
+| 43   | ¿¡¾î¸®¾î-¼¼Æ®            | A01.SET04           | ¿¡¾î¸®¾î1-¼¼Æ®4                      |
+| 44   | ¿¡¾î¸®¾î-¼¼Æ®-¸Þ¸ð¸®Æ÷Æ® | A01.SET04.MP01~MP32 | ¿¡¾î¸®¾î1-¼¼Æ®4-¸Þ¸ð¸®Æ÷Æ®1~32       |
+| 45   | ¿¡¾î¸®¾î-¼¼Æ®            | A01.SET05           | ¿¡¾î¸®¾î1-¼¼Æ®5                      |
+| 46   | ¿¡¾î¸®¾î-¼¼Æ®-¸Þ¸ð¸®Æ÷Æ® | A01.SET05.MP01~MP32 | ¿¡¾î¸®¾î1-¼¼Æ®5-¸Þ¸ð¸®Æ÷Æ®1~32       |
+| 47   | ¿¡¾î¸®¾î-¼¼Æ®            | A01.SET06           | ¿¡¾î¸®¾î1-¼¼Æ®6                      |
+| 48   | ¿¡¾î¸®¾î-¼¼Æ®-¸Þ¸ð¸®Æ÷Æ® | A01.SET06.MP01~MP32 | ¿¡¾î¸®¾î1-¼¼Æ®6-¸Þ¸ð¸®Æ÷Æ®1~32       |
+| 49   | ¿¡¾î¸®¾î-¼¼Æ®            | A01.SET07           | ¿¡¾î¸®¾î1-¼¼Æ®7                      |
+| 50   | ¿¡¾î¸®¾î-¼¼Æ®-¸Þ¸ð¸®Æ÷Æ® | A01.SET07.MP01~MP32 | ¿¡¾î¸®¾î1-¼¼Æ®7-¸Þ¸ð¸®Æ÷Æ®1~32       |
+| 51   | ¿¡¾î¸®¾î-¼¼Æ®            | A01.SET08           | ¿¡¾î¸®¾î1-¼¼Æ®8                      |
+| 52   | ¿¡¾î¸®¾î-¼¼Æ®-¸Þ¸ð¸®Æ÷Æ® | A01.SET08.MP01~MP32 | ¿¡¾î¸®¾î1-¼¼Æ®8-¸Þ¸ð¸®Æ÷Æ®1~32       |
+| 53   | ¿¡¾î¸®¾î-¼¼Æ®            | A01.SET09           | ¿¡¾î¸®¾î1-¼¼Æ®9                      |
+| 54   | ¿¡¾î¸®¾î-¼¼Æ®-¸Þ¸ð¸®Æ÷Æ® | A01.SET09.MP01~MP32 | ¿¡¾î¸®¾î1-¼¼Æ®9-¸Þ¸ð¸®Æ÷Æ®1~32       |
+| 55   | ¿¡¾î¸®¾î-¼¼Æ®            | A01.SET10           | ¿¡¾î¸®¾î1-¼¼Æ®10                     |
+| 56   | ¿¡¾î¸®¾î-¼¼Æ®-¸Þ¸ð¸®Æ÷Æ® | A01.SET10.MP01~MP32 | ¿¡¾î¸®¾î1-¼¼Æ®10-¸Þ¸ð¸®Æ÷Æ®1~32      |
+| 57   | ¿¡¾î¸®¾î-¼¼Æ®            | A01.SET11           | ¿¡¾î¸®¾î1-¼¼Æ®11                     |
+| 58   | ¿¡¾î¸®¾î-¼¼Æ®-¸Þ¸ð¸®Æ÷Æ® | A01.SET11.MP01~MP32 | ¿¡¾î¸®¾î1-¼¼Æ®11-¸Þ¸ð¸®Æ÷Æ®1~32      |
+| 59   | ¿¡¾î¸®¾î-¼¼Æ®            | A01.SET12           | ¿¡¾î¸®¾î1-¼¼Æ®12                     |
+| 60   | ¿¡¾î¸®¾î-¼¼Æ®-¸Þ¸ð¸®Æ÷Æ® | A01.SET12.MP01~MP32 | ¿¡¾î¸®¾î1-¼¼Æ®12-¸Þ¸ð¸®Æ÷Æ®1~32      |
+| 61   | ¹°·ù·Îº¿-Ä«¼¼Æ®Æ÷Æ®      | AMR.CP01            | ¹°·ù·Îº¿1-Ä«¼¼Æ®Æ÷Æ®1                |
+| 62   | ÀÛ¾÷·Îº¿-Æ®·¹ÀÌÆ÷Æ®      | AMR.TP01            | ÀÛ¾÷·Îº¿1-Æ®·¹ÀÌÆ÷Æ®1                |
+| 63   | ÀÛ¾÷·Îº¿-¸Þ¸ð¸®Æ÷Æ®      | AMR.TP01.MP01~MP25  | ÀÛ¾÷·Îº¿1-Æ®·¹ÀÌÆ÷Æ®1-¸Þ¸ð¸®Æ÷Æ®1~25 |
+| 64   | ÀÛ¾÷·Îº¿-Æ®·¹ÀÌÆ÷Æ®      | AMR.TP02            | ÀÛ¾÷·Îº¿1-Æ®·¹ÀÌÆ÷Æ®2                |
+| 65   | ÀÛ¾÷·Îº¿-¸Þ¸ð¸®Æ÷Æ®      | AMR.TP02.MP01~MP25  | ÀÛ¾÷·Îº¿1-Æ®·¹ÀÌÆ÷Æ®2-¸Þ¸ð¸®Æ÷Æ®1~25 |
+| 66   | ÀÛ¾÷·Îº¿-Æ®·¹ÀÌÆ÷Æ®      | AMR.TP03            | ÀÛ¾÷·Îº¿1-Æ®·¹ÀÌÆ÷Æ®3                |
+| 67   | ÀÛ¾÷·Îº¿-¸Þ¸ð¸®Æ÷Æ®      | AMR.TP03.MP01~MP25  | ÀÛ¾÷·Îº¿1-Æ®·¹ÀÌÆ÷Æ®3-¸Þ¸ð¸®Æ÷Æ®1~25 |
 
 
 
 
 
-## 9. ë¬¸ì„œ ì •ë³´
+## 9. ¹®¼­ Á¤º¸
 
-- **ë²„ì „**: v1.4.1
-- **ìž‘ì„±ì¼**: 2025-08-11
-- **ìž‘ì„±ìž**: ì œì´ì›ì†Œí”„íŠ¸ ìœ¤ì„í˜¸
-- **ë¹„ê³ **:  ë³¸ ë¬¸ì„œëŠ” ê³ ê°ì‚¬ ìš”ì²­ ë˜ëŠ” ê°œë°œ ì§„í–‰ ê³¼ì •ì—ì„œ ë‚´ìš©ì´ ë³€ê²½ë  ìˆ˜ ìžˆìŠµë‹ˆë‹¤.
+- **¹öÀü**: v1.4.1
+- **ÀÛ¼ºÀÏ**: 2025-08-11
+- **ÀÛ¼ºÀÚ**: Á¦ÀÌ¿ø¼ÒÇÁÆ® À±¼®È£
+- **ºñ°í**:  º» ¹®¼­´Â °í°´»ç ¿äÃ» ¶Ç´Â °³¹ß ÁøÇà °úÁ¤¿¡¼­ ³»¿ëÀÌ º¯°æµÉ ¼ö ÀÖ½À´Ï´Ù.
 
 ---
 
 
 
-### 9.1 ìˆ˜ì • ì‚¬í•­
+### 9.1 ¼öÁ¤ »çÇ×
 
 * **v1.4.1**
-  - **<span style="color: red;">6.10 í”Œëžœ í˜„í™© ìš”ì²­ (RequestAcsPlans)  </span>**
-    - `status` ê°’ì— ë”°ë¥¸ `stepNo`, `jobId` í‘œê¸° ê·œì¹™ ì¶”ê°€
-      - Pendingì˜ ê²½ìš°, ì²« ë²ˆì§¸ Stepê³¼ í•´ë‹¹ Stepì˜ ì²« ë²ˆì§¸ Job
-      - InProgressì˜ ê²½ìš°, ì§„í–‰ ì¤‘ì¸ Stepê³¼ ì§„í–‰ ì¤‘ì¸ Job
-      - Pausedì˜ ê²½ìš°, ì§„í–‰ ì¤‘ì´ë˜ Stepê³¼ ì¼ì‹œ ì¤‘ì§€ëœ Job
-  - <span style="color: red;">**6.11 ACS í”Œëžœ ì´ë ¥ ì¡°íšŒ (RequestAcsPlanHistory)**</span>
-    - `status` ê°’ì— ë”°ë¥¸ `stepNo`, `jobId` í‘œê¸° ê·œì¹™ ì¶”ê°€
-      - Failedì˜ ê²½ìš°, ì‹¤íŒ¨ê°€ ë°œìƒí•œ *Step*ê³¼ í•´ë‹¹ *Job*
-      - Completedì˜ ê²½ìš°, *stepNo*ëŠ” 0,  *jobId*ëŠ” `null`
+  - **<span style="color: red;">6.10 ÇÃ·£ ÇöÈ² ¿äÃ» (RequestAcsPlans)  </span>**
+    - `status` °ª¿¡ µû¸¥ `stepNo`, `jobId` Ç¥±â ±ÔÄ¢ Ãß°¡
+      - PendingÀÇ °æ¿ì, Ã¹ ¹øÂ° Step°ú ÇØ´ç StepÀÇ Ã¹ ¹øÂ° Job
+      - InProgressÀÇ °æ¿ì, ÁøÇà ÁßÀÎ Step°ú ÁøÇà ÁßÀÎ Job
+      - PausedÀÇ °æ¿ì, ÁøÇà ÁßÀÌ´ø Step°ú ÀÏ½Ã ÁßÁöµÈ Job
+  - <span style="color: red;">**6.11 ACS ÇÃ·£ ÀÌ·Â Á¶È¸ (RequestAcsPlanHistory)**</span>
+    - `status` °ª¿¡ µû¸¥ `stepNo`, `jobId` Ç¥±â ±ÔÄ¢ Ãß°¡
+      - FailedÀÇ °æ¿ì, ½ÇÆÐ°¡ ¹ß»ýÇÑ *Step*°ú ÇØ´ç *Job*
+      - CompletedÀÇ °æ¿ì, *stepNo*´Â 0,  *jobId*´Â `null`
 
 - **v1.4.0**
-  - ìž‘ì—… (ì·¨ì†Œ/ì¤‘ë‹¨/ì¼ì‹œì •ì§€/ìž¬ê°œ) ì»¤ë§¨ë“œ ë‚´ ê²°ê³¼ ë³´ê³  ì»¤ë§¨ë“œ ì¶”ê°€
-  - Abnormal Case ë°œìƒ ì‹œ ë‚´ìš© ë³´ì™„
-  - 6.21 ACS í†µì‹  ìƒíƒœ ë³´ê³  (AcsCommStateUpdate) ì»¤ë§¨ë“œ ì¶”ê°€
+  - ÀÛ¾÷ (Ãë¼Ò/Áß´Ü/ÀÏ½ÃÁ¤Áö/Àç°³) Ä¿¸Çµå ³» °á°ú º¸°í Ä¿¸Çµå Ãß°¡
+  - Abnormal Case ¹ß»ý ½Ã ³»¿ë º¸¿Ï
+  - 6.21 ACS Åë½Å »óÅÂ º¸°í (AcsCommStateUpdate) Ä¿¸Çµå Ãß°¡
 
 - **v1.3.0**
-  - 6.20 TSC ìƒíƒœ ë³´ê³  ë©”ì„¸ì§€ ì¶”ê°€
+  - 6.20 TSC »óÅÂ º¸°í ¸Þ¼¼Áö Ãß°¡
   
 - **v1.2.1**
-  - 6.16 ë¡œë´‡ ìƒíƒœ ì—…ë°ì´íŠ¸ ì»¤ë§¨ë“œ ë³€ê²½ (*robotType* ì†ì„± ì¶”ê°€)
-  - 6.19 ë°°í„°ë¦¬ ìŠ¤í…Œì´ì…˜ ì—…ë°ì´íŠ¸ ì»¤ë§¨ë“œ ì‚­ì œ
+  - 6.16 ·Îº¿ »óÅÂ ¾÷µ¥ÀÌÆ® Ä¿¸Çµå º¯°æ (*robotType* ¼Ó¼º Ãß°¡)
+  - 6.19 ¹èÅÍ¸® ½ºÅ×ÀÌ¼Ç ¾÷µ¥ÀÌÆ® Ä¿¸Çµå »èÁ¦
 
 - **v1.2.0**
-  - 5.3 ë¡œë´‡ ìœ„ì¹˜, ë°°í„°ë¦¬ ìŠ¤í…Œì´ì…˜ ìƒíƒœ ë“±ì˜ ì •ë³´ë¥¼ ì£¼ê¸°ì ìœ¼ë¡œ ì „ì†¡í•˜ëŠ” ì»¤ë§¨ë“œ í•­ëª© ì¶”ê°€ (6.18, 6.19 ì»¤ë§¨ë“œ)
-  - 6.16 ë¡œë´‡ ìƒíƒœ ì •ë³´ ê°±ì‹  RobotStatusUpdate ë©”ì„¸ì§€ ë³€ê²½ (*battery* ì†ì„± ì‚­ì œ)
-  - 6.16 ë¡œë´‡ ìƒíƒœ ì •ë³´ ê°±ì‹  RobotStatusUpdate ë©”ì„¸ì§€ (*carrierIds* ì„¤ëª… ì¶”ê°€ - TPê°€ ë¹„ì–´ìžˆëŠ” ê²½ìš°)
+  - 5.3 ·Îº¿ À§Ä¡, ¹èÅÍ¸® ½ºÅ×ÀÌ¼Ç »óÅÂ µîÀÇ Á¤º¸¸¦ ÁÖ±âÀûÀ¸·Î Àü¼ÛÇÏ´Â Ä¿¸Çµå Ç×¸ñ Ãß°¡ (6.18, 6.19 Ä¿¸Çµå)
+  - 6.16 ·Îº¿ »óÅÂ Á¤º¸ °»½Å RobotStatusUpdate ¸Þ¼¼Áö º¯°æ (*battery* ¼Ó¼º »èÁ¦)
+  - 6.16 ·Îº¿ »óÅÂ Á¤º¸ °»½Å RobotStatusUpdate ¸Þ¼¼Áö (*carrierIds* ¼³¸í Ãß°¡ - TP°¡ ºñ¾îÀÖ´Â °æ¿ì)
 
 - **v1.1.0**
-  - MCS - ACS í†µì‹  í´ë¼ì´ì–¸íŠ¸ëŠ” í•˜ë‚˜ë¡œ ìš´ìš©
-  - 6.2 Registration ë©”ì„¸ì§€ ë³€ê²½ (*robotType* ì‚­ì œ)
-  - 6.14 Job ìƒíƒœ ë³´ê³  ë©”ì„¸ì§€ ë‚´ *Status* ì†ì„± ê°’ ì¤‘[*Retrying*] ìƒíƒœ ì‚¬ìš© ì•ˆí•¨
-  - 6.3~6.4 ExecutionPlan ì‹¤í–‰ ëª…ë ¹ ë©”ì„¸ì§€ ë³€ê²½ (*carrierIds* ì¶”ê°€)
-  - 6.15 ì—ëŸ¬/ì•ŒëžŒ ì´ë²¤íŠ¸ ë³´ê³  ë©”ì„¸ì§€ ë‚´ ì†ì„± ì¶”ê°€ (ì—ëŸ¬ í•´ì œ ê¸°ëŠ¥/ level)
-  - 6.16 ë¡œë´‡ ìƒíƒœ ì •ë³´ ê°±ì‹  RobotStatusUpdate ë©”ì„¸ì§€ ë³€ê²½ (*ports* ì‚­ì œ, *carrierIds* ì¶”ê°€)
-  - 6.17 ì—ëŸ¬/ì•ŒëžŒ í˜„í™© ìš”ì²­ ë©”ì„¸ì§€ ì¶”ê°€ (RequestAcsErrorList)
-  - 6.10 í”Œëžœ í˜„í™© ìš”ì²­ ë©”ì„¸ì§€ì— ACS ì¸¡ì—ì„œ ë³´ê³ í•˜ëŠ” í”Œëžœ ë¦¬ìŠ¤íŠ¸ì˜ status ì†ì„±ì€ (*Pending, InProgress, Paused*)ë¡œ ì œí•œ
+  - MCS - ACS Åë½Å Å¬¶óÀÌ¾ðÆ®´Â ÇÏ³ª·Î ¿î¿ë
+  - 6.2 Registration ¸Þ¼¼Áö º¯°æ (*robotType* »èÁ¦)
+  - 6.14 Job »óÅÂ º¸°í ¸Þ¼¼Áö ³» *Status* ¼Ó¼º °ª Áß[*Retrying*] »óÅÂ »ç¿ë ¾ÈÇÔ
+  - 6.3~6.4 ExecutionPlan ½ÇÇà ¸í·É ¸Þ¼¼Áö º¯°æ (*carrierIds* Ãß°¡)
+  - 6.15 ¿¡·¯/¾Ë¶÷ ÀÌº¥Æ® º¸°í ¸Þ¼¼Áö ³» ¼Ó¼º Ãß°¡ (¿¡·¯ ÇØÁ¦ ±â´É/ level)
+  - 6.16 ·Îº¿ »óÅÂ Á¤º¸ °»½Å RobotStatusUpdate ¸Þ¼¼Áö º¯°æ (*ports* »èÁ¦, *carrierIds* Ãß°¡)
+  - 6.17 ¿¡·¯/¾Ë¶÷ ÇöÈ² ¿äÃ» ¸Þ¼¼Áö Ãß°¡ (RequestAcsErrorList)
+  - 6.10 ÇÃ·£ ÇöÈ² ¿äÃ» ¸Þ¼¼Áö¿¡ ACS Ãø¿¡¼­ º¸°íÇÏ´Â ÇÃ·£ ¸®½ºÆ®ÀÇ status ¼Ó¼ºÀº (*Pending, InProgress, Paused*)·Î Á¦ÇÑ
 
 - **v1.0.1**
-  - ì´ˆê¸° ì—°ê²° (Registration) ë©”ì„¸ì§€ ë‚´  payload ìˆ˜ì •. (íŠ¸ë ˆì´ / ì¹´ì„¸íŠ¸ ìœ ë¬´ ì†¡ìˆ˜ì‹  ì‚­ì œ)
+  - ÃÊ±â ¿¬°á (Registration) ¸Þ¼¼Áö ³»  payload ¼öÁ¤. (Æ®·¹ÀÌ / Ä«¼¼Æ® À¯¹« ¼Û¼ö½Å »èÁ¦)
 
-  - í”Œëžœ ìƒíƒœ ë³´ê³  ë©”ì„¸ì§€ ì¶”ê°€.
+  - ÇÃ·£ »óÅÂ º¸°í ¸Þ¼¼Áö Ãß°¡.
 
-  - RequestAcsStatus ë©”ì„¸ì§€ ë‚´ payload ìˆ˜ì •.
+  - RequestAcsStatus ¸Þ¼¼Áö ³» payload ¼öÁ¤.
 
-  - StatusUpdate ë©”ì„¸ì§€ ëª…ì¹­ ë³€ê²½ (RobotStatusUpdate)
+  - StatusUpdate ¸Þ¼¼Áö ¸íÄª º¯°æ (RobotStatusUpdate)
 
-  - RobotStatusUpdate (íŠ¸ë ˆì´/ì¹´ì„¸íŠ¸ ìœ ë¬´ )
+  - RobotStatusUpdate (Æ®·¹ÀÌ/Ä«¼¼Æ® À¯¹« )
 
-  - RequestAcsStatus ë©”ì„¸ì§€ ëª…ì¹­ ë³€ê²½ (RequestAcsPlans)
-  - ACS í”Œëžœ ì´ë ¥ ì¡°íšŒ ë©”ì„¸ì§€ ì¶”ê°€ 
+  - RequestAcsStatus ¸Þ¼¼Áö ¸íÄª º¯°æ (RequestAcsPlans)
+  - ACS ÇÃ·£ ÀÌ·Â Á¶È¸ ¸Þ¼¼Áö Ãß°¡ 
 
 

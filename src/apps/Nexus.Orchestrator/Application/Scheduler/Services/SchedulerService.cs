@@ -1,4 +1,6 @@
 using System.Collections.Concurrent;
+using StackExchange.Redis;
+using System.Text.Json;
 using Nexus.Core.Domain.Models.Areas;
 using Nexus.Core.Domain.Models.Areas.Enums;
 using Nexus.Core.Domain.Models.Areas.Interfaces;
@@ -7,9 +9,14 @@ using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Lots;
 using Nexus.Core.Domain.Models.Lots.Enums;
 using Nexus.Core.Domain.Models.Lots.Interfaces;
+using Nexus.Core.Domain.Models.Lots.DTO;
 using Nexus.Core.Domain.Models.Plans;
 using Nexus.Core.Domain.Models.Plans.Enums;
 using Nexus.Core.Domain.Models.Transports;
+using Nexus.Core.Domain.Models.Robots;
+using Nexus.Core.Domain.Models.Robots.Interfaces;
+using Nexus.Orchestrator.Application.Robots.Simulation;
+using Nexus.Core.Domain.Shared.Bases;
 
 namespace Nexus.Orchestrator.Application.Scheduler.Services
 {
@@ -21,6 +28,9 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
         private readonly ILocationService _locationService;
         private readonly ILotRepository _lotRepository;
         private readonly ILogger<SchedulerService> _logger;
+        private readonly IConnectionMultiplexer _redis;
+        private readonly IRobotRepository _robotRepository;
+        private readonly RobotMotionService _motionService;
 
         private readonly ConcurrentQueue<string> _pendingLotIds = new();
 
@@ -32,12 +42,18 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             IAreaService areaService,
             ILocationService locationService,
             ILotRepository lotRepository,
-            ILogger<SchedulerService> logger)
+            ILogger<SchedulerService> logger,
+            IConnectionMultiplexer redis,
+            IRobotRepository robotRepository,
+            RobotMotionService motionService)
         {
             _areaService = areaService;
             _locationService = locationService;
             _lotRepository = lotRepository;
             _logger = logger;
+            _redis = redis;
+            _robotRepository = robotRepository;
+            _motionService = motionService;
         }
 
         #endregion
@@ -55,12 +71,41 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
 
         private async Task SubscribeToLotCreatedEventsAsync(CancellationToken stoppingToken)
         {
-            
+            ISubscriber sub = _redis.GetSubscriber();
+            string channel = "events:lot:publish";
+            await sub.SubscribeAsync(RedisChannel.Literal(channel), (redisChannel, value) =>
+            {
+                try
+                {
+                    string message = value.ToString();
+                    HandleLotCreatedEventMessage(message);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error handling lot publish message");
+                }
+            });
         }
 
         private void HandleLotCreatedEventMessage(string message)
         {
-          
+          try
+          {
+              LotPublishedEventDto? dto = JsonSerializer.Deserialize<LotPublishedEventDto>(message);
+              if (dto == null)
+              {
+                  return;
+              }
+              if (string.IsNullOrEmpty(dto.LotId))
+              {
+                  return;
+              }
+              _ = ProcessLotAsync(dto.LotId, CancellationToken.None);
+          }
+          catch (Exception ex)
+          {
+              _logger.LogError(ex, "Failed to parse lot publish message: {Message}", message);
+          }
         }
 
         #endregion
@@ -83,6 +128,9 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                 // PlanGroup 생성 (조건 체크 없이 무조건 생성)
                 CreatePlanGroups(lot);
 
+                // Simulate robot motions for Stocker->Area paths
+                await SimulateStockerToAreaAsync(lot, cancellationToken);
+
                 // Lot 상태를 Assigned로 변경
                 lot.Status = ELotStatus.Assigned;
                 await _lotRepository.UpdateAsync(lot, cancellationToken);
@@ -95,6 +143,96 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
 
                 // 에러 발생 시 다시 대기열에 추가 (재시도)
                 _pendingLotIds.Enqueue(lotId);
+            }
+        }
+
+        private async Task<bool> MoveRobotToAsync(string robotId, uint targetX, uint targetY, double speed, CancellationToken cancellationToken)
+        {
+            _motionService.ScheduleMove(robotId, (double)targetX, (double)targetY, speed);
+
+            const int pollMs = 200;
+            const int maxWaitMs = 60000;
+            int waited = 0;
+            while (waited < maxWaitMs)
+            {
+                Position? pos = await _robotRepository.GetPositionAsync(robotId, cancellationToken);
+                if (pos != null)
+                {
+                    if (pos.X == targetX && pos.Y == targetY)
+                    {
+                        return true;
+                    }
+                }
+                try
+                {
+                    await Task.Delay(pollMs, cancellationToken);
+                }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
+                waited += pollMs;
+            }
+            return false;
+        }
+
+        private async Task SimulateStockerToAreaAsync(Lot lot, CancellationToken cancellationToken)
+        {
+            IReadOnlyList<Robot> robots = await _robotRepository.GetAllAsync(cancellationToken);
+            if (robots == null || robots.Count == 0)
+            {
+                _logger.LogWarning("No robots available for simulation");
+                return;
+            }
+            Robot robot = robots[0];
+            double speed = 80.0; // units per second
+
+            foreach (LotStep step in lot.LotSteps)
+            {
+                Area? emptyArea = GetEmptyAreaForCassettes(step.Cassettes.Count);
+                if (emptyArea == null)
+                {
+                    emptyArea = _areaService.GetAvailableAreaForCassette();
+                }
+                if (emptyArea == null)
+                {
+                    _logger.LogWarning("No area available for simulation of lot step {LotStepId}", step.Id);
+                    continue;
+                }
+
+                string amrIdSim = $"{robot.Id}.CP01";
+                MarkerLocation amrLocation = GetOrCreateAMRLocation(amrIdSim, $"AMR Port of {robot.Id}");
+
+                foreach (Cassette cassette in step.Cassettes)
+                {
+                    CassetteLocation? stockerLocation = _locationService.GetCassetteLocationById(cassette.Id);
+                    if (stockerLocation == null)
+                    {
+                        _logger.LogWarning("Cannot find stocker location for cassette {CassetteId}", cassette.Id);
+                        continue;
+                    }
+
+                    CassetteLocation? targetCassettePort = _areaService.GetAvailableCassettePort(emptyArea);
+                    if (targetCassettePort == null)
+                    {
+                        _logger.LogWarning("No available cassette port in area {AreaId} for cassette {CassetteId}", emptyArea.Id, cassette.Id);
+                        continue;
+                    }
+
+                    // Move robot to AMR location first
+                    bool ok1 = await MoveRobotToAsync(robot.Id, amrLocation.Position.X, amrLocation.Position.Y, speed, cancellationToken);
+                    if (!ok1)
+                    {
+                        _logger.LogWarning("Robot {RobotId} did not reach AMR location in time", robot.Id);
+                    }
+
+                    // Then move to target cassette port in area
+                    bool ok2 = await MoveRobotToAsync(robot.Id, targetCassettePort.Position.X, targetCassettePort.Position.Y, speed, cancellationToken);
+                    if (!ok2)
+                    {
+                        _logger.LogWarning("Robot {RobotId} did not reach target cassette port {PortId} in time", robot.Id, targetCassettePort.Id);
+                    }
+                }
             }
         }
 
@@ -153,8 +291,19 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             _logger.LogInformation("Selected Area {AreaId} (Status: {AreaStatus}) for cassette placement",
                 emptyArea.Id, emptyArea.Status);
 
-            // AMR 마커 Location 생성/조회 (경유지)
-            MarkerLocation amrLocation = GetOrCreateAMRLocation("AMR.CP01", "물류로봇 카세트 포트 1");
+            // AMR 마커 Location 생성/조회 (경유지) - robot-specific
+            string robotIdForAmr = "RBT01";
+            try
+            {
+                IReadOnlyList<Robot> robots = _robotRepository.GetAllAsync().GetAwaiter().GetResult();
+                if (robots != null && robots.Count > 0 && robots[0] != null)
+                {
+                    robotIdForAmr = robots[0].Id;
+                }
+            }
+            catch { }
+            string amrId = $"{robotIdForAmr}.CP01";
+            MarkerLocation amrLocation = GetOrCreateAMRLocation(amrId, $"AMR Port of {robotIdForAmr}");
 
             foreach (Cassette cassette in lotStep.Cassettes)
             {
@@ -338,8 +487,19 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             string planGroupId = Guid.NewGuid().ToString();
             PlanGroup planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_AreaToStocker", EPlanGroupType.AreaToStocker);
 
-            // AMR 마커 Location 조회
-            MarkerLocation amrLocation = GetOrCreateAMRLocation("AMR.CP01", "물류로봇 카세트 포트 1");
+            // AMR 마커 Location 조회 - robot-specific
+            string robotIdForAmr2 = "RBT01";
+            try
+            {
+                IReadOnlyList<Robot> robots2 = _robotRepository.GetAllAsync().GetAwaiter().GetResult();
+                if (robots2 != null && robots2.Count > 0 && robots2[0] != null)
+                {
+                    robotIdForAmr2 = robots2[0].Id;
+                }
+            }
+            catch { }
+            string amrId2 = $"{robotIdForAmr2}.CP01";
+            MarkerLocation amrLocation = GetOrCreateAMRLocation(amrId2, $"AMR Port of {robotIdForAmr2}");
 
             const string stockerPrefix = "ST01.CP";
             int stockerPortIndex = 1;

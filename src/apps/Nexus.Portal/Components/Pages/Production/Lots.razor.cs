@@ -7,6 +7,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Nexus.Core.Domain.Models.Lots.DTO;
+using StackExchange.Redis;
+using System.Text.Json;
 
 namespace Nexus.Portal.Components.Pages.Production
 {
@@ -20,6 +23,9 @@ namespace Nexus.Portal.Components.Pages.Production
 
         [Inject]
         private IDialogService DialogService { get; set; } = default!;
+
+        [Inject]
+        private IConnectionMultiplexer Redis { get; set; } = default!;
 
         private List<Lot> _lots = new List<Lot>();
         private HashSet<Lot> _selectedLots = new HashSet<Lot>();
@@ -163,6 +169,72 @@ namespace Nexus.Portal.Components.Pages.Production
             return new List<LotStep>();
         }
 
+        private bool CanPublishSelectedLot
+        {
+            get
+            {
+                if (_selectedLots == null)
+                {
+                    return false;
+                }
+                if (_selectedLots.Count != 1)
+                {
+                    return false;
+                }
+                Lot selected = _selectedLots.First();
+                if (selected == null)
+                {
+                    return false;
+                }
+                return selected.Status == ELotStatus.None;
+            }
+        }
+
+        private async Task OnPublishSelectedLot()
+        {
+            if (_selectedLots == null)
+            {
+                return;
+            }
+            if (_selectedLots.Count != 1)
+            {
+                return;
+            }
+            Lot selected = _selectedLots.First();
+            if (selected == null)
+            {
+                return;
+            }
+            if (selected.Status != ELotStatus.None)
+            {
+                return;
+            }
+
+            try
+            {
+                selected.Status = ELotStatus.Waiting;
+                await LotRepository.UpdateAsync(selected);
+
+                ISubscriber sub = Redis.GetSubscriber();
+                string channel = "events:lot:publish";
+                LotPublishedEventDto dto = new LotPublishedEventDto();
+                dto.Event = "LotPublished";
+                dto.LotId = selected.Id;
+                dto.Name = selected.Name;
+                dto.Status = selected.Status.ToString();
+                dto.Timestamp = DateTime.UtcNow;
+                string payload = JsonSerializer.Serialize(dto);
+                await sub.PublishAsync(RedisChannel.Literal(channel), payload);
+
+                Snackbar.Add($"Lot '{selected.Id}' published", Severity.Success);
+                await LoadLotsAsync();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Publish failed: {ex.Message}", Severity.Error);
+            }
+        }
+
         private void OnNewLot()
         {
             _isCreatingLot = true;
@@ -240,7 +312,7 @@ namespace Nexus.Portal.Components.Pages.Production
                 return;
             }
 
-            string message = $"Delete [{_selectedLots.First().Id}]? This action cannot be undone.";
+            string message = $"Delete '{_selectedLots.First().Id}'? This action cannot be undone.";
             DialogOptions dialogOptions = new DialogOptions
             {
                 CloseOnEscapeKey = true
@@ -384,7 +456,7 @@ namespace Nexus.Portal.Components.Pages.Production
             }
 
             Lot lot = _selectedLots.First();
-            string message = $"Delete [{_selectedSteps.First().Id}] from lot '{lot.Id}'? This action cannot be undone.";
+            string message = $"Delete '{_selectedSteps.First().Id}' from lot '{lot.Id}'? This action cannot be undone.";
             DialogOptions dialogOptions = new DialogOptions
             {
                 CloseOnEscapeKey = true
