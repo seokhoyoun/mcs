@@ -167,10 +167,10 @@
         const baseLocationType = normalizedLocation.locationType;
 
         const locationTypeColorMap = {
-            'Cassette': nexus3dRef.themeColors && nexus3dRef.themeColors.info != null ? nexus3dRef.themeColors.info : 0xffc107,
-            'Tray': nexus3dRef.themeColors && nexus3dRef.themeColors.success != null ? nexus3dRef.themeColors.success : 0x2e7d32,
+            'Cassette': nexus3dRef.themeColors && nexus3dRef.themeColors.background != null ? nexus3dRef.themeColors.background : 0xffc107,
+            'Tray': nexus3dRef.themeColors && nexus3dRef.themeColors.background != null ? nexus3dRef.themeColors.background : 0x2e7d32,
             'Memory': nexus3dRef.themeColors && nexus3dRef.themeColors.info != null ? nexus3dRef.themeColors.info : 0x0288d1,
-            'Marker': nexus3dRef.themeColors && nexus3dRef.themeColors.secondary != null ? nexus3dRef.themeColors.secondary : 0x9c27b0
+            'Marker': nexus3dRef.themeColors && nexus3dRef.themeColors.success != null ? nexus3dRef.themeColors.success : 0x9c27b0
         };
 
         let selectedColor = locationTypeColorMap[baseLocationType] || 0x888888;
@@ -178,10 +178,10 @@
 
         if (locationRole) {
             const roleColorMap = {
-                'area': nexus3dRef.themeColors && nexus3dRef.themeColors.background != null ? nexus3dRef.themeColors.background : 0x2e7d32,
+                'area': nexus3dRef.themeColors && nexus3dRef.themeColors.success != null ? nexus3dRef.themeColors.success : 0x2e7d32,
                 'stocker': nexus3dRef.themeColors && nexus3dRef.themeColors.background != null ? nexus3dRef.themeColors.background : 0xffc107,
                 'set': nexus3dRef.themeColors && nexus3dRef.themeColors.primary != null ? nexus3dRef.themeColors.primary : 0x3f51b5,
-                'movearea': nexus3dRef.themeColors && nexus3dRef.themeColors.info != null ? nexus3dRef.themeColors.info : 0x0288d1
+                'movearea': nexus3dRef.themeColors && nexus3dRef.themeColors.success != null ? nexus3dRef.themeColors.success : 0x0288d1
             };
             selectedColor = roleColorMap[locationRole] || selectedColor;
         }
@@ -209,7 +209,7 @@
                 materialOpacity = 0.30; // cassette: more transparent to see inner item
                 break;
             case baseLocationType === 'Tray':
-                materialOpacity = 0.6; // tray: semi-transparent
+                materialOpacity = 0.5; // tray: semi-transparent
                 break;
             default:
                 materialOpacity = 1.0;
@@ -259,7 +259,8 @@
             status: normalizedLocation.status,
             parentId: normalizedLocation.parentId,
             isVisible: normalizedLocation.isVisible,
-            isRelativePosition: normalizedLocation.isRelativePosition
+            isRelativePosition: normalizedLocation.isRelativePosition,
+            currentItemId: normalizedLocation.currentItemId || ''
         };
         locationMesh.visible = (normalizedLocation.isVisible !== false);
 
@@ -267,9 +268,9 @@
         try {
             if ((baseLocationType === 'Cassette' || baseLocationType === 'Tray' || baseLocationType === 'Memory') && normalizedLocation.currentItemId) {
                 const td = getTransportDims(nexus3dRef, baseLocationType);
-                let innerWidth = meshWidth * 0.8;
-                let innerHeight = meshHeight * 0.6;
-                let innerDepth = meshDepth * 0.8;
+                let innerWidth = meshWidth * 0.9;
+                let innerHeight = meshHeight * 1;
+                let innerDepth = meshDepth * 0.9;
                 if (td) {
                     innerWidth = Math.min(td.width || innerWidth, meshWidth);
                     innerHeight = Math.min(td.height || innerHeight, meshHeight);
@@ -580,10 +581,24 @@
                     return found;
                 }
 
-                // 3) Add trays initially as independent; we'll re-parent in a second pass
+                // 3) Add trays: only if parent cassette (by parentId or containment) has currentItemId
+                const cassettesWithoutItem = new Set(cassetteItems.filter(c => !c.currentItemId).map(c => c.id));
                 trayItems.forEach(tray => {
                     const trayMesh = createLocationMeshObject(nexus3dRef, tray);
                     if (!trayMesh) { return; }
+                    // Decide container cassette id
+                    let containerId = null;
+                    if (tray.parentId) {
+                        containerId = tray.parentId;
+                    } else {
+                        const containerCassette = findContainingCassette(tray);
+                        containerId = containerCassette ? containerCassette.id : null;
+                    }
+                    if (containerId && cassettesWithoutItem.has(containerId)) {
+                        // Skip adding tray if container cassette has no current item
+                        try { trayMesh.visible = false; } catch { }
+                        return;
+                    }
                     sceneObject.add(trayMesh);
                     locationMeshCollection.set(tray.id, trayMesh);
                 });
@@ -1132,6 +1147,21 @@
                 const ry = (normalizedLocation.rotateY || 0) * Math.PI / 180.0;
                 const rz = (normalizedLocation.rotateZ || 0) * Math.PI / 180.0;
                 existingMesh.rotation.set(rx, ry, rz);
+            } catch { }
+
+            // Hide tray under cassette if parent cassette has no currentItemId
+            try {
+                if (baseLocationType === 'Tray' && existingMesh.parent && existingMesh.parent.userData && existingMesh.parent.userData.locationType === 'Cassette') {
+                    const cassetteHasItem = !!(existingMesh.parent.userData.currentItemId);
+                    existingMesh.visible = cassetteHasItem && (normalizedLocation.isVisible !== false);
+                }
+            } catch { }
+
+            // If this location is a cassette, update its currentItemId in userData
+            try {
+                if (baseLocationType === 'Cassette') {
+                    existingMesh.userData.currentItemId = normalizedLocation.currentItemId || '';
+                }
             } catch { }
 
             // Update material color and opacity

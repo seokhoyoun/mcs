@@ -44,10 +44,10 @@ namespace Nexus.Sandbox
             {
                 new DimensionSeeder(dimesionRepo),
                 new CassetteSeeder(transportRepo),
-                new AreaSeeder(areaRepo),
-                new StockerSeeder(stockerRepo),
+                new AreaSeeder(areaRepo, dimesionRepo),
+                new StockerSeeder(stockerRepo, dimesionRepo),
                 new MarkerSeeder(locationRepo, areaRepo, stockerRepo),
-                new RobotSeeder(robotRepo, locationRepo)
+                new RobotSeeder(robotRepo, locationRepo, dimesionRepo)
             };
 
             foreach (IDataSeeder seeder in seeders)

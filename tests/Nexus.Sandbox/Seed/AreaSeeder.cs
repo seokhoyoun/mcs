@@ -1,11 +1,13 @@
 using Nexus.Core.Domain.Models.Areas;
 using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Enums;
+using Nexus.Core.Domain.Shared.Bases;
+using Nexus.Core.Domain.Standards;
 using Nexus.Infrastructure.Persistence.Redis;
 using Nexus.Sandbox.Seed.Interfaces;
-using Nexus.Core.Domain.Shared.Bases;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -16,19 +18,21 @@ namespace Nexus.Sandbox.Seed
     internal class AreaSeeder : IDataSeeder
     {
         private readonly RedisAreaRepository _repo;
+        private readonly RedisDimensionRepository _dimRepo;
 
-        public AreaSeeder(RedisAreaRepository repo)
+        public AreaSeeder(RedisAreaRepository repo, RedisDimensionRepository dimRepo)
         {
             _repo = repo;
+            _dimRepo = dimRepo;
         }
         public async Task SeedAsync()
         {
-            List<Area> areas = LoadAreasFromLocalFile();
+            List<Area> areas = await LoadAreasFromLocalFileAsync();
 
             await _repo.AddRangeAsync(areas);
         }
 
-        private List<Area> LoadAreasFromLocalFile()
+        private async Task<List<Area>> LoadAreasFromLocalFileAsync()
         {
             List<Area> areas = new List<Area>();
             string filePath = "tmp\\areas.json";
@@ -63,11 +67,30 @@ namespace Nexus.Sandbox.Seed
                 {
                     areaBaseY = (areaIdx - 1) * 1000; // fallback offset pattern
                 }
+                DimensionStandard? cassetteStd = await _dimRepo.GetByIdAsync("transport:cassette");
+                DimensionStandard? cassetteLocationStd = await _dimRepo.GetByIdAsync("location:cassette");
+                DimensionStandard? trayLocationStd = await _dimRepo.GetByIdAsync("location:tray");
+                DimensionStandard? memoryLocationStd = await _dimRepo.GetByIdAsync("location:memory");
+
+                uint cassetteLocationW = cassetteLocationStd != null ? cassetteLocationStd.Width : 30u;
+                uint cassetteLocationH = cassetteLocationStd != null ? cassetteLocationStd.Height : 60u;
+                uint cassetteLocationD = cassetteLocationStd != null ? cassetteLocationStd.Depth : 60u;
+                uint trayLocationW = trayLocationStd != null ? trayLocationStd.Width : 30u;
+                uint trayLocationH = trayLocationStd != null ? trayLocationStd.Height : 4u;
+                uint trayLocationD = trayLocationStd != null ? trayLocationStd.Depth : 30u;
+                uint memLocationW = memoryLocationStd != null ? memoryLocationStd.Width : 5u;
+                uint memLocationH = memoryLocationStd != null ? memoryLocationStd.Height : 5u;
+                uint memLocationD = memoryLocationStd != null ? memoryLocationStd.Depth : 5u;
+
+                Debug.Assert(cassetteStd != null, "Cassette dimension standard not found");
+                uint cassetteW = cassetteStd.Width;
+                uint cassetteD = cassetteStd.Depth;
+                uint cassetteH = cassetteStd.Height;
 
                 for (int cassetteIdx = 1; cassetteIdx <= 6; cassetteIdx++)
                 {
                     string cassetteLocationId = $"{areaId}.CP{cassetteIdx:00}";
-                    CassetteLocation cassette = new CassetteLocation(
+                    CassetteLocation cassetteLocation = new CassetteLocation(
                         id: cassetteLocationId,
                         name: $"{areaName}_cp{cassetteIdx:00}");
 
@@ -77,14 +100,16 @@ namespace Nexus.Sandbox.Seed
                     uint cassetteX = (uint)(areaBaseX + cassetteCol * cassetteSpacingX);
                     uint cassetteY = (uint)(areaBaseY + cassetteRow * cassetteSpacingY);
                     uint cassetteZ = 0;
-                    cassette.Position = new Position(cassetteX, cassetteY, cassetteZ);
-                    cassette.Width = 30;
-                    cassette.Height = 60;
-                    cassette.Depth = 60;
-                    cassette.Rotation = new Rotation(0, 90, 0); // rotate area cassette orientation
-                    cassette.ParentId = string.Empty;
-                    cassette.IsVisible = true;
-                    cassetteLocations.Add(cassette);
+                    cassetteLocation.Position = new Position(cassetteX, cassetteY, cassetteZ);
+                    cassetteLocation.Width = cassetteLocationW;
+                    cassetteLocation.Height = cassetteLocationH;
+                    cassetteLocation.Depth = cassetteLocationD;
+                    cassetteLocation.Rotation = new Rotation(0, 90, 0); // rotate area cassette orientation
+                    cassetteLocation.ParentId = string.Empty;
+                    cassetteLocation.IsVisible = true;
+                    cassetteLocations.Add(cassetteLocation);
+
+                    uint baseTrayLocationZ = (cassetteLocation.Height - cassetteStd.Height) / 2;
 
                     for (int trayIdx = 1; trayIdx <= 6; trayIdx++)
                     {
@@ -93,26 +118,26 @@ namespace Nexus.Sandbox.Seed
                             id: trayLocationId,
                             name: $"{areaName}_cp{cassetteIdx:00}_tp{trayIdx:00}");
                         // Center trays inside the cassette footprint and stack vertically within cassette height
-                        // Size first
-                        tray.Width = 30;
-                        tray.Height = 4;
-                        tray.Depth = 30;
+                        // Size first (from dimension standard)
+                        tray.Width = trayLocationW;
+                        tray.Height = trayLocationH;
+                        tray.Depth = trayLocationD;
 
                         // Center X/Y within cassette bounds (relative offset)
                         tray.IsRelativePosition = true;
-                        uint trayX = (uint)(((int)cassette.Width - (int)tray.Width) / 2);
-                        uint trayY = (uint)(((int)cassette.Depth - (int)tray.Depth) / 2);
+                        uint trayX = (uint)(((int)cassetteW - (int)trayLocationW) / 2);
+                        uint trayY = (uint)(((int)cassetteD - (int)trayLocationD) / 2);
 
                         // Evenly distribute Z within cassette height so all layers fit inside
                         int layers = 6;
-                        int available = (int)cassette.Height - (int)tray.Height;
+                        int available = (int)cassetteH - (int)trayLocationH;
                         if (available < 0)
                         {
                             available = 0;
                         }
                         int step = layers > 1 ? (available / (layers - 1)) : 0;
                         int zeroBasedIndex = trayIdx - 1;
-                        uint trayZ = (uint)(zeroBasedIndex * step);
+                        uint trayZ = (uint)(zeroBasedIndex * step) + baseTrayLocationZ;
 
                         tray.ParentId = cassetteLocationId;
                         tray.IsVisible = true;
@@ -156,9 +181,9 @@ namespace Nexus.Sandbox.Seed
                         uint memY = (uint)(setOriginY + memRow * memSpacingY);
                         uint memZ = 0;
                         memory.Position = new Position(memX, memY, memZ);
-                        memory.Width = 5;
-                        memory.Height = 5;
-                        memory.Depth = 5;
+                        memory.Width = memLocationW;
+                        memory.Height = memLocationH;
+                        memory.Depth = memLocationD;
                         // Parent tray inference from id: map SET index to CP, MP index to TP (1..6 cyclic)
                         int inferredCpIndex = i % 6 == 0 ? 6 : i % 6;
                         int inferredTpIndex = ((m - 1) % 6) + 1;
@@ -178,6 +203,9 @@ namespace Nexus.Sandbox.Seed
                 Area area = new Area(areaId, areaName, cassetteLocations, trayLocations, sets);
                 areas.Add(area);
             }
+
+
+            areas.First().CassetteLocations.First().CurrentItemId = "CST02";
 
             // 파일로 저장
             Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);

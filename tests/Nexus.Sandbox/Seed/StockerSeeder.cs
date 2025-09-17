@@ -10,25 +10,29 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Nexus.Core.Domain.Standards;
+using System.Diagnostics;
 
 namespace Nexus.Sandbox.Seed
 {
     internal class StockerSeeder : IDataSeeder
     {
         private readonly RedisStockerRepository _repo;
+        private readonly RedisDimensionRepository _dimRepo;
 
-        public StockerSeeder(RedisStockerRepository repo)
+        public StockerSeeder(RedisStockerRepository repo, RedisDimensionRepository dimRepo)
         {
             _repo = repo;
+            _dimRepo = dimRepo;
         }
 
         public async Task SeedAsync()
         {
-            List<Stocker> stockers = LoadStockersFromLocalFile();
+            List<Stocker> stockers = await LoadStockersFromLocalFileAsync();
             await _repo.AddRangeAsync(stockers);
         }
 
-        private List<Stocker> LoadStockersFromLocalFile()
+        private async Task<List<Stocker>> LoadStockersFromLocalFileAsync()
         {
             List<Stocker> stockers = new List<Stocker>();
             string filePath = "tmp\\stockers.json";
@@ -45,15 +49,27 @@ namespace Nexus.Sandbox.Seed
             int spacingY = 30;
             int itemsPerFloor = 6; // total 12 -> 6 ports x 2 floors
             int floors = 2;
-            int cassetteDepth = 60; // length along Z (depth)
+            //int cassetteDepth = 60; // length along Z (depth)
             int cassetteHeight = 60; // fixed vertical thickness (Y axis)
             int floorHeight = cassetteHeight; // Z-position offset per floor (vertical stacking)
+            DimensionStandard? cassetteStd = await _dimRepo.GetByIdAsync("transport:cassette");
+            DimensionStandard? cassetteLocationStd = await _dimRepo.GetByIdAsync("location:cassette");
+            DimensionStandard? trayLocationStd = await _dimRepo.GetByIdAsync("location:tray");
+            uint cassetteLocationW = cassetteLocationStd != null ? cassetteLocationStd.Width : 30u;
+            uint cassetteLocationD = cassetteLocationStd != null ? cassetteLocationStd.Depth : 60u;
+            uint trayLocationW = trayLocationStd != null ? trayLocationStd.Width : 30u;
+            uint trayLocationH = trayLocationStd != null ? trayLocationStd.Height : 4u;
+            uint trayLocationD = trayLocationStd != null ? trayLocationStd.Depth : 30u;
 
+            Debug.Assert(cassetteStd != null, "Cassette dimension standard not found");
+            uint cassetteW = cassetteStd.Width;
+            uint cassetteD = cassetteStd.Depth;
+            uint cassetteH = cassetteStd.Height;
             for (int i = 1; i <= itemsPerFloor * floors; i++)
             {
                 string portId = $"{stockerId}.CP{i:00}";
 
-                CassetteLocation cassette = new CassetteLocation(
+                CassetteLocation cassetteLocation = new CassetteLocation(
                     id: portId,
                     name: $"{stockerName}_cp{i:00}"
                 );
@@ -68,52 +84,59 @@ namespace Nexus.Sandbox.Seed
                 uint y = (uint)(rowInFloor * spacingY);
                 // Use Position.Z to stack floors vertically (0 = 1F, cassetteHeight = 2F)
                 uint z = (uint)(floorIndex * floorHeight);
-                cassette.Position = new Position(x, y, z);
-                cassette.Width = 30;
-                cassette.Height = (uint)cassetteHeight; // fixed
-                cassette.Depth = (uint)cassetteDepth; // length on Z
-                cassette.ParentId = string.Empty;
-                cassette.IsVisible = true;
+                cassetteLocation.Position = new Position(x, y, z);
+                cassetteLocation.Width = cassetteLocationW;
+                cassetteLocation.Height = (uint)cassetteHeight; // keep spacing
+                cassetteLocation.Depth = cassetteLocationD;
+                cassetteLocation.ParentId = string.Empty;
+                cassetteLocation.IsVisible = true;
 
-                cassetteLocations.Add(cassette);
+                cassetteLocations.Add(cassetteLocation);
+
+                uint baseTrayLocationZ = (cassetteLocation.Height - cassetteStd.Height) / 2;
 
                 // 각 CassetteLocation에 대해 TrayLocation 생성 (카세트 내부에 층층이 쌓이도록)
                 for (int trayIdx = 1; trayIdx <= 6; trayIdx++)
                 {
                     string trayLocationId = $"{stockerId}.CP{i:00}.TP{trayIdx:00}";
-                    TrayLocation tray = new TrayLocation(
+                    TrayLocation trayLocation = new TrayLocation(
                         id: trayLocationId,
                         name: $"{stockerName}_cp{i:00}_tp{trayIdx:00}");
 
-                    // 트레이 크기 설정 (카세트 내부 여유를 두고 중앙 정렬)
-                    tray.Width = 30;
-                    tray.Height = 4; // 얇은 트레이 높이로 레이어 시각화
-                    tray.Depth = 30;
+                    // 트레이 크기 설정 (dimension)
+                    trayLocation.Width = trayLocationW;
+                    trayLocation.Height = trayLocationH;
+                    trayLocation.Depth = trayLocationD;
 
                     // 카세트 내부 중앙 정렬 (X/Y 평면)
-                    tray.IsRelativePosition = true;
-                    uint trayX = (uint)(((int)cassette.Width - (int)tray.Width) / 2);
-                    uint trayY = (uint)(((int)cassette.Depth - (int)tray.Depth) / 2);
+                    trayLocation.IsRelativePosition = true;
+                    uint trayX = (uint)(((int)cassetteW - (int)trayLocationW) / 2);
+                    uint trayY = (uint)(((int)cassetteD - (int)trayLocationD) / 2);
 
                     // 카세트 높이 범위 내에서 균등 분포 (Z=vertical)
                     int layers = 6;
-                    int available = cassetteHeight - (int)tray.Height;
+                    int available = (int)cassetteH - (int)trayLocationH;
                     if (available < 0)
                     {
                         available = 0;
                     }
                     int step = layers > 1 ? (available / (layers - 1)) : 0;
                     int zeroBasedIndex = trayIdx - 1;
-                    uint trayZ = (uint)(zeroBasedIndex * step);
+                    uint trayZ = (uint)(zeroBasedIndex * step) + baseTrayLocationZ;
 
-                    tray.ParentId = portId;
-                    tray.IsVisible = true;
-                    tray.Position = new Position(trayX, trayY, trayZ);
-                    trayLocations.Add(tray);
+                    trayLocation.ParentId = portId;
+                    trayLocation.IsVisible = true;
+                    trayLocation.Position = new Position(trayX, trayY, trayZ);
+                    trayLocations.Add(trayLocation);
                 }
             }
 
             Stocker stocker = new Stocker(stockerId, stockerName, cassetteLocations, trayLocations);
+
+            CassetteLocation? sample = cassetteLocations.LastOrDefault();
+            Debug.Assert(sample != null);
+            sample.CurrentItemId = "CST01";
+
             stockers.Add(stocker);
 
             // JSON 파일로 저장

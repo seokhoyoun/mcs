@@ -12,11 +12,13 @@ namespace Nexus.Sandbox.Seed
     {
         private readonly RedisRobotRepository _repo;
         private readonly RedisLocationRepository _locationRepo;
+        private readonly RedisDimensionRepository _dimRepo;
 
-        public RobotSeeder(RedisRobotRepository repo, RedisLocationRepository locationRepo)
+        public RobotSeeder(RedisRobotRepository repo, RedisLocationRepository locationRepo, RedisDimensionRepository dimRepo)
         {
             _repo = repo;
             _locationRepo = locationRepo;
+            _dimRepo = dimRepo;
         }
 
         public async Task SeedAsync()
@@ -24,15 +26,21 @@ namespace Nexus.Sandbox.Seed
             // Create new locations for robots and save them
             List<Robot> robots = new List<Robot>();
 
+            // Load tray dimension
+            var trayStd = await _dimRepo.GetByIdAsync("location:tray");
+            uint trayW = trayStd != null ? trayStd.Width : 20u;
+            uint trayH = trayStd != null ? trayStd.Height : 20u;
+            uint trayD = trayStd != null ? trayStd.Depth : 20u;
+
             // CR01: 3 TrayLocations
             List<Location> cr01Locations = new List<Location>();
             for (int i = 1; i <= 3; i++)
             {
                 string id = $"CR01.TP{i:00}";
                 Nexus.Core.Domain.Models.Locations.TrayLocation trayLocation = new Nexus.Core.Domain.Models.Locations.TrayLocation(id, $"CR01_TRAY_{i:00}");
-                trayLocation.Width = 20;
-                trayLocation.Height = 20;
-                trayLocation.Depth = 20;
+                trayLocation.Width = trayW;
+                trayLocation.Height = trayH;
+                trayLocation.Depth = trayD;
                 trayLocation.ParentId = "CR01";
                 trayLocation.IsVisible = true;
                 trayLocation.IsRelativePosition = true;
@@ -52,9 +60,9 @@ namespace Nexus.Sandbox.Seed
             {
                 string id = $"CR02.TP{i:00}";
                 Nexus.Core.Domain.Models.Locations.TrayLocation trayLocation = new Nexus.Core.Domain.Models.Locations.TrayLocation(id, $"CR02_TRAY_{i:00}");
-                trayLocation.Width = 20;
-                trayLocation.Height = 20;
-                trayLocation.Depth = 20;
+                trayLocation.Width = trayW;
+                trayLocation.Height = trayH;
+                trayLocation.Depth = trayD;
                 trayLocation.ParentId = "CR02";
                 trayLocation.IsVisible = true;
                 trayLocation.IsRelativePosition = true;
