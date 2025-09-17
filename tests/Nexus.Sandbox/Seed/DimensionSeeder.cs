@@ -19,12 +19,12 @@ namespace Nexus.Sandbox.Seed
             {
                 // Location types
                 new DimensionStandard(id: "location:cassette", name: "CassetteLocation", category: "location", width: 30, height: 60, depth: 60),
-                new DimensionStandard(id: "location:tray", name: "TrayLocation", category: "location", width: 26, height: 1, depth: 30),
+                new DimensionStandard(id: "location:tray", name: "TrayLocation", category: "location", width: 26, height: 0, depth: 30),
                 new DimensionStandard(id: "location:memory", name: "MemoryLocation", category: "location", width: 5, height: 5, depth: 5),
 
                 // Transport (items placed at locations)
                 new DimensionStandard(id: "transport:cassette", name: "Cassette", category: "transport", width: 28, height: 50, depth: 50),
-                new DimensionStandard(id: "transport:tray", name: "Tray", category: "transport", width: 24, height: 3, depth: 28),
+                new DimensionStandard(id: "transport:tray", name: "Tray", category: "transport", width: 24, height: 1, depth: 28),
                 new DimensionStandard(id: "transport:memory", name: "Memory", category: "transport", width: 4, height: 4, depth: 4),
 
                 // Robots

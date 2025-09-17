@@ -37,138 +37,35 @@ namespace Nexus.Sandbox.Seed
 
         private async Task SeedStockerMarkersAsync()
         {
-            IReadOnlyList<Nexus.Core.Domain.Models.Stockers.Stocker> stockers = await _stockerRepo.GetAllAsync();
-            foreach (Nexus.Core.Domain.Models.Stockers.Stocker stocker in stockers)
-            {
-                if (stocker.CassetteLocations == null || stocker.CassetteLocations.Count == 0)
-                {
-                    continue;
-                }
 
-                // Create a single region marker that encloses the stocker's cassette ports
-                uint minX;
-                uint minY;
-                uint maxX;
-                uint maxY;
-                uint z;
-                List<Location> stockerPortsAsLocations = new List<Location>();
-                foreach (Nexus.Core.Domain.Models.Locations.CassetteLocation cp in stocker.CassetteLocations)
-                {
-                    stockerPortsAsLocations.Add(cp);
-                }
-                GetBounds(stockerPortsAsLocations, out minX, out minY, out maxX, out maxY, out z);
-                uint margin = 20;
-                uint left;
-                if (minX > margin)
-                {
-                    left = minX - margin;
-                }
-                else
-                {
-                    left = 0;
-                }
-                uint top;
-                if (minY > margin)
-                {
-                    top = minY - margin;
-                }
-                else
-                {
-                    top = 0;
-                }
-                uint width;
-                if (maxX >= left)
-                {
-                    width = maxX - left + margin;
-                }
-                else
-                {
-                    width = 0;
-                }
-                uint height;
-                if (maxY >= top)
-                {
-                    height = maxY - top + margin;
-                }
-                else
-                {
-                    height = 0;
-                }
-
-                MarkerLocation region = new MarkerLocation(stocker.Id, stocker.Name);
-                region.MarkerRole = EMarkerRole.Stocker;
-                region.Position = new Position(left, top, z);
-                region.Width = width;
-                region.Height = 0; // thin vertical thickness
-                region.Depth = height; // depth is Z length
-                await _locationRepo.AddAsync(region);
-            }
+            MarkerLocation region = new MarkerLocation(id: "ST01", name: "ST01");
+            region.MarkerRole = EMarkerRole.Stocker;
+            region.Position = new Position(0, 0, 0);
+            region.Width = 200;
+            region.Height = 0; // thin vertical thickness
+            region.Depth = 100; // depth is Z length
+            await _locationRepo.AddAsync(region);
         }
 
         private async Task SeedAreaMarkersAsync()
         {
-            IReadOnlyList<Area> areas = await _areaRepo.GetAllAsync();
-            foreach (Area area in areas)
-            {
-                List<Location> locs = new List<Location>();
-                locs.AddRange(area.CassetteLocations);
-                locs.AddRange(area.TrayLocations);
-                foreach (Set s in area.Sets)
-                {
-                    locs.AddRange(s.MemoryLocations);
-                }
 
-                if (locs.Count == 0)
-                {
-                    continue;
-                }
+            MarkerLocation region1 = new MarkerLocation("A01", "A01");
+            region1.MarkerRole = Nexus.Core.Domain.Models.Locations.Enums.EMarkerRole.Area;
+            region1.Position = new Position(250, 0, 0);
+            region1.Width = 700;
+            region1.Height = 0; // thin vertical thickness
+            region1.Depth = 250; // depth is Z length
+            await _locationRepo.AddAsync(region1);
 
-                // Create one region marker that encloses all sub-locations in the area
-                uint minX;
-                uint minY;
-                uint maxX;
-                uint maxY;
-                uint z;
-                GetBounds(locs, out minX, out minY, out maxX, out maxY, out z);
-                uint margin = 14;
-                uint left;
-                if (minX > margin)
-                {
-                    left = minX - margin;
-                }
-                else
-                {
-                    left = 0;
-                }
-                // Top margin intentionally not applied to keep consistent inner padding across areas
-                uint top = minY;
-                uint width;
-                if (maxX >= left)
-                {
-                    width = maxX - left + margin; // left margin + right margin
-                }
-                else
-                {
-                    width = 0;
-                }
-                uint height;
-                if (maxY >= top)
-                {
-                    height = maxY - top + margin; // bottom margin only
-                }
-                else
-                {
-                    height = 0;
-                }
 
-                MarkerLocation region = new MarkerLocation(area.Id, area.Name);
-                region.MarkerRole = Nexus.Core.Domain.Models.Locations.Enums.EMarkerRole.Area;
-                region.Position = new Position(left, top, z);
-                region.Width = width;
-                region.Height = 0; // thin vertical thickness
-                region.Depth = height; // depth is Z length
-                await _locationRepo.AddAsync(region);
-            }
+            MarkerLocation region2 = new MarkerLocation("A02", "A02");
+            region2.MarkerRole = Nexus.Core.Domain.Models.Locations.Enums.EMarkerRole.Area;
+            region2.Position = new Position(250, 300, 0);
+            region2.Width = 700;
+            region2.Height = 0; // thin vertical thickness
+            region2.Depth = 250; // depth is Z length
+            await _locationRepo.AddAsync(region2);
         }
 
         private async Task SeedSetMarkersAsync()
