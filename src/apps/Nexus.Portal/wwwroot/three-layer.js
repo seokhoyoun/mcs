@@ -116,6 +116,32 @@
         return null;
     }
 
+    function getItemFillColor(nexus3dRef, locationType) {
+        const colors = (nexus3dRef && nexus3dRef.themeColors) ? nexus3dRef.themeColors : {};
+        if (locationType === 'Cassette') {
+            if (colors.error != null) {
+                return colors.error;
+            }
+            return 0xff4444;
+        }
+        if (locationType === 'Tray') {
+            if (colors.success != null) {
+                return colors.success;
+            }
+            return 0x2e7d32;
+        }
+        if (locationType === 'Memory') {
+            if (colors.info != null) {
+                return colors.info;
+            }
+            return 0x0288d1;
+        }
+        if (colors.primary != null) {
+            return colors.primary;
+        }
+        return 0x3f51b5;
+    }
+
     function normalizeRobotData(robotData) {
         if (!robotData) {
             return {
@@ -268,9 +294,9 @@
         try {
             if ((baseLocationType === 'Cassette' || baseLocationType === 'Tray' || baseLocationType === 'Memory') && normalizedLocation.currentItemId) {
                 const td = getTransportDims(nexus3dRef, baseLocationType);
-                let innerWidth = meshWidth * 0.9;
-                let innerHeight = meshHeight * 1;
-                let innerDepth = meshDepth * 0.9;
+                let innerWidth = meshWidth;
+                let innerHeight = meshHeight;
+                let innerDepth = meshDepth;
                 if (td) {
                     innerWidth = Math.min(td.width || innerWidth, meshWidth);
                     innerHeight = Math.min(td.height || innerHeight, meshHeight);
@@ -281,10 +307,8 @@
                 innerDepth = Math.max(2, innerDepth);
 
                 const itemGeom = new THREE.BoxGeometry(innerWidth, innerHeight, innerDepth);
-                const itemColor = (nexus3dRef.themeColors && nexus3dRef.themeColors.error != null)
-                    ? nexus3dRef.themeColors.error
-                    : 0xff4444;
-                const itemMat = new THREE.MeshPhongMaterial({ color: convertToIntegerColor(itemColor), transparent: true, shininess: 60, opacity : 0.5, depthWrite: true, depthTest: true });
+                const itemColorValue = getItemFillColor(nexus3dRef, baseLocationType);
+                const itemMat = new THREE.MeshPhongMaterial({ color: convertToIntegerColor(itemColorValue), transparent: true, shininess: 60, opacity : 0.5, depthWrite: true, depthTest: true });
                 const itemMesh = new THREE.Mesh(itemGeom, itemMat);
                 itemMesh.position.set(0, 0, 0);
                 itemMesh.userData = { tag: 'item', itemId: normalizedLocation.currentItemId };
@@ -334,9 +358,9 @@
                 const meshDepth = typeof boxSize.depth === 'number' ? boxSize.depth : 0;
 
                 const td = getTransportDims(nexus3dRef, baseLocationType);
-                let innerWidth = meshWidth * 0.8;
-                let innerHeight = meshHeight * 0.6;
-                let innerDepth = meshDepth * 0.8;
+                let innerWidth = meshWidth;
+                let innerHeight = meshHeight;
+                let innerDepth = meshDepth;
                 if (td) {
                     innerWidth = Math.min(td.width || innerWidth, meshWidth);
                     innerHeight = Math.min(td.height || innerHeight, meshHeight);
@@ -347,10 +371,8 @@
                 innerDepth = Math.max(2, innerDepth);
 
                 const itemGeom = new THREE.BoxGeometry(innerWidth, innerHeight, innerDepth);
-                const itemColor = (nexus3dRef.themeColors && nexus3dRef.themeColors.primary != null)
-                    ? nexus3dRef.themeColors.primary
-                    : 0x3f51b5;
-                const itemMat = new THREE.MeshPhongMaterial({ color: convertToIntegerColor(itemColor), shininess: 60, transparent: true, opacity: 0.6 });
+                const itemColorValue = getItemFillColor(nexus3dRef, baseLocationType);
+                const itemMat = new THREE.MeshPhongMaterial({ color: convertToIntegerColor(itemColorValue), shininess: 60, transparent: true, opacity: 0.6 });
                 const itemMesh = new THREE.Mesh(itemGeom, itemMat);
                 itemMesh.position.set(0, 0, 0);
                 itemMesh.userData = { tag: 'item', itemId: normalizedLocation.currentItemId };
@@ -372,18 +394,16 @@
                 // Update item color and id; adjust geometry if needed
                 try {
                     existingItem.userData.itemId = normalizedLocation.currentItemId;
-                    const newColor = (nexus3dRef.themeColors && nexus3dRef.themeColors.primary != null)
-                        ? nexus3dRef.themeColors.primary
-                        : 0x3f51b5;
+                    const newColorValue = getItemFillColor(nexus3dRef, baseLocationType);
                     if (existingItem.material && existingItem.material.color) {
-                        existingItem.material.color.setHex(convertToIntegerColor(newColor));
+                        existingItem.material.color.setHex(convertToIntegerColor(newColorValue));
                         existingItem.material.needsUpdate = true;
                     }
 
                     const td = getTransportDims(nexus3dRef, baseLocationType);
-                    let desiredWidth = boxSize.width * 0.8;
-                    let desiredHeight = boxSize.height * 0.6;
-                    let desiredDepth = boxSize.depth * 0.8;
+                    let desiredWidth = boxSize.width;
+                    let desiredHeight = boxSize.height;
+                    let desiredDepth = boxSize.depth;
                     if (td) {
                         desiredWidth = Math.min(td.width || desiredWidth, boxSize.width);
                         desiredHeight = Math.min(td.height || desiredHeight, boxSize.height);
@@ -581,7 +601,7 @@
                     return found;
                 }
 
-                // 3) Add trays: only if parent cassette (by parentId or containment) has currentItemId
+                // 3) Add trays when parent cassette (by parentId or containment) has currentItemId or the tray carries an item
                 const cassettesWithoutItem = new Set(cassetteItems.filter(c => !c.currentItemId).map(c => c.id));
                 trayItems.forEach(tray => {
                     const trayMesh = createLocationMeshObject(nexus3dRef, tray);
@@ -594,8 +614,9 @@
                         const containerCassette = findContainingCassette(tray);
                         containerId = containerCassette ? containerCassette.id : null;
                     }
-                    if (containerId && cassettesWithoutItem.has(containerId)) {
-                        // Skip adding tray if container cassette has no current item
+                    const trayHasItem = !!tray.currentItemId;
+                    if (containerId && cassettesWithoutItem.has(containerId) && !trayHasItem) {
+                        // Skip adding tray if container cassette has no current item and tray is empty
                         try { trayMesh.visible = false; } catch { }
                         return;
                     }
@@ -1059,6 +1080,7 @@
             existingMesh.userData.role = role;
             existingMesh.userData.locationType = baseLocationType;
             existingMesh.userData.status = normalizedLocation.status;
+            existingMesh.userData.currentItemId = normalizedLocation.currentItemId || '';
 
             // Update geometry if size changed
             const desiredWidth = typeof normalizedLocation.width === 'number' ? normalizedLocation.width : 0;
@@ -1149,11 +1171,13 @@
                 existingMesh.rotation.set(rx, ry, rz);
             } catch { }
 
-            // Hide tray under cassette if parent cassette has no currentItemId
+            // Hide tray under cassette unless parent cassette or tray has currentItemId
             try {
                 if (baseLocationType === 'Tray' && existingMesh.parent && existingMesh.parent.userData && existingMesh.parent.userData.locationType === 'Cassette') {
                     const cassetteHasItem = !!(existingMesh.parent.userData.currentItemId);
-                    existingMesh.visible = cassetteHasItem && (normalizedLocation.isVisible !== false);
+                    const trayHasItem = !!normalizedLocation.currentItemId;
+                    const shouldShowTray = (cassetteHasItem || trayHasItem) && (normalizedLocation.isVisible !== false);
+                    existingMesh.visible = shouldShowTray;
                 }
             } catch { }
 
