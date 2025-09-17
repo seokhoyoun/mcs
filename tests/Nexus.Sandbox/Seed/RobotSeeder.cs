@@ -30,10 +30,13 @@ namespace Nexus.Sandbox.Seed
             {
                 string id = $"CR01.TP{i:00}";
                 Nexus.Core.Domain.Models.Locations.TrayLocation trayLocation = new Nexus.Core.Domain.Models.Locations.TrayLocation(id, $"CR01_TRAY_{i:00}");
-                trayLocation.Position = new Nexus.Core.Domain.Shared.Bases.Position((uint)(100 + i * 25), 100, 0);
                 trayLocation.Width = 20;
                 trayLocation.Height = 20;
                 trayLocation.Depth = 20;
+                trayLocation.ParentId = "CR01";
+                trayLocation.IsVisible = true;
+                trayLocation.IsRelativePosition = true;
+                trayLocation.Position = new Nexus.Core.Domain.Shared.Bases.Position((uint)(i * 10), 0, 0);
                 await _locationRepo.AddAsync(trayLocation);
                 cr01Locations.Add(trayLocation);
             }
@@ -49,10 +52,13 @@ namespace Nexus.Sandbox.Seed
             {
                 string id = $"CR02.TP{i:00}";
                 Nexus.Core.Domain.Models.Locations.TrayLocation trayLocation = new Nexus.Core.Domain.Models.Locations.TrayLocation(id, $"CR02_TRAY_{i:00}");
-                trayLocation.Position = new Nexus.Core.Domain.Shared.Bases.Position((uint)(200 + i * 25), 120, 0);
                 trayLocation.Width = 20;
                 trayLocation.Height = 20;
                 trayLocation.Depth = 20;
+                trayLocation.ParentId = "CR02";
+                trayLocation.IsVisible = true;
+                trayLocation.IsRelativePosition = true;
+                trayLocation.Position = new Nexus.Core.Domain.Shared.Bases.Position((uint)(i * 10), 0, 0);
                 await _locationRepo.AddAsync(trayLocation);
                 cr02Locations.Add(trayLocation);
             }
@@ -69,6 +75,8 @@ namespace Nexus.Sandbox.Seed
             cassetteLocation.Width = 30;
             cassetteLocation.Height = 30;
             cassetteLocation.Depth = 30;
+            cassetteLocation.ParentId = string.Empty;
+            cassetteLocation.IsVisible = true;
             await _locationRepo.AddAsync(cassetteLocation);
             lrLocations.Add(cassetteLocation);
             robots.Add(new Robot(

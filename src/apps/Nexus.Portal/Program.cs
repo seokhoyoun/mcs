@@ -14,6 +14,7 @@ using Nexus.Core.Domain.Shared.Bases;
 using Nexus.Infrastructure.Persistence.Redis;
 using Nexus.Portal.Components;
 using StackExchange.Redis;
+using Nexus.Core.Domain.Standards.Interfaces;
 
 namespace Nexus.Portal
 {
@@ -54,6 +55,7 @@ namespace Nexus.Portal
             builder.Services.AddScoped<ILocationRepository, RedisLocationRepository>();
             builder.Services.AddScoped<IRobotRepository, RedisRobotRepository>();
             builder.Services.AddScoped<ILotRepository, RedisLotRepository>();
+            builder.Services.AddScoped<IDimensionRepository, RedisDimensionRepository>();
 
             builder.Services.AddScoped<ILocationService, LocationService>();
             builder.Services.AddScoped<ITransportService, TransportService>();

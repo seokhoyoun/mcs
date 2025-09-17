@@ -12,6 +12,10 @@ namespace Nexus.Core.Domain.Models.Locations.Base
         public ELocationType LocationType { get; protected set; }
         public ELocationStatus Status { get; set; }
         public string CurrentItemId { get; set; } = string.Empty;
+        public string ParentId { get; set; } = string.Empty;
+        public bool IsVisible { get; set; } = true;
+        public bool IsRelativePosition { get; set; } = false;
+        public Rotation Rotation { get; set; } = new Rotation(0, 0, 0);
         public Position Position { get; set; } = new Position(0, 0, 0);
         public uint Width { get; set; } = 0;
         public uint Height { get; set; } = 0;

@@ -69,21 +69,36 @@ namespace Nexus.Infrastructure.Persistence.Redis
             }
 
             string name = Helper.GetHashValue(hashEntries, "name");
-            string cassettePortIdsValue = Helper.GetHashValue(hashEntries, "cassette_port_ids");
-            string[] cassettePortIds = cassettePortIdsValue.Split(ID_SEPARATOR, StringSplitOptions.RemoveEmptyEntries);
 
-            List<CassetteLocation> cassettePorts = new List<CassetteLocation>();
+            string cassetteIdsValue = Helper.GetHashValue(hashEntries, "cassette_location_ids");
+            string trayIdsValue = Helper.GetHashValue(hashEntries, "tray_location_ids");
+         
 
-            foreach (string portId in cassettePortIds)
+            string[] cassetteLocationIds = cassetteIdsValue.Split(ID_SEPARATOR, StringSplitOptions.RemoveEmptyEntries);
+            string[] trayLocationIds = trayIdsValue.Split(ID_SEPARATOR, StringSplitOptions.RemoveEmptyEntries);
+
+            List<CassetteLocation> cassetteLocations = new List<CassetteLocation>();
+            List<TrayLocation> trayLocations = new List<TrayLocation>();
+
+            foreach (string cassetteLocationId in cassetteLocationIds)
             {
-                Location? location = await _locationRepository.GetByIdAsync(portId, cancellationToken);
+                Location? location = await _locationRepository.GetByIdAsync(cassetteLocationId, cancellationToken);
                 if (location is CassetteLocation cassetteLocation)
                 {
-                    cassettePorts.Add(cassetteLocation);
+                    cassetteLocations.Add(cassetteLocation);
                 }
             }
 
-            return new Stocker(id, name, cassettePorts.AsReadOnly());
+            foreach (string trayLocationId in trayLocationIds)
+            {
+                Location? location = await _locationRepository.GetByIdAsync(trayLocationId, cancellationToken);
+                if (location is TrayLocation trayLocation)
+                {
+                    trayLocations.Add(trayLocation);
+                }
+            }
+
+            return new Stocker(id, name, cassetteLocations.AsReadOnly(), trayLocations.AsReadOnly());
         }
 
         public async Task<Stocker> AddAsync(Stocker entity, CancellationToken cancellationToken = default)
@@ -166,19 +181,27 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         private async Task SaveStockerAsync(Stocker stocker, CancellationToken cancellationToken = default)
         {
-            string cassettePortIds = string.Join(ID_SEPARATOR, stocker.CassettePorts.Select(cp => cp.Id));
+            string cassetteLocationIds = string.Join(ID_SEPARATOR, stocker.CassetteLocations.Select(cp => cp.Id));
+            string trayLocationIds = string.Join(ID_SEPARATOR, stocker.TrayLocations.Select(tp => tp.Id));
 
             HashEntry[] entries = new HashEntry[]
             {
                 new HashEntry("id", stocker.Id),
                 new HashEntry("name", stocker.Name),
-                new HashEntry("cassette_port_ids", cassettePortIds)
+                // New canonical fields
+                new HashEntry("cassette_location_ids", cassetteLocationIds),
+                new HashEntry("tray_location_ids", trayLocationIds),
             };
 
-            // locationRepository를 통해 cassette location 저장
-            foreach (CassetteLocation port in stocker.CassettePorts)
+            // Persist locations via location repository
+            foreach (CassetteLocation cassetteLocation in stocker.CassetteLocations)
             {
-                await _locationRepository.AddAsync(port, cancellationToken);
+                await _locationRepository.AddAsync(cassetteLocation, cancellationToken);
+            }
+
+            foreach (TrayLocation trayLocation in stocker.TrayLocations)
+            {
+                await _locationRepository.AddAsync(trayLocation, cancellationToken);
             }
 
             await _database.HashSetAsync($"{STOCKER_KEY_PREFIX}{stocker.Id}", entries);

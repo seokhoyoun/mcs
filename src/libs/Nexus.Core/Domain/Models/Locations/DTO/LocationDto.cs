@@ -6,6 +6,12 @@ namespace Nexus.Core.Domain.Models.Locations.DTO
         public string Name { get; set; } = string.Empty;
         public string LocationType { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
+        public string ParentId { get; set; } = string.Empty;
+        public bool IsVisible { get; set; } = true;
+        public bool IsRelativePosition { get; set; }
+        public int RotateX { get; set; }
+        public int RotateY { get; set; }
+        public int RotateZ { get; set; }
         public int X { get; set; }
         public int Y { get; set; }
         public int Z { get; set; }

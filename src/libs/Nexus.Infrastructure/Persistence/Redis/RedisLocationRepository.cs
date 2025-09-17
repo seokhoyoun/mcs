@@ -380,9 +380,39 @@ namespace Nexus.Infrastructure.Persistence.Redis
             ELocationType locationType = Helper.GetHashValueAsEnum<ELocationType>(hashEntries, "location_type");
             ELocationStatus status = Helper.GetHashValueAsEnum<ELocationStatus>(hashEntries, "status");
             string currentItemId = Helper.GetHashValue(hashEntries, "current_item_id");
+            string parentId = Helper.GetHashValue(hashEntries, "parent_id");
+            string isVisibleRaw = Helper.GetHashValue(hashEntries, "is_visible");
+            string isRelRaw = Helper.GetHashValue(hashEntries, "is_relative_position");
+            bool isVisible = true;
+            if (!string.IsNullOrEmpty(isVisibleRaw))
+            {
+                bool parsed;
+                if (bool.TryParse(isVisibleRaw, out parsed))
+                {
+                    isVisible = parsed;
+                }
+            }
+            bool isRelative = false;
+            if (!string.IsNullOrEmpty(isRelRaw))
+            {
+                bool parsedRel;
+                if (bool.TryParse(isRelRaw, out parsedRel))
+                {
+                    isRelative = parsedRel;
+                }
+            }
             int xValue = Helper.GetHashValueAsInt(hashEntries, "x");
             int yValue = Helper.GetHashValueAsInt(hashEntries, "y");
             int zValue = Helper.GetHashValueAsInt(hashEntries, "z");
+            int rotateX = Helper.GetHashValueAsInt(hashEntries, "rotate_x");
+            int rotateY = Helper.GetHashValueAsInt(hashEntries, "rotate_y");
+            int rotateZ = Helper.GetHashValueAsInt(hashEntries, "rotate_z");
+            // backward compatibility: single 'rotate' as yaw
+            if (rotateX == 0 && rotateY == 0 && rotateZ == 0)
+            {
+                int legacyYaw = Helper.GetHashValueAsInt(hashEntries, "rotate");
+                rotateY = legacyYaw;
+            }
 
             int widthValue = Helper.GetHashValueAsInt(hashEntries, "width");
             int heightValue = Helper.GetHashValueAsInt(hashEntries, "height");
@@ -391,6 +421,9 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
             CassetteLocation loc = new CassetteLocation(id, name) { Status = status };
             loc.CurrentItemId = currentItemId;
+            loc.ParentId = parentId;
+            loc.IsVisible = isVisible;
+            loc.IsRelativePosition = isRelative;
             loc.Position = new Position((uint)xValue, (uint)yValue, (uint)zValue);
             if (widthValue > 0)
             {
@@ -404,6 +437,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
             {
                 loc.Depth = (uint)depthValue;
             }
+            loc.Rotation = new Rotation(rotateX, rotateY, rotateZ);
 
             return loc;
         }
@@ -420,9 +454,38 @@ namespace Nexus.Infrastructure.Persistence.Redis
             ELocationType locationType = Helper.GetHashValueAsEnum<ELocationType>(hashEntries, "location_type");
             ELocationStatus status = Helper.GetHashValueAsEnum<ELocationStatus>(hashEntries, "status");
             string currentItemId = Helper.GetHashValue(hashEntries, "current_item_id");
+            string parentId = Helper.GetHashValue(hashEntries, "parent_id");
+            string isVisibleRaw = Helper.GetHashValue(hashEntries, "is_visible");
+            string isRelRaw = Helper.GetHashValue(hashEntries, "is_relative_position");
+            bool isVisible = true;
+            if (!string.IsNullOrEmpty(isVisibleRaw))
+            {
+                bool parsed;
+                if (bool.TryParse(isVisibleRaw, out parsed))
+                {
+                    isVisible = parsed;
+                }
+            }
+            bool isRelative = false;
+            if (!string.IsNullOrEmpty(isRelRaw))
+            {
+                bool parsedRel;
+                if (bool.TryParse(isRelRaw, out parsedRel))
+                {
+                    isRelative = parsedRel;
+                }
+            }
             int xValue = Helper.GetHashValueAsInt(hashEntries, "x");
             int yValue = Helper.GetHashValueAsInt(hashEntries, "y");
             int zValue = Helper.GetHashValueAsInt(hashEntries, "z");
+            int rotateX = Helper.GetHashValueAsInt(hashEntries, "rotate_x");
+            int rotateY = Helper.GetHashValueAsInt(hashEntries, "rotate_y");
+            int rotateZ = Helper.GetHashValueAsInt(hashEntries, "rotate_z");
+            if (rotateX == 0 && rotateY == 0 && rotateZ == 0)
+            {
+                int legacyYaw = Helper.GetHashValueAsInt(hashEntries, "rotate");
+                rotateY = legacyYaw;
+            }
 
             int widthValue = Helper.GetHashValueAsInt(hashEntries, "width");
             int heightValue = Helper.GetHashValueAsInt(hashEntries, "height");
@@ -431,6 +494,9 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
             TrayLocation loc = new TrayLocation(id, name) { Status = status };
             loc.CurrentItemId = currentItemId;
+            loc.ParentId = parentId;
+            loc.IsVisible = isVisible;
+            loc.IsRelativePosition = isRelative;
             loc.Position = new Position((uint)xValue, (uint)yValue, (uint)zValue);
             if (widthValue > 0)
             {
@@ -444,6 +510,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
             {
                 loc.Depth = (uint)depthValue;
             }
+            loc.Rotation = new Rotation(rotateX, rotateY, rotateZ);
 
             return loc;
         }
@@ -460,9 +527,38 @@ namespace Nexus.Infrastructure.Persistence.Redis
             ELocationType locationType = Helper.GetHashValueAsEnum<ELocationType>(hashEntries, "location_type");
             ELocationStatus status = Helper.GetHashValueAsEnum<ELocationStatus>(hashEntries, "status");
             string currentItemId = Helper.GetHashValue(hashEntries, "current_item_id");
+            string parentId = Helper.GetHashValue(hashEntries, "parent_id");
+            string isVisibleRaw = Helper.GetHashValue(hashEntries, "is_visible");
+            string isRelRaw = Helper.GetHashValue(hashEntries, "is_relative_position");
+            bool isVisible = true;
+            if (!string.IsNullOrEmpty(isVisibleRaw))
+            {
+                bool parsed;
+                if (bool.TryParse(isVisibleRaw, out parsed))
+                {
+                    isVisible = parsed;
+                }
+            }
+            bool isRelative = false;
+            if (!string.IsNullOrEmpty(isRelRaw))
+            {
+                bool parsedRel;
+                if (bool.TryParse(isRelRaw, out parsedRel))
+                {
+                    isRelative = parsedRel;
+                }
+            }
             int xValue = Helper.GetHashValueAsInt(hashEntries, "x");
             int yValue = Helper.GetHashValueAsInt(hashEntries, "y");
             int zValue = Helper.GetHashValueAsInt(hashEntries, "z");
+            int rotateX = Helper.GetHashValueAsInt(hashEntries, "rotate_x");
+            int rotateY = Helper.GetHashValueAsInt(hashEntries, "rotate_y");
+            int rotateZ = Helper.GetHashValueAsInt(hashEntries, "rotate_z");
+            if (rotateX == 0 && rotateY == 0 && rotateZ == 0)
+            {
+                int legacyYaw = Helper.GetHashValueAsInt(hashEntries, "rotate");
+                rotateY = legacyYaw;
+            }
 
             int widthValue = Helper.GetHashValueAsInt(hashEntries, "width");
             int heightValue = Helper.GetHashValueAsInt(hashEntries, "height");
@@ -471,6 +567,9 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
             MemoryLocation loc = new MemoryLocation(id, name) { Status = status };
             loc.CurrentItemId = currentItemId;
+            loc.ParentId = parentId;
+            loc.IsVisible = isVisible;
+            loc.IsRelativePosition = isRelative;
             loc.Position = new Position((uint)xValue, (uint)yValue, (uint)zValue);
             if (widthValue > 0)
             {
@@ -484,6 +583,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
             {
                 loc.Depth = (uint)depthValue;
             }
+            loc.Rotation = new Rotation(rotateX, rotateY, rotateZ);
 
             return loc;
         }
@@ -554,12 +654,18 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("location_type", loc.LocationType.ToString()),
                 new HashEntry("status", loc.Status.ToString()),
                 new HashEntry("current_item_id", currentItemId),
+                new HashEntry("parent_id", loc.ParentId ?? string.Empty),
+                new HashEntry("is_visible", loc.IsVisible.ToString()),
+                new HashEntry("is_relative_position", loc.IsRelativePosition.ToString()),
                 new HashEntry("x", loc.Position.X.ToString()),
                 new HashEntry("y", loc.Position.Y.ToString()),
                 new HashEntry("z", loc.Position.Z.ToString()),
                 new HashEntry("width", loc.Width.ToString()),
                 new HashEntry("height", loc.Height.ToString()),
-                new HashEntry("depth", loc.Depth.ToString())
+                new HashEntry("depth", loc.Depth.ToString()),
+                new HashEntry("rotate_x", (loc.Rotation != null ? loc.Rotation.X : 0).ToString()),
+                new HashEntry("rotate_y", (loc.Rotation != null ? loc.Rotation.Y : 0).ToString()),
+                new HashEntry("rotate_z", (loc.Rotation != null ? loc.Rotation.Z : 0).ToString())
             };
             await _database.HashSetAsync($"{CASSETTE_LOCATION_KEY_PREFIX}{loc.Id}", entries);
             await _database.SetAddAsync(CASSETTE_LOCATIONS_ALL_KEY, loc.Id);
@@ -579,12 +685,18 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("location_type", loc.LocationType.ToString()),
                 new HashEntry("status", loc.Status.ToString()),
                 new HashEntry("current_item_id", currentItemId),
+                new HashEntry("parent_id", loc.ParentId ?? string.Empty),
+                new HashEntry("is_visible", loc.IsVisible.ToString()),
+                new HashEntry("is_relative_position", loc.IsRelativePosition.ToString()),
                 new HashEntry("x", loc.Position.X.ToString()),
                 new HashEntry("y", loc.Position.Y.ToString()),
                 new HashEntry("z", loc.Position.Z.ToString()),
                 new HashEntry("width", loc.Width.ToString()),
                 new HashEntry("height", loc.Height.ToString()),
-                new HashEntry("depth", loc.Depth.ToString())
+                new HashEntry("depth", loc.Depth.ToString()),
+                new HashEntry("rotate_x", (loc.Rotation != null ? loc.Rotation.X : 0).ToString()),
+                new HashEntry("rotate_y", (loc.Rotation != null ? loc.Rotation.Y : 0).ToString()),
+                new HashEntry("rotate_z", (loc.Rotation != null ? loc.Rotation.Z : 0).ToString())
             };
             await _database.HashSetAsync($"{TRAY_LOCATION_KEY_PREFIX}{loc.Id}", entries);
             await _database.SetAddAsync(TRAY_LOCATIONS_ALL_KEY, loc.Id);
@@ -605,12 +717,18 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("location_type", loc.LocationType.ToString()),
                 new HashEntry("status", loc.Status.ToString()),
                 new HashEntry("current_item_id", currentItemId),
+                new HashEntry("parent_id", loc.ParentId ?? string.Empty),
+                new HashEntry("is_visible", loc.IsVisible.ToString()),
+                new HashEntry("is_relative_position", loc.IsRelativePosition.ToString()),
                 new HashEntry("x", loc.Position.X.ToString()),
                 new HashEntry("y", loc.Position.Y.ToString()),
                 new HashEntry("z", loc.Position.Z.ToString()),
                 new HashEntry("width", loc.Width.ToString()),
                 new HashEntry("height", loc.Height.ToString()),
-                new HashEntry("depth", loc.Depth.ToString())
+                new HashEntry("depth", loc.Depth.ToString()),
+                new HashEntry("rotate_x", (loc.Rotation != null ? loc.Rotation.X : 0).ToString()),
+                new HashEntry("rotate_y", (loc.Rotation != null ? loc.Rotation.Y : 0).ToString()),
+                new HashEntry("rotate_z", (loc.Rotation != null ? loc.Rotation.Z : 0).ToString())
             };
             await _database.HashSetAsync($"{MEMORY_LOCATION_KEY_PREFIX}{loc.Id}", entries);
             await _database.SetAddAsync(MEMORY_LOCATIONS_ALL_KEY, loc.Id);
@@ -624,12 +742,18 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("name", loc.Name),
                 new HashEntry("location_type", loc.LocationType.ToString()),
                 new HashEntry("status", loc.Status.ToString()),
+                new HashEntry("parent_id", loc.ParentId ?? string.Empty),
+                new HashEntry("is_visible", loc.IsVisible.ToString()),
+                new HashEntry("is_relative_position", loc.IsRelativePosition.ToString()),
                 new HashEntry("x", loc.Position.X.ToString()),
                 new HashEntry("y", loc.Position.Y.ToString()),
                 new HashEntry("z", loc.Position.Z.ToString()),
                 new HashEntry("width", loc.Width.ToString()),
                 new HashEntry("height", loc.Height.ToString()),
                 new HashEntry("depth", loc.Depth.ToString()),
+                new HashEntry("rotate_x", (loc.Rotation != null ? loc.Rotation.X : 0).ToString()),
+                new HashEntry("rotate_y", (loc.Rotation != null ? loc.Rotation.Y : 0).ToString()),
+                new HashEntry("rotate_z", (loc.Rotation != null ? loc.Rotation.Z : 0).ToString()),
                 new HashEntry("marker_role", loc.MarkerRole.ToString())
             };
             await _database.HashSetAsync($"{MARKER_LOCATION_KEY_PREFIX}{loc.Id}", entries);

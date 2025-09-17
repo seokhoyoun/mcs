@@ -1,4 +1,4 @@
-﻿using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Transports;
 using Nexus.Core.Domain.Shared.Bases;
 using System;
@@ -14,16 +14,19 @@ namespace Nexus.Core.Domain.Models.Stockers
         public string Id { get; }
         public string Name { get; }
 
-        public IReadOnlyList<CassetteLocation> CassettePorts => _cassettePorts.AsReadOnly();
+        public IReadOnlyList<CassetteLocation> CassetteLocations => _cassetteLocations.AsReadOnly();
+        public IReadOnlyList<TrayLocation> TrayLocations => _trayLocations.AsReadOnly();
 
-        private List<CassetteLocation> _cassettePorts = new List<CassetteLocation>();
+        private List<CassetteLocation> _cassetteLocations = new List<CassetteLocation>();
+        private List<TrayLocation> _trayLocations = new List<TrayLocation>();
 
-        public Stocker(string id, string name, IReadOnlyList<CassetteLocation> cassettePorts)
+        public Stocker(string id, string name, IReadOnlyList<CassetteLocation> cassetteLocations, IReadOnlyList<TrayLocation> trayLocations)
         {
             Id = id;
             Name = name;
 
-            _cassettePorts.AddRange(cassettePorts);
+            _cassetteLocations.AddRange(cassetteLocations);
+            _trayLocations.AddRange(trayLocations);
         }
     }
 }

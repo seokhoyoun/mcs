@@ -38,6 +38,10 @@
                 name: '',
                 locationType: 'Marker',
                 status: 'Available',
+                parentId: '',
+                isVisible: true,
+                isRelativePosition: false,
+                rotate: 0,
                 x: 0,
                 y: 0,
                 z: 0,
@@ -52,12 +56,23 @@
         const locationName = locationData.name != null ? locationData.name : locationData.Name;
         const locationType = locationData.locationType != null ? locationData.locationType : locationData.LocationType;
         const locationStatus = locationData.status != null ? locationData.status : locationData.Status;
+        const parentId = locationData.parentId != null ? locationData.parentId : locationData.ParentId;
+        const isVisible = (locationData.isVisible != null ? locationData.isVisible : locationData.IsVisible);
+        const isRelativePosition = (locationData.isRelativePosition != null ? locationData.isRelativePosition : locationData.IsRelativePosition) || false;
         const xCoordinate = getValidNumber(locationData.x, locationData.X, 0);
         const yCoordinate = getValidNumber(locationData.y, locationData.Y, 0);
         const zCoordinate = getValidNumber(locationData.z, locationData.Z, 0);
         const locationWidth = getValidNumber(locationData.width, locationData.Width, 0);
         const locationHeight = getValidNumber(locationData.height, locationData.Height, 0);
         const locationDepth = getValidNumber(locationData.depth, locationData.Depth, 0);
+        const rotateXDeg = getValidNumber(locationData.rotateX, locationData.RotateX, 0);
+        const rotateYDeg = getValidNumber(locationData.rotateY, locationData.RotateY, 0);
+        const rotateZDeg = getValidNumber(locationData.rotateZ, locationData.RotateZ, 0);
+        // backward compat: single rotate as yaw (Y)
+        let legacyYaw = getValidNumber(locationData.rotate, locationData.Rotate, 0);
+        const finalRotX = rotateXDeg || 0;
+        const finalRotY = (rotateYDeg || legacyYaw || 0);
+        const finalRotZ = rotateZDeg || 0;
         const markerRole = (locationData.markerRole != null ? locationData.markerRole : locationData.MarkerRole) || '';
         const currentItemId = (locationData.currentItemId != null ? locationData.currentItemId : locationData.CurrentItemId) || '';
 
@@ -66,6 +81,9 @@
             name: locationName,
             locationType,
             status: locationStatus,
+            parentId: parentId || '',
+            isVisible: (isVisible === false ? false : true),
+            isRelativePosition: !!isRelativePosition,
             x: xCoordinate,
             y: yCoordinate,
             z: zCoordinate,
@@ -73,8 +91,29 @@
             height: locationHeight,
             depth: locationDepth,
             markerRole,
-            currentItemId
+            currentItemId,
+            rotateX: finalRotX,
+            rotateY: finalRotY,
+            rotateZ: finalRotZ
         };
+    }
+
+    // --- Dimensions ---
+    function normalizeDimension(value) {
+        const w = getValidNumber(value && (value.width != null ? value.width : value.Width), null, 0);
+        const h = getValidNumber(value && (value.height != null ? value.height : value.Height), null, 0);
+        const d = getValidNumber(value && (value.depth != null ? value.depth : value.Depth), null, 0);
+        return { width: w, height: h, depth: d };
+    }
+
+    function getTransportDims(nexus3dRef, locationType) {
+        const dims = (nexus3dRef && nexus3dRef.dimensions && nexus3dRef.dimensions.transports) ? nexus3dRef.dimensions.transports : null;
+        if (!dims) return null;
+        const key = (locationType || '').toString().toLowerCase();
+        if (key === 'cassette') return normalizeDimension(dims.cassette);
+        if (key === 'tray') return normalizeDimension(dims.tray);
+        if (key === 'memory') return normalizeDimension(dims.memory);
+        return null;
     }
 
     function normalizeRobotData(robotData) {
@@ -162,12 +201,19 @@
         const shouldMakeTransparent = (!!locationRole) || (baseLocationType === 'Cassette');
 
         let materialOpacity;
-        if (locationRole) {
-            materialOpacity = 0.18; // region roles: slightly transparent
-        } else if (baseLocationType === 'Cassette') {
-            materialOpacity = 0.30; // cassette: more transparent to see inner item
-        } else {
-            materialOpacity = 1.0;
+        switch (true) {
+            case !!locationRole:
+                materialOpacity = 0.18; // region roles: slightly transparent
+                break;
+            case baseLocationType === 'Cassette':
+                materialOpacity = 0.30; // cassette: more transparent to see inner item
+                break;
+            case baseLocationType === 'Tray':
+                materialOpacity = 0.6; // tray: semi-transparent
+                break;
+            default:
+                materialOpacity = 1.0;
+                break;
         }
 
         const isTransparent = (materialOpacity < 1.0) || shouldMakeTransparent;
@@ -199,34 +245,49 @@
         }
 
         locationMesh.position.set(positionX, positionY, -positionZ);
+        try {
+            const rx = (normalizedLocation.rotateX || 0) * Math.PI / 180.0;
+            const ry = (normalizedLocation.rotateY || 0) * Math.PI / 180.0;
+            const rz = (normalizedLocation.rotateZ || 0) * Math.PI / 180.0;
+            locationMesh.rotation.set(rx, ry, rz);
+        } catch { }
         locationMesh.userData = {
             id: normalizedLocation.id,
             type: 'location',
             role: locationRole,
             locationType: baseLocationType,
-            status: normalizedLocation.status
+            status: normalizedLocation.status,
+            parentId: normalizedLocation.parentId,
+            isVisible: normalizedLocation.isVisible,
+            isRelativePosition: normalizedLocation.isRelativePosition
         };
+        locationMesh.visible = (normalizedLocation.isVisible !== false);
 
-        // If cassette has an item, render an inner 3D box to represent it
+        // If this location has an item, render an inner 3D box (transport) using dimension standards
         try {
-            if (baseLocationType === 'Cassette' && normalizedLocation.currentItemId) {
-                const innerWidth = Math.max(2, meshWidth * 0.8);
-                const innerHeight = Math.max(2, meshHeight * 0.6);
-                const innerDepth = Math.max(2, meshDepth * 0.8);
+            if ((baseLocationType === 'Cassette' || baseLocationType === 'Tray' || baseLocationType === 'Memory') && normalizedLocation.currentItemId) {
+                const td = getTransportDims(nexus3dRef, baseLocationType);
+                let innerWidth = meshWidth * 0.8;
+                let innerHeight = meshHeight * 0.6;
+                let innerDepth = meshDepth * 0.8;
+                if (td) {
+                    innerWidth = Math.min(td.width || innerWidth, meshWidth);
+                    innerHeight = Math.min(td.height || innerHeight, meshHeight);
+                    innerDepth = Math.min(td.depth || innerDepth, meshDepth);
+                }
+                innerWidth = Math.max(2, innerWidth);
+                innerHeight = Math.max(2, innerHeight);
+                innerDepth = Math.max(2, innerDepth);
 
                 const itemGeom = new THREE.BoxGeometry(innerWidth, innerHeight, innerDepth);
-                const itemColor = (nexus3dRef.themeColors && nexus3dRef.themeColors.secondary != null)
-                    ? nexus3dRef.themeColors.secondary
-                    : 0x3f51b5;
-                const itemMat = new THREE.MeshPhongMaterial({ color: convertToIntegerColor(itemColor), transparent: true, shininess: 60, opacity : 0.6 });
-          
+                const itemColor = (nexus3dRef.themeColors && nexus3dRef.themeColors.error != null)
+                    ? nexus3dRef.themeColors.error
+                    : 0xff4444;
+                const itemMat = new THREE.MeshPhongMaterial({ color: convertToIntegerColor(itemColor), transparent: true, shininess: 60, opacity : 0.5, depthWrite: true, depthTest: true });
                 const itemMesh = new THREE.Mesh(itemGeom, itemMat);
-
-                // Centered inside the cassette box (parent is centered already)
                 itemMesh.position.set(0, 0, 0);
                 itemMesh.userData = { tag: 'item', itemId: normalizedLocation.currentItemId };
-
-                // Add subtle edge outline for the item
+                try { itemMesh.renderOrder = (locationMesh.renderOrder || 0) + 1; } catch { }
                 try {
                     const itemEdgeGeom = new THREE.EdgesGeometry(itemGeom);
                     const edgeCol = (nexus3dRef.themeColors && nexus3dRef.themeColors.textPrimary != null)
@@ -235,15 +296,15 @@
                     const itemEdgeMat = new THREE.LineBasicMaterial({ color: convertToIntegerColor(edgeCol) });
                     itemMesh.add(new THREE.LineSegments(itemEdgeGeom, itemEdgeMat));
                 } catch { }
-
                 locationMesh.add(itemMesh);
+                locationMesh.visible = true;
             }
         } catch { }
 
         return locationMesh;
     }
 
-    function upsertCassetteItemMesh(nexus3dRef, parentMesh, normalizedLocation, boxSize) {
+    function upsertCassetteItemMesh(nexus3dRef, parentMesh, normalizedLocation, boxSize, baseLocationType) {
         try {
             const hasItem = !!normalizedLocation.currentItemId;
             let existingItem = null;
@@ -271,9 +332,18 @@
                 const meshHeight = typeof boxSize.height === 'number' ? boxSize.height : 0;
                 const meshDepth = typeof boxSize.depth === 'number' ? boxSize.depth : 0;
 
-                const innerWidth = Math.max(2, meshWidth * 0.8);
-                const innerHeight = Math.max(2, meshHeight * 0.6);
-                const innerDepth = Math.max(2, meshDepth * 0.8);
+                const td = getTransportDims(nexus3dRef, baseLocationType);
+                let innerWidth = meshWidth * 0.8;
+                let innerHeight = meshHeight * 0.6;
+                let innerDepth = meshDepth * 0.8;
+                if (td) {
+                    innerWidth = Math.min(td.width || innerWidth, meshWidth);
+                    innerHeight = Math.min(td.height || innerHeight, meshHeight);
+                    innerDepth = Math.min(td.depth || innerDepth, meshDepth);
+                }
+                innerWidth = Math.max(2, innerWidth);
+                innerHeight = Math.max(2, innerHeight);
+                innerDepth = Math.max(2, innerDepth);
 
                 const itemGeom = new THREE.BoxGeometry(innerWidth, innerHeight, innerDepth);
                 const itemColor = (nexus3dRef.themeColors && nexus3dRef.themeColors.primary != null)
@@ -309,9 +379,18 @@
                         existingItem.material.needsUpdate = true;
                     }
 
-                    const desiredWidth = Math.max(2, boxSize.width * 0.8);
-                    const desiredHeight = Math.max(2, boxSize.height * 0.6);
-                    const desiredDepth = Math.max(2, boxSize.depth * 0.8);
+                    const td = getTransportDims(nexus3dRef, baseLocationType);
+                    let desiredWidth = boxSize.width * 0.8;
+                    let desiredHeight = boxSize.height * 0.6;
+                    let desiredDepth = boxSize.depth * 0.8;
+                    if (td) {
+                        desiredWidth = Math.min(td.width || desiredWidth, boxSize.width);
+                        desiredHeight = Math.min(td.height || desiredHeight, boxSize.height);
+                        desiredDepth = Math.min(td.depth || desiredDepth, boxSize.depth);
+                    }
+                    desiredWidth = Math.max(2, desiredWidth);
+                    desiredHeight = Math.max(2, desiredHeight);
+                    desiredDepth = Math.max(2, desiredDepth);
                     const params = existingItem.geometry && existingItem.geometry.parameters ? existingItem.geometry.parameters : {};
                     if (params.width !== desiredWidth || params.height !== desiredHeight || params.depth !== desiredDepth) {
                         const newGeom = new THREE.BoxGeometry(desiredWidth, desiredHeight, desiredDepth);
@@ -456,15 +535,102 @@
 
         if (Array.isArray(initialLocationList)) {
             try {
-                for (let locationIndex = 0; locationIndex < initialLocationList.length; locationIndex++) {
-                    const locationMesh = createLocationMeshObject(nexus3dRef, initialLocationList[locationIndex]);
+                const normalizedList = initialLocationList.map(normalizeLocationData);
+                const cassetteItems = normalizedList.filter(x => x.locationType === 'Cassette');
+                const trayItems = normalizedList.filter(x => x.locationType === 'Tray');
+                const otherItems = normalizedList.filter(x => x.locationType !== 'Cassette' && x.locationType !== 'Tray');
 
+                // 1) Add cassettes first
+                cassetteItems.forEach(loc => {
+                    const locationMesh = createLocationMeshObject(nexus3dRef, loc);
                     if (locationMesh) {
                         sceneObject.add(locationMesh);
-                        const normalizedLocationData = normalizeLocationData(initialLocationList[locationIndex]);
-                        locationMeshCollection.set(normalizedLocationData.id, locationMesh);
+                        locationMeshCollection.set(loc.id, locationMesh);
                     }
+                });
+
+                // 2) Add non-cassette, non-tray items
+                otherItems.forEach(loc => {
+                    const locationMesh = createLocationMeshObject(nexus3dRef, loc);
+                    if (locationMesh) {
+                        sceneObject.add(locationMesh);
+                        locationMeshCollection.set(loc.id, locationMesh);
+                    }
+                });
+
+                // Helper to find containing cassette for a tray by 2D bounds
+                function findContainingCassette(tray) {
+                    const tMinX = tray.x;
+                    const tMaxX = tray.x + tray.width;
+                    const tMinY = tray.y;
+                    const tMaxY = tray.y + tray.depth;
+                    let found = null;
+                    cassetteItems.some(cs => {
+                        const cMinX = cs.x;
+                        const cMaxX = cs.x + cs.width;
+                        const cMinY = cs.y;
+                        const cMaxY = cs.y + cs.depth;
+                        const inside = tMinX >= cMinX && tMaxX <= cMaxX && tMinY >= cMinY && tMaxY <= cMaxY;
+                        if (inside) {
+                            found = cs;
+                            return true;
+                        }
+                        return false;
+                    });
+                    return found;
                 }
+
+                // 3) Add trays initially as independent; we'll re-parent in a second pass
+                trayItems.forEach(tray => {
+                    const trayMesh = createLocationMeshObject(nexus3dRef, tray);
+                    if (!trayMesh) { return; }
+                    sceneObject.add(trayMesh);
+                    locationMeshCollection.set(tray.id, trayMesh);
+                });
+
+                // Second pass: parent any item that has parentId set (to location or robot) and/or trays inside cassettes
+                function getParentObjectById(pid) {
+                    if (!pid) return null;
+                    const loc = locationMeshCollection.get(pid);
+                    if (loc) return loc;
+                    const rob = robotMeshCollection.get(pid);
+                    if (rob) return rob;
+                    return null;
+                }
+                normalizedList.forEach(loc => {
+                    if (!loc.parentId) return;
+                    const child = locationMeshCollection.get(loc.id);
+                    const parentObj = getParentObjectById(loc.parentId);
+                    if (!child || !parentObj) return;
+                    try {
+                        parentObj.add(child);
+                        if (loc.isRelativePosition) {
+                            const p = (parentObj.geometry && parentObj.geometry.parameters) ? parentObj.geometry.parameters : {};
+                            const pHalfW = (typeof p.width === 'number') ? (p.width / 2) : 0;
+                            const pHalfH = (typeof p.height === 'number') ? (p.height / 2) : 0;
+                            const pHalfD = (typeof p.depth === 'number') ? (p.depth / 2) : 0;
+                            const halfW = (loc.width || 0) / 2;
+                            const halfH = (loc.height || 0) / 2;
+                            const halfD = (loc.depth || 0) / 2;
+                            const offX = (loc.x || 0);
+                            const offY = (loc.y || 0);
+                            const offZ = (typeof loc.z === 'number') ? loc.z : 0;
+                            const localX = -pHalfW + (offX + halfW);
+                            const localY = -pHalfH + (offZ + halfH);
+                            const localZ = +pHalfD - (offY + halfD);
+                            child.position.set(localX, localY, localZ);
+                        } else {
+                            const targetWorld = new THREE.Vector3(
+                                (loc.x || 0) + (loc.width || 0) / 2,
+                                (typeof loc.z === 'number' ? loc.z : 0) + (loc.height || 0) / 2,
+                                -((loc.y || 0) + (loc.depth || 0) / 2)
+                            );
+                            const local = parentObj.worldToLocal(targetWorld.clone());
+                            child.position.copy(local);
+                        }
+                        // Keep item placeholder visible even when trays exist
+                    } catch { }
+                });
             } catch (error) {
                 // 에러 무시
             }
@@ -741,6 +907,21 @@
         } catch { }
     };
 
+    // Inject dimensional standards from portal (e.g., transports)
+    nexus3dInstance.setDimensions = function (dimPayload) {
+        try {
+            const payload = dimPayload || {};
+            const transports = payload.transports || {};
+            nexus3dInstance.dimensions = {
+                transports: {
+                    cassette: normalizeDimension(transports.cassette || { width: 28, height: 58, depth: 58 }),
+                    tray: normalizeDimension(transports.tray || { width: 28, height: 3, depth: 28 }),
+                    memory: normalizeDimension(transports.memory || { width: 4, height: 4, depth: 4 })
+                }
+            };
+        } catch { }
+    };
+
     nexus3dInstance.init3D = function (containerElementId, locationList) {
         try {
             const targetElement = document.getElementById(containerElementId);
@@ -839,6 +1020,7 @@
         const normalizedLocation = normalizeLocationData(locationData);
         const baseLocationType = normalizedLocation.locationType;
         const role = selectLocationRole(normalizedLocation);
+        const parentId = normalizedLocation.parentId || '';
 
         let existingMesh = nexus3dInstance.three.locationMeshes.get(normalizedLocation.id);
 
@@ -903,11 +1085,54 @@
                 } catch { }
             }
 
-            // Update position
-            const posX = (normalizedLocation.x || 0) + desiredWidth / 2;
-            const posZ = (normalizedLocation.y || 0) + desiredDepth / 2;
-            const posY = (typeof normalizedLocation.z === 'number') ? (normalizedLocation.z + (desiredHeight / 2)) : (desiredHeight / 2);
-            existingMesh.position.set(posX, posY, -posZ);
+            // Attach to parent if specified
+            if (parentId) {
+                const parentObj = (nexus3dInstance.three.locationMeshes.get(parentId) || nexus3dInstance.three.robotMeshes.get(parentId) || null);
+                if (parentObj && existingMesh.parent !== parentObj) {
+                    try { parentObj.add(existingMesh); } catch { }
+                }
+                if (normalizedLocation.isRelativePosition) {
+                    const p = (parentObj && parentObj.geometry && parentObj.geometry.parameters) ? parentObj.geometry.parameters : {};
+                    const pHalfW = (typeof p.width === 'number') ? (p.width / 2) : 0;
+                    const pHalfH = (typeof p.height === 'number') ? (p.height / 2) : 0;
+                    const pHalfD = (typeof p.depth === 'number') ? (p.depth / 2) : 0;
+                    const halfW = desiredWidth / 2;
+                    const halfH = desiredHeight / 2;
+                    const halfD = desiredDepth / 2;
+                    const offX = (normalizedLocation.x || 0);
+                    const offY = (normalizedLocation.y || 0);
+                    const offZ = (typeof normalizedLocation.z === 'number') ? normalizedLocation.z : 0;
+                    const localX = -pHalfW + (offX + halfW);
+                    const localY = -pHalfH + (offZ + halfH);
+                    const localZ = +pHalfD - (offY + halfD);
+                    existingMesh.position.set(localX, localY, localZ);
+                } else {
+                    const posX = (normalizedLocation.x || 0) + desiredWidth / 2;
+                    const posZ = (normalizedLocation.y || 0) + desiredDepth / 2;
+                    const posY = (typeof normalizedLocation.z === 'number') ? (normalizedLocation.z + (desiredHeight / 2)) : (desiredHeight / 2);
+                    const targetWorld = new THREE.Vector3(posX, posY, -posZ);
+                    const local = parentObj ? parentObj.worldToLocal(targetWorld.clone()) : targetWorld;
+                    existingMesh.position.copy(local);
+                }
+                existingMesh.userData = existingMesh.userData || {};
+                existingMesh.userData.parentId = parentId;
+                existingMesh.userData.isRelativePosition = normalizedLocation.isRelativePosition;
+                existingMesh.userData.rotateX = normalizedLocation.rotateX || 0;
+                existingMesh.userData.rotateY = normalizedLocation.rotateY || 0;
+                existingMesh.userData.rotateZ = normalizedLocation.rotateZ || 0;
+            } else {
+                const posX = (normalizedLocation.x || 0) + desiredWidth / 2;
+                const posZ = (normalizedLocation.y || 0) + desiredDepth / 2;
+                const posY = (typeof normalizedLocation.z === 'number') ? (normalizedLocation.z + (desiredHeight / 2)) : (desiredHeight / 2);
+                existingMesh.position.set(posX, posY, -posZ);
+            }
+            existingMesh.visible = (normalizedLocation.isVisible !== false);
+            try {
+                const rx = (normalizedLocation.rotateX || 0) * Math.PI / 180.0;
+                const ry = (normalizedLocation.rotateY || 0) * Math.PI / 180.0;
+                const rz = (normalizedLocation.rotateZ || 0) * Math.PI / 180.0;
+                existingMesh.rotation.set(rx, ry, rz);
+            } catch { }
 
             // Update material color and opacity
             try {
@@ -960,13 +1185,62 @@
                 }
             } catch { }
 
-            // Upsert inner item mesh for cassette
-            if (baseLocationType === 'Cassette') {
+            // Re-parent trays into cassettes if needed
+            if (baseLocationType === 'Tray') {
+                try {
+                    // find a container cassette by bounds
+                    const tMinX = normalizedLocation.x;
+                    const tMaxX = normalizedLocation.x + desiredWidth;
+                    const tMinY = normalizedLocation.y;
+                    const tMaxY = normalizedLocation.y + desiredDepth;
+                    let container = null;
+                    nexus3dInstance.three.locationMeshes.forEach((m, key) => {
+                        const ud = m.userData || {};
+                        if (ud.locationType !== 'Cassette') return;
+                        const params = m.geometry && m.geometry.parameters ? m.geometry.parameters : {};
+                        const cx = (m.position.x - (params.width || 0) / 2);
+                        const cy = (-(m.position.z) - (params.depth || 0) / 2);
+                        const cMinX = cx;
+                        const cMaxX = cx + (params.width || 0);
+                        const cMinY = cy;
+                        const cMaxY = cy + (params.depth || 0);
+                        const inside = tMinX >= cMinX && tMaxX <= cMaxX && tMinY >= cMinY && tMaxY <= cMaxY;
+                        if (inside) { container = m; }
+                    });
+                    if (container) {
+                        // attach as child if not already
+                        if (existingMesh.parent !== container) {
+                            try {
+                                container.add(existingMesh);
+                            } catch { }
+                        }
+                        // remove cassette placeholder item if any
+                        try {
+                            for (let ci = container.children.length - 1; ci >= 0; ci--) {
+                                const child = container.children[ci];
+                                if (child && child.userData && child.userData.tag === 'item') {
+                                    container.remove(child);
+                                    if (child.geometry && child.geometry.dispose) child.geometry.dispose();
+                                    if (child.material && child.material.dispose) child.material.dispose();
+                                }
+                            }
+                        } catch { }
+                    } else {
+                        // ensure it's attached to scene if no container
+                        if (existingMesh.parent !== nexus3dInstance.three.scene) {
+                            try { nexus3dInstance.three.scene.add(existingMesh); } catch { }
+                        }
+                    }
+                } catch { }
+            }
+
+            // Upsert inner item mesh for cassette/tray regardless of tray children
+            if (baseLocationType === 'Cassette' || baseLocationType === 'Tray') {
                 upsertCassetteItemMesh(nexus3dInstance, existingMesh, normalizedLocation, {
                     width: desiredWidth,
                     height: desiredHeight,
                     depth: desiredDepth
-                });
+                }, baseLocationType);
             } else {
                 // Remove any stray item meshes if type changed away from cassette
                 try {

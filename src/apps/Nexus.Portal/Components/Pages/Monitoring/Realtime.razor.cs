@@ -48,6 +48,18 @@ namespace Nexus.Portal.Components.Pages.Monitoring
 
             LocationDto[] locations = _locations.Select(MapLocationToDto).ToArray();
             RobotDto[] robots = _robots.Select(MapRobotToDto).ToArray();
+
+            // Push dimension standards (transports) to 3D layer before init
+            try
+            {
+                Dictionary<string, object> dims = await BuildDimensionPayloadAsync();
+                await JS.InvokeVoidAsync("nexus3d.setDimensions", dims);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to push dimensions; using defaults in 3D layer");
+            }
+
             await JS.InvokeVoidAsync("nexus3d.init3D", "threeContainer", (object)locations);
             await JS.InvokeVoidAsync("nexus3d.loadRobots3D", (object)robots);
 
@@ -61,6 +73,53 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             {
                 Logger.LogError(ex, "ConnectSignalRAsync failed");
             }
+        }
+
+        private async Task<Dictionary<string, object>> BuildDimensionPayloadAsync()
+        {
+            Dictionary<string, object> transports = new Dictionary<string, object>();
+
+            try
+            {
+                var cassette = await DimensionRepository.GetByIdAsync("transport:cassette");
+                var tray = await DimensionRepository.GetByIdAsync("transport:tray");
+                var memory = await DimensionRepository.GetByIdAsync("transport:memory");
+
+                if (cassette != null)
+                {
+                    transports["cassette"] = new { width = (int)cassette.Width, height = (int)cassette.Height, depth = (int)cassette.Depth };
+                }
+                if (tray != null)
+                {
+                    transports["tray"] = new { width = (int)tray.Width, height = (int)tray.Height, depth = (int)tray.Depth };
+                }
+                if (memory != null)
+                {
+                    transports["memory"] = new { width = (int)memory.Width, height = (int)memory.Height, depth = (int)memory.Depth };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "DimensionRepository unavailable; building fallback dimensions");
+            }
+
+            // Fill any missing defaults
+            if (!transports.ContainsKey("cassette"))
+            {
+                transports["cassette"] = new { width = 28, height = 58, depth = 58 };
+            }
+            if (!transports.ContainsKey("tray"))
+            {
+                transports["tray"] = new { width = 28, height = 3, depth = 28 };
+            }
+            if (!transports.ContainsKey("memory"))
+            {
+                transports["memory"] = new { width = 4, height = 4, depth = 4 };
+            }
+
+            Dictionary<string, object> payload = new Dictionary<string, object>();
+            payload["transports"] = transports;
+            return payload;
         }
 
         
@@ -115,6 +174,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             {
                 IReadOnlyList<Location> markers = await LocationRepository.GetLocationsByTypeAsync(ELocationType.Marker);
                 IReadOnlyList<Location> cassettes = await LocationRepository.GetLocationsByTypeAsync(ELocationType.Cassette);
+                IReadOnlyList<Location> trays = await LocationRepository.GetLocationsByTypeAsync(ELocationType.Tray);
 
                 List<Location> combined = new List<Location>();
                 if (markers != null)
@@ -124,6 +184,10 @@ namespace Nexus.Portal.Components.Pages.Monitoring
                 if (cassettes != null)
                 {
                     combined.AddRange(cassettes);
+                }
+                if (trays != null)
+                {
+                    combined.AddRange(trays);
                 }
 
                 _locations = combined
@@ -180,6 +244,12 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             dto.Name = location.Name;
             dto.LocationType = location.LocationType.ToString();
             dto.Status = location.Status.ToString();
+            dto.ParentId = location.ParentId;
+            dto.IsVisible = location.IsVisible;
+            dto.IsRelativePosition = location.IsRelativePosition;
+            dto.RotateX = location.Rotation != null ? location.Rotation.X : 0;
+            dto.RotateY = location.Rotation != null ? location.Rotation.Y : 0;
+            dto.RotateZ = location.Rotation != null ? location.Rotation.Z : 0;
             dto.X = (int)location.Position.X;
             dto.Y = (int)location.Position.Y;
             dto.Z = (int)location.Position.Z;

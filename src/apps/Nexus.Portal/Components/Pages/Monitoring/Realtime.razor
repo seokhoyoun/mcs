@@ -13,6 +13,7 @@
 @using Nexus.Core.Domain.Models.Robots
 @using Nexus.Core.Domain.Models.Robots.Enums
 @using Nexus.Core.Domain.Models.Robots.Interfaces
+@using Nexus.Core.Domain.Standards.Interfaces
 
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
@@ -21,6 +22,7 @@
 @inject IAreaRepository AreaRepository
 @inject ILocationRepository LocationRepository
 @inject IRobotRepository RobotRepository
+@inject IDimensionRepository DimensionRepository
 
 <MudContainer MaxWidth="MaxWidth.False" Class="pa-0">
 	<div id="threeContainer" style="display:block; width:100%; height:100%; position: relative;">

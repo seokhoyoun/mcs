@@ -38,9 +38,11 @@ namespace Nexus.Sandbox
             RedisAreaRepository areaRepo = new RedisAreaRepository(redis, locationRepo);
             RedisStockerRepository stockerRepo = new RedisStockerRepository(redis, locationRepo);
             RedisRobotRepository robotRepo = new RedisRobotRepository(redis, locationRepo);
+            RedisDimensionRepository dimesionRepo = new RedisDimensionRepository(redis);
 
             List<IDataSeeder> seeders = new List<IDataSeeder>
             {
+                new DimensionSeeder(dimesionRepo),
                 new CassetteSeeder(transportRepo),
                 new AreaSeeder(areaRepo),
                 new StockerSeeder(stockerRepo),

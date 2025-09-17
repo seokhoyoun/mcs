@@ -33,12 +33,13 @@ namespace Nexus.Sandbox.Seed
             List<Stocker> stockers = new List<Stocker>();
             string filePath = "tmp\\stockers.json";
 
-
             // 기본 Stocker 하나 생성
             string stockerId = "ST01";
             string stockerName = "Main Stocker";
 
             List<CassetteLocation> cassetteLocations = new List<CassetteLocation>();
+            List<TrayLocation> trayLocations = new List<TrayLocation>();
+
             int columns = 6; // 6 per floor
             int spacingX = 30;
             int spacingY = 30;
@@ -71,19 +72,54 @@ namespace Nexus.Sandbox.Seed
                 cassette.Width = 30;
                 cassette.Height = (uint)cassetteHeight; // fixed
                 cassette.Depth = (uint)cassetteDepth; // length on Z
+                cassette.ParentId = string.Empty;
+                cassette.IsVisible = true;
 
                 cassetteLocations.Add(cassette);
+
+                // 각 CassetteLocation에 대해 TrayLocation 생성 (카세트 내부에 층층이 쌓이도록)
+                for (int trayIdx = 1; trayIdx <= 6; trayIdx++)
+                {
+                    string trayLocationId = $"{stockerId}.CP{i:00}.TP{trayIdx:00}";
+                    TrayLocation tray = new TrayLocation(
+                        id: trayLocationId,
+                        name: $"{stockerName}_cp{i:00}_tp{trayIdx:00}");
+
+                    // 트레이 크기 설정 (카세트 내부 여유를 두고 중앙 정렬)
+                    tray.Width = 30;
+                    tray.Height = 4; // 얇은 트레이 높이로 레이어 시각화
+                    tray.Depth = 30;
+
+                    // 카세트 내부 중앙 정렬 (X/Y 평면)
+                    tray.IsRelativePosition = true;
+                    uint trayX = (uint)(((int)cassette.Width - (int)tray.Width) / 2);
+                    uint trayY = (uint)(((int)cassette.Depth - (int)tray.Depth) / 2);
+
+                    // 카세트 높이 범위 내에서 균등 분포 (Z=vertical)
+                    int layers = 6;
+                    int available = cassetteHeight - (int)tray.Height;
+                    if (available < 0)
+                    {
+                        available = 0;
+                    }
+                    int step = layers > 1 ? (available / (layers - 1)) : 0;
+                    int zeroBasedIndex = trayIdx - 1;
+                    uint trayZ = (uint)(zeroBasedIndex * step);
+
+                    tray.ParentId = portId;
+                    tray.IsVisible = true;
+                    tray.Position = new Position(trayX, trayY, trayZ);
+                    trayLocations.Add(tray);
+                }
             }
 
-            Stocker stocker = new Stocker(stockerId, stockerName, cassetteLocations);
+            Stocker stocker = new Stocker(stockerId, stockerName, cassetteLocations, trayLocations);
             stockers.Add(stocker);
 
             // JSON 파일로 저장
             Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
             string baseJson = JsonSerializer.Serialize(stockers, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(filePath, baseJson);
-
-
 
             // 파일이 이미 있는 경우 → 로딩
             string json = File.ReadAllText(filePath);
@@ -100,6 +136,5 @@ namespace Nexus.Sandbox.Seed
 
             return stockers;
         }
-
     }
 }

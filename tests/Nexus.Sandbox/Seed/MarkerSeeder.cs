@@ -40,7 +40,7 @@ namespace Nexus.Sandbox.Seed
             IReadOnlyList<Nexus.Core.Domain.Models.Stockers.Stocker> stockers = await _stockerRepo.GetAllAsync();
             foreach (Nexus.Core.Domain.Models.Stockers.Stocker stocker in stockers)
             {
-                if (stocker.CassettePorts == null || stocker.CassettePorts.Count == 0)
+                if (stocker.CassetteLocations == null || stocker.CassetteLocations.Count == 0)
                 {
                     continue;
                 }
@@ -52,7 +52,7 @@ namespace Nexus.Sandbox.Seed
                 uint maxY;
                 uint z;
                 List<Location> stockerPortsAsLocations = new List<Location>();
-                foreach (Nexus.Core.Domain.Models.Locations.CassetteLocation cp in stocker.CassettePorts)
+                foreach (Nexus.Core.Domain.Models.Locations.CassetteLocation cp in stocker.CassetteLocations)
                 {
                     stockerPortsAsLocations.Add(cp);
                 }

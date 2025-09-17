@@ -81,6 +81,9 @@ namespace Nexus.Sandbox.Seed
                     cassette.Width = 30;
                     cassette.Height = 60;
                     cassette.Depth = 60;
+                    cassette.Rotation = new Rotation(0, 90, 0); // rotate area cassette orientation
+                    cassette.ParentId = string.Empty;
+                    cassette.IsVisible = true;
                     cassetteLocations.Add(cassette);
 
                     for (int trayIdx = 1; trayIdx <= 6; trayIdx++)
@@ -89,14 +92,31 @@ namespace Nexus.Sandbox.Seed
                         TrayLocation tray = new TrayLocation(
                             id: trayLocationId,
                             name: $"{areaName}_cp{cassetteIdx:00}_tp{trayIdx:00}");
-                        // Align tray X/Y with its cassette; use Z as stack index
-                        uint trayX = cassetteX;
-                        uint trayY = cassetteY;
-                        uint trayZ = (uint)trayIdx;
+                        // Center trays inside the cassette footprint and stack vertically within cassette height
+                        // Size first
+                        tray.Width = 30;
+                        tray.Height = 4;
+                        tray.Depth = 30;
+
+                        // Center X/Y within cassette bounds (relative offset)
+                        tray.IsRelativePosition = true;
+                        uint trayX = (uint)(((int)cassette.Width - (int)tray.Width) / 2);
+                        uint trayY = (uint)(((int)cassette.Depth - (int)tray.Depth) / 2);
+
+                        // Evenly distribute Z within cassette height so all layers fit inside
+                        int layers = 6;
+                        int available = (int)cassette.Height - (int)tray.Height;
+                        if (available < 0)
+                        {
+                            available = 0;
+                        }
+                        int step = layers > 1 ? (available / (layers - 1)) : 0;
+                        int zeroBasedIndex = trayIdx - 1;
+                        uint trayZ = (uint)(zeroBasedIndex * step);
+
+                        tray.ParentId = cassetteLocationId;
+                        tray.IsVisible = true;
                         tray.Position = new Position(trayX, trayY, trayZ);
-                        tray.Width = 20;
-                        tray.Height = 20;
-                        tray.Depth = 20;
                         trayLocations.Add(tray);
                     }
                 }
@@ -107,7 +127,7 @@ namespace Nexus.Sandbox.Seed
                 int setSpacingX = 100; // ensure each set block (≈95px wide) does not overlap
                 int setSpacingY = 30;  // vertical separation between set blocks
                 // Uniform start X for all areas; only Y differs by areaBaseY.
-                int setsBaseX = areaBaseX + 40;
+                int setsBaseX = areaBaseX + 100;
                 int setsBaseY = areaBaseY + 10; // small top padding
 
                 for (int i = 1; i <= 20; i++)
@@ -139,6 +159,12 @@ namespace Nexus.Sandbox.Seed
                         memory.Width = 5;
                         memory.Height = 5;
                         memory.Depth = 5;
+                        // Parent tray inference from id: map SET index to CP, MP index to TP (1..6 cyclic)
+                        int inferredCpIndex = i % 6 == 0 ? 6 : i % 6;
+                        int inferredTpIndex = ((m - 1) % 6) + 1;
+                        string trayParentId = $"{areaId}.CP{inferredCpIndex:00}.TP{inferredTpIndex:00}";
+                        memory.ParentId = trayParentId;
+                        memory.IsVisible = true;
 
                         memoryLocations.Add(memory);
                     }

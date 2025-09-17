@@ -12,6 +12,8 @@ namespace Nexus.Core.Domain.Models.Areas
     {
         public string Id { get; }
         public string Name { get; }
+        public string ParentId { get; set; } = string.Empty;
+        public bool IsVisible { get; set; } = true;
         public IReadOnlyList<CassetteLocation> CassetteLocations => _cassetteLocations.AsReadOnly();
         public IReadOnlyList<TrayLocation> TrayLocations => _trayLocations.AsReadOnly();
         public IReadOnlyList<Set> Sets => _sets.AsReadOnly();
