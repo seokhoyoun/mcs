@@ -45,3 +45,7 @@
 - Local secrets: use User Secrets for apps with `UserSecretsId`.
 - Key env vars: `Redis__ConnectionString`, `ASPNETCORE_ENVIRONMENT`.
 - Ports: Portal `8080`, Gateway `8082`, Orchestrator `8081`, Prometheus `9090`, Grafana `3000`.
+
+## Documentation References
+- Product Requirements Plan: docs/ProductRequirementsPlan.md
+- Product Requirements Document: docs/ProductRequirementsDocument.md

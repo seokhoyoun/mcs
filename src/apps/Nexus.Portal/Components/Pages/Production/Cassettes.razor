@@ -19,159 +19,199 @@
 <MudPaper Class="pa-4">
     @if (_isLoading)
     {
-        <div class="d-flex justify-center align-center" style="height: 600px;">
-            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
-            <MudText Class="ml-2">데이터를 불러오는 중입니다...</MudText>
+        <div class="d-flex justify-center align-center" style="height: 400px;">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                <MudText Typo="Typo.subtitle1">데이터를 불러오는 중입니다...</MudText>
+            </MudStack>
         </div>
     }
     else
     {
-        <MudGrid GutterSize="16px">
-            <MudItem xs="12" md="4">
-                <MudPaper Class="pa-4" Elevation="1">
-                    <MudStack Spacing="2">
-                        <MudText Typo="Typo.h6">Cassettes</MudText>
-                        <MudTextField @bind-Value="_searchTerm"
-                                      Placeholder="Search..."
-                                      Adornment="Adornment.Start"
-                                      AdornmentIcon="@Icons.Material.Filled.Search"
-                                      IconSize="Size.Medium" />
-                        <MudDivider Class="mb-2" />
-                        <MudList T="CassetteViewModel" Dense="true" DisableGutters="true">
-                            @foreach (CassetteViewModel cassette in GetFilteredCassettes())
-                            {
-                                <MudListItem OnClick="@(() => OnSelectCassette(cassette))"
-                                             Style="cursor: pointer;"
-                                             Class="@GetCassetteListItemClass(cassette)">
-                                    <MudStack Direction="Row" AlignItems="AlignItems.Center" JustifyContent="SpaceBetween">
-                                        <MudStack Direction="Row" AlignItems="AlignItems.Center" Spacing="1">
-                                            <MudIcon Icon="@Icons.Material.Filled.Inbox" Color="Color.Primary" />
-                                            <MudText Typo="Typo.body2">@cassette.Cassette.Id</MudText>
-                                        </MudStack>
-                                        @if (!string.IsNullOrEmpty(cassette.LocationId))
-                                        {
-                                            <MudChip Color="Color.Info" Variant="Variant.Outlined">@cassette.LocationId</MudChip>
-                                        }
-                                    </MudStack>
-                                </MudListItem>
-                            }
-                        </MudList>
+        <MudTable T="CassetteViewModel"
+                  Items="@GetFilteredCassettes()"
+                  Dense="true"
+                  Hover="true"
+                  Bordered="true"
+                  Striped="true"
+                  Elevation="1"
+                  RowsPerPage="20"
+                  RowsPerPageOptions="@(new int[] { 10, 20, 50 })">
+            <ToolBarContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="w-100">
+                    <MudText Typo="Typo.h6">Cassette Overview</MudText>
+                    <MudTextField @bind-Value="_searchTerm"
+                                  Placeholder="카세트 또는 위치 검색"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  IconSize="Size.Medium"
+                                  Immediate="true"
+                                  Margin="Margin.Dense"
+                                  Style="max-width: 280px; width: 100%;" />
+                </MudStack>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Cassette</MudTh>
+                <MudTh>Name</MudTh>
+                <MudTh>Location</MudTh>
+                <MudTh>Tray Usage</MudTh>
+                <MudTh>Memory Usage</MudTh>
+                <MudTh Align="Right">Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="cassette">
+                <MudTd DataLabel="Cassette">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.Inventory2" Color="Color.Primary" />
+                        <MudText Typo="Typo.body2">@cassette.Cassette.Id</MudText>
                     </MudStack>
-                </MudPaper>
-            </MudItem>
-            <MudItem xs="12" md="8">
-                <MudPaper Class="pa-4" Elevation="1">
-                    @if (_selectedCassette == null)
+                </MudTd>
+                <MudTd DataLabel="Name">
+                    @if (!string.IsNullOrWhiteSpace(cassette.Cassette.Name))
                     {
-                        <MudText Typo="Typo.subtitle1" Color="Color.Secondary">카세트를 선택하여 트레이와 메모리 정보를 확인하세요.</MudText>
+                        <MudText Typo="Typo.body2">@cassette.Cassette.Name</MudText>
                     }
                     else
                     {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">이름 없음</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Location">
+                    @if (!string.IsNullOrEmpty(cassette.LocationId))
+                    {
+                        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@cassette.LocationId</MudChip>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">미배정</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Tray Usage">
+                    <MudStack Spacing="1">
+                        <MudText Typo="Typo.body2">@string.Format("{0} / {1}", cassette.TrayCount, cassette.Cassette.MaxTrayCapacity)</MudText>
+                        <MudProgressLinear Value="@CalculateTrayUsagePercent(cassette)" Color="Color.Primary" Rounded="true" />
+                    </MudStack>
+                </MudTd>
+                <MudTd DataLabel="Memory Usage">
+                    <MudStack Spacing="1">
+                        <MudText Typo="Typo.body2">@string.Format("{0} / {1}", GetMemoryCount(cassette), cassette.Cassette.MaxMemoryCapacity)</MudText>
+                        <MudProgressLinear Value="@CalculateMemoryUsagePercent(cassette)" Color="Color.Secondary" Rounded="true" />
+                    </MudStack>
+                </MudTd>
+                <MudTd DataLabel="Actions" Align="Right">
+                    <MudTooltip Text="위치 변경">
+                        <MudIconButton Icon="@Icons.Material.Filled.Place"
+                                      Color="Color.Primary"
+                                      OnClick="@(() => ChangeLocationAsync(ELocationType.Cassette, cassette.Cassette.Id, cassette.LocationId))" />
+                    </MudTooltip>
+                    <MudTooltip Text="위치 해제">
+                        <MudIconButton Icon="@Icons.Material.Filled.HighlightOff"
+                                      Color="Color.Secondary"
+                                      Disabled="@string.IsNullOrEmpty(cassette.LocationId)"
+                                      OnClick="@(() => ClearLocationAsync(ELocationType.Cassette, cassette.Cassette.Id, cassette.LocationId))" />
+                    </MudTooltip>
+                </MudTd>
+            </RowTemplate>
+            <ChildRowContent Context="cassetteDetail">
+                <MudTd ColSpan="6">
+                    <MudPaper Class="pa-3" Elevation="0" Style="background-color: var(--mud-palette-background-grey);">
                         <MudStack Spacing="2">
-                            <MudStack Direction="Row" AlignItems="AlignItems.Center" JustifyContent="SpaceBetween">
-                                <MudText Typo="Typo.h6">@_selectedCassette.Cassette.Id</MudText>
-                                <MudStack Direction="Row" AlignItems="AlignItems.Center" Spacing="1">
-                                    @if (!string.IsNullOrEmpty(_selectedCassette.LocationId))
-                                    {
-                                        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@_selectedCassette.LocationId</MudChip>
-                                    }
-                                    <MudButton Variant="Variant.Outlined"
-                                               Color="Color.Primary"
-                                               StartIcon="@Icons.Material.Filled.Place"
-                                               OnClick="@(() => ChangeLocationAsync(ELocationType.Cassette, _selectedCassette.Cassette.Id, _selectedCassette.LocationId))">
-                                        위치 변경
-                                    </MudButton>
-                                    <MudButton Variant="Variant.Text"
-                                               Color="Color.Secondary"
-                                               StartIcon="@Icons.Material.Filled.HighlightOff"
-                                               Disabled="@string.IsNullOrEmpty(_selectedCassette.LocationId)"
-                                               OnClick="@(() => ClearLocationAsync(ELocationType.Cassette, _selectedCassette.Cassette.Id, _selectedCassette.LocationId))">
-                                        위치 해제
-                                    </MudButton>
-                                </MudStack>
-                            </MudStack>
-
-                            <MudDivider />
-
-                            <MudText Typo="Typo.subtitle1">Trays</MudText>
-                            @if (_selectedCassette.Trays.Count == 0)
+                            <MudText Typo="Typo.subtitle2">트레이 상세</MudText>
+                            @if (cassetteDetail.Trays.Count == 0)
                             {
-                                <MudText Typo="Typo.body2" Color="Color.Secondary">연결된 트레이가 없습니다.</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">등록된 트레이가 없습니다.</MudText>
                             }
                             else
                             {
-                                <MudExpansionPanels Dense="true">
-                                    @foreach (TrayViewModel tray in _selectedCassette.Trays)
-                                    {
-                                        <MudExpansionPanel Text="@tray.Tray.Id">
-                                            <MudStack Spacing="1">
-                                                <MudStack Direction="Row" AlignItems="AlignItems.Center" JustifyContent="SpaceBetween">
-                                                    <MudStack Direction="Row" AlignItems="AlignItems.Center" Spacing="1">
-                                                        <MudIcon Icon="@Icons.Material.Filled.TableRows" Color="Color.Secondary" />
-                                                        <MudText Typo="Typo.body2">@tray.Tray.Id</MudText>
-                                                        @if (!string.IsNullOrEmpty(tray.LocationId))
-                                                        {
-                                                            <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@tray.LocationId</MudChip>
-                                                        }
-                                                    </MudStack>
-                                                    <MudStack Direction="Row" AlignItems="AlignItems.Center" Spacing="1">
+                                @foreach (TrayViewModel tray in cassetteDetail.Trays)
+                                {
+                                    <MudPaper Class="pa-3 mb-3" Elevation="0" Style="border: 1px solid var(--mud-palette-lines-default);">
+                                        <MudStack Spacing="1">
+                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                                    <MudIcon Icon="@Icons.Material.Filled.TableRows" Color="Color.Secondary" />
+                                                    <MudText Typo="Typo.body2">@tray.Tray.Id</MudText>
+                                                    @if (!string.IsNullOrEmpty(tray.LocationId))
+                                                    {
+                                                        <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@tray.LocationId</MudChip>
+                                                    }
+                                                    else
+                                                    {
+                                                        <MudText Typo="Typo.caption" Color="Color.Secondary">미배정</MudText>
+                                                    }
+                                                </MudStack>
+                                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                                    <MudTooltip Text="위치 변경">
                                                         <MudIconButton Icon="@Icons.Material.Filled.Place"
                                                                       Color="Color.Primary"
                                                                       OnClick="@(() => ChangeLocationAsync(ELocationType.Tray, tray.Tray.Id, tray.LocationId))" />
+                                                    </MudTooltip>
+                                                    <MudTooltip Text="위치 해제">
                                                         <MudIconButton Icon="@Icons.Material.Filled.HighlightOff"
                                                                       Color="Color.Secondary"
                                                                       Disabled="@string.IsNullOrEmpty(tray.LocationId)"
                                                                       OnClick="@(() => ClearLocationAsync(ELocationType.Tray, tray.Tray.Id, tray.LocationId))" />
-                                                    </MudStack>
+                                                    </MudTooltip>
                                                 </MudStack>
+                                            </MudStack>
 
-                                                <MudDivider />
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                @string.Format("메모리 {0} / {1}", tray.Memories.Count, tray.Tray.MaxMemoryCapacity)
+                                            </MudText>
 
-                                                <MudText Typo="Typo.subtitle2">Memories</MudText>
-                                                @if (tray.Memories.Count == 0)
-                                                {
-                                                    <MudText Typo="Typo.body2" Color="Color.Secondary">연결된 메모리가 없습니다.</MudText>
-                                                }
-                                                else
-                                                {
-                                                    <MudTable T="MemoryViewModel" Items="tray.Memories" Dense="true">
-                                                        <HeaderContent>
-                                                            <MudTh>Memory ID</MudTh>
-                                                            <MudTh>Device ID</MudTh>
-                                                            <MudTh>Location</MudTh>
-                                                            <MudTh Align="Right">Actions</MudTh>
-                                                        </HeaderContent>
-                                                        <RowTemplate>
-                                                            <MudTd DataLabel="Memory ID">@context.Memory.Id</MudTd>
-                                                            <MudTd DataLabel="Device ID">@context.Memory.DeviceId</MudTd>
-                                                            <MudTd DataLabel="Location">
-                                                                @if (!string.IsNullOrEmpty(context.LocationId))
-                                                                {
-                                                                    <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@context.LocationId</MudChip>
-                                                                }
-                                                            </MudTd>
-                                                            <MudTd Align="Right">
+                                            @if (tray.Memories.Count == 0)
+                                            {
+                                                <MudText Typo="Typo.body2" Color="Color.Secondary">등록된 메모리가 없습니다.</MudText>
+                                            }
+                                            else
+                                            {
+                                                <MudTable T="MemoryViewModel" Items="@tray.Memories" Dense="true" Hover="true" Bordered="true" Elevation="0">
+                                                    <HeaderContent>
+                                                        <MudTh>Memory ID</MudTh>
+                                                        <MudTh>Device ID</MudTh>
+                                                        <MudTh>Location</MudTh>
+                                                        <MudTh Align="Right">Actions</MudTh>
+                                                    </HeaderContent>
+                                                    <RowTemplate>
+                                                        <MudTd DataLabel="Memory ID">@context.Memory.Id</MudTd>
+                                                        <MudTd DataLabel="Device ID">@context.Memory.DeviceId</MudTd>
+                                                        <MudTd DataLabel="Location">
+                                                            @if (!string.IsNullOrEmpty(context.LocationId))
+                                                            {
+                                                                <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@context.LocationId</MudChip>
+                                                            }
+                                                            else
+                                                            {
+                                                                <MudText Typo="Typo.caption" Color="Color.Secondary">미배정</MudText>
+                                                            }
+                                                        </MudTd>
+                                                        <MudTd Align="Right">
+                                                            <MudTooltip Text="위치 변경">
                                                                 <MudIconButton Icon="@Icons.Material.Filled.Place"
                                                                               Color="Color.Primary"
                                                                               OnClick="@(() => ChangeLocationAsync(ELocationType.Memory, context.Memory.Id, context.LocationId))" />
+                                                            </MudTooltip>
+                                                            <MudTooltip Text="위치 해제">
                                                                 <MudIconButton Icon="@Icons.Material.Filled.HighlightOff"
                                                                               Color="Color.Secondary"
                                                                               Disabled="@string.IsNullOrEmpty(context.LocationId)"
                                                                               OnClick="@(() => ClearLocationAsync(ELocationType.Memory, context.Memory.Id, context.LocationId))" />
-                                                            </MudTd>
-                                                        </RowTemplate>
-                                                    </MudTable>
-                                                }
-                                            </MudStack>
-                                        </MudExpansionPanel>
-                                    }
-                                </MudExpansionPanels>
+                                                            </MudTooltip>
+                                                        </MudTd>
+                                                    </RowTemplate>
+                                                </MudTable>
+                                            }
+                                        </MudStack>
+                                    </MudPaper>
+                                }
                             }
                         </MudStack>
-                    }
-                </MudPaper>
-            </MudItem>
-        </MudGrid>
+                    </MudPaper>
+                </MudTd>
+            </ChildRowContent>
+            <NoRecordsContent>
+                <MudText Typo="Typo.body1" Color="Color.Secondary">조건에 맞는 카세트가 없습니다.</MudText>
+            </NoRecordsContent>
+        </MudTable>
     }
 </MudPaper>
 
@@ -179,7 +219,6 @@
     private bool _isLoading = true;
     private string _searchTerm = string.Empty;
     private List<CassetteViewModel> _cassettes = new List<CassetteViewModel>();
-    private CassetteViewModel? _selectedCassette;
     private Dictionary<string, CassetteViewModel> _cassetteLookup = new Dictionary<string, CassetteViewModel>();
     private Dictionary<string, TrayViewModel> _trayLookup = new Dictionary<string, TrayViewModel>();
     private Dictionary<string, MemoryViewModel> _memoryLookup = new Dictionary<string, MemoryViewModel>();
@@ -191,7 +230,11 @@
 
     private async Task LoadCassetteDataAsync()
     {
+        _isLoading = true;
+        StateHasChanged();
+
         Stopwatch stopwatch = Stopwatch.StartNew();
+
         try
         {
             Task<IReadOnlyList<Location>> locationTask = LocationRepository.GetAllAsync();
@@ -240,15 +283,6 @@
                         }
                     }
                 }
-            }
-
-            if (_cassettes.Count > 0)
-            {
-                _selectedCassette = _cassettes[0];
-            }
-            else
-            {
-                _selectedCassette = null;
             }
 
             stopwatch.Stop();
@@ -307,19 +341,44 @@
             (!string.IsNullOrEmpty(cassette.LocationId) && cassette.LocationId.Contains(search, StringComparison.OrdinalIgnoreCase)));
     }
 
-    private void OnSelectCassette(CassetteViewModel cassette)
+    private int GetMemoryCount(CassetteViewModel cassette)
     {
-        _selectedCassette = cassette;
-    }
-
-    private string GetCassetteListItemClass(CassetteViewModel cassette)
-    {
-        if (ReferenceEquals(_selectedCassette, cassette))
+        int total = 0;
+        foreach (TrayViewModel tray in cassette.Trays)
         {
-            return "mud-selected pa-2";
+            total += tray.Memories.Count;
         }
 
-        return "pa-2";
+        return total;
+    }
+
+    private double CalculateTrayUsagePercent(CassetteViewModel cassette)
+    {
+        int capacity = cassette.Cassette.MaxTrayCapacity;
+        if (capacity == 0)
+        {
+            return 0;
+        }
+
+        double trayCount = Convert.ToDouble(cassette.TrayCount);
+        double trayCapacity = Convert.ToDouble(capacity);
+        double percentage = (trayCount / trayCapacity) * 100.0;
+        return Math.Round(percentage, 2);
+    }
+
+    private double CalculateMemoryUsagePercent(CassetteViewModel cassette)
+    {
+        int capacity = cassette.Cassette.MaxMemoryCapacity;
+        if (capacity == 0)
+        {
+            return 0;
+        }
+
+        int memoryCount = GetMemoryCount(cassette);
+        double used = Convert.ToDouble(memoryCount);
+        double memoryCapacity = Convert.ToDouble(capacity);
+        double percentage = (used / memoryCapacity) * 100.0;
+        return Math.Round(percentage, 2);
     }
 
     private async Task ChangeLocationAsync(ELocationType locationType, string transportId, string? currentLocationId)
@@ -334,15 +393,20 @@
             }
         }
 
-        DialogParameters parameters = new DialogParameters
+        DialogParameters parameters = new DialogParameters();
+        parameters.Add("Title", "위치 변경");
+        parameters.Add("Locations", availableLocationIds);
+
+        string currentLocationValue = string.Empty;
+        if (!string.IsNullOrEmpty(currentLocationId))
         {
-            { "Title", "위치 선택" },
-            { "Locations", availableLocationIds },
-            { "CurrentLocationId", currentLocationId ?? string.Empty }
-        };
+            currentLocationValue = currentLocationId;
+        }
+
+        parameters.Add("CurrentLocationId", currentLocationValue);
 
         DialogOptions options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
-        IDialogReference dialog = await DialogService.ShowAsync<Nexus.Portal.Components.Dialogs.SelectLocationDialog>("위치 선택", parameters, options);
+        IDialogReference dialog = await DialogService.ShowAsync<Nexus.Portal.Components.Dialogs.SelectLocationDialog>("위치 변경", parameters, options);
         DialogResult? result = await dialog.Result;
         if (result == null || result.Canceled)
         {
@@ -437,6 +501,8 @@
         public Cassette Cassette { get; }
         public string LocationId { get; set; }
         public List<TrayViewModel> Trays { get; }
+
+        public int TrayCount => Trays.Count;
     }
 
     private sealed class TrayViewModel
