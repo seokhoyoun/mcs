@@ -101,6 +101,23 @@
                 <MudStack Spacing="2">
                     <MudTextField T="string" Label="Id" @bind-Value="_lotEditor.Id" Disabled="@(!_isCreatingLot)" Required="true" />
                     <MudTextField T="string" Label="Name" @bind-Value="_lotEditor.Name" Required="true" />
+                    <MudDivider Class="my-2" />
+                    <MudText Typo="Typo.subtitle2">Cassettes In Stockers</MudText>
+                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                        <MudSelect T="string" Label="Cassettes" @bind-Value="_selectedCassetteId">
+                            @foreach (string cid in _stockerCassetteIds)
+                            {
+                                <MudSelectItem Value="@cid">@cid</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Variant="Variant.Outlined" Disabled="@string.IsNullOrEmpty(_selectedCassetteId)" OnClick="@OnAddCassetteToLot">Add Cassette</MudButton>
+                    </MudStack>
+                    <MudChipSet T="string" OnClose="@((MudChip<string> chip) => OnRemoveCassetteFromLot(chip.Text))">
+                        @foreach (string cid in _lotEditorCassetteIds)
+                        {
+                            <MudChip Closeable="true" Color="Color.Info" Variant="Variant.Outlined">@cid</MudChip>
+                        }
+                    </MudChipSet>
                     <MudSelect T="ELotStatus" Label="Status" @bind-Value="_lotEditor.Status" Disabled="@_isCreatingLot">
                         @foreach (ELotStatus st in Enum.GetValues(typeof(ELotStatus)))
                         {
@@ -108,7 +125,7 @@
                         }
                     </MudSelect>
                     <MudNumericField T="int" Label="Priority" @bind-Value="_lotEditor.Priority" />
-                    <MudNumericField T="int" Label="Qty" @bind-Value="_lotEditor.Qty" />
+                    <MudNumericField T="int" Label="Qty" @bind-Value="_lotEditor.Qty" Disabled="true" HelperText="Auto-set from selected cassettes' memory count" />
                     <MudTextField T="string" Label="Purpose" @bind-Value="_lotEditor.Purpose" />
                     <MudTextField T="string" Label="Eval No" @bind-Value="_lotEditor.EvalNo" />
                     <MudTextField T="string" Label="Part No" @bind-Value="_lotEditor.PartNo" />
@@ -202,7 +219,39 @@
                             <MudTextField T="string" Label="DPC Type" @bind-Value="_stepEditor.DpcType" />
                             <MudTextField T="string" Label="Chipset" @bind-Value="_stepEditor.Chipset" />
                             <MudTextField T="string" Label="PGM" @bind-Value="_stepEditor.PGM" />
-                            <MudNumericField T="int" Label="Plan %" @bind-Value="_stepEditor.PlanPercent" />
+                            <MudDivider Class="my-2" />
+
+
+                            <MudText Typo="Typo.subtitle2">Step Cassettes</MudText>
+                            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End">
+                                <MudSelect T="string"
+                                           Label="Select Cassettes"
+                                           Variant="Variant.Outlined"
+                                           Dense="true"
+                                           MultiSelection="true"
+                                           SelectedValues="_stepEditorCassetteIds"
+                                           SelectedValuesChanged="OnStepCassettesChanged">
+                                    @foreach (string cid in _currentLotCassetteIdsForStep)
+                                    {
+                                        <MudSelectItem Value="@cid">@cid</MudSelectItem>
+                                    }
+                                </MudSelect>
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Primary"
+                                           Disabled="@(_currentLotCassetteIdsForStep.Count == 0 || _stepEditorCassetteIds.SetEquals(_currentLotCassetteIdsForStep))"
+                                           OnClick="@SelectAllStepCassettes">All</MudButton>
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Default"
+                                           Disabled="@(_stepEditorCassetteIds.Count == 0)"
+                                           OnClick="@ClearStepCassettes">Clear</MudButton>
+                            </MudStack>
+                            <MudChipSet T="string">
+                                @foreach (string cid in _stepEditorCassetteIds)
+                                {
+                                    <MudChip Color="Color.Info" Variant="Variant.Outlined">@cid</MudChip>
+                                }
+                            </MudChipSet>
+                            <MudNumericField T="int" Label="Plan %" @bind-Value="_stepEditor.PlanPercent" Disabled="true" />
                             <MudSelect T="ELotStatus" Label="Status" @bind-Value="_stepEditor.Status" Disabled="@_isCreatingStep">
                                 @foreach (ELotStatus st in Enum.GetValues(typeof(ELotStatus)))
                                 {

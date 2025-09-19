@@ -22,6 +22,8 @@ namespace Nexus.Core.Domain.Models.Lots
         public int PlanPercent { get; set; } = 100;
         public ELotStatus Status { get; set; } = ELotStatus.Waiting;
         public List<Cassette> Cassettes { get; set; } = new List<Cassette>();
+        // Redis persistence: store cassette ids only
+        public List<string> CassetteIds { get; set; } = new List<string>();
         public List<PlanGroup> PlanGroups { get; set; } = new List<PlanGroup>();
 
 

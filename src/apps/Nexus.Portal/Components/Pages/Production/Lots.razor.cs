@@ -10,6 +10,14 @@ using System.Threading.Tasks;
 using Nexus.Core.Domain.Models.Lots.DTO;
 using StackExchange.Redis;
 using System.Text.Json;
+using Nexus.Core.Domain.Models.Stockers.Interfaces;
+using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Locations.Base;
+using Nexus.Core.Domain.Models.Locations.Enums;
+using Nexus.Core.Domain.Models.Locations.Interfaces;
+using Nexus.Core.Domain.Models.Transports.Interfaces;
+using Nexus.Core.Domain.Models.Transports;
+using Nexus.Core.Domain.Models.Stockers;
 
 namespace Nexus.Portal.Components.Pages.Production
 {
@@ -27,6 +35,15 @@ namespace Nexus.Portal.Components.Pages.Production
         [Inject]
         private IConnectionMultiplexer Redis { get; set; } = default!;
 
+        [Inject]
+        private IStockerRepository StockerRepository { get; set; } = default!;
+
+        [Inject]
+        private ILocationRepository LocationRepository { get; set; } = default!;
+
+        [Inject]
+        private ITransportRepository TransportRepository { get; set; } = default!;
+
         private List<Lot> _lots = new List<Lot>();
         private HashSet<Lot> _selectedLots = new HashSet<Lot>();
         private HashSet<LotStep> _selectedSteps = new HashSet<LotStep>();
@@ -39,15 +56,46 @@ namespace Nexus.Portal.Components.Pages.Production
         private bool _isCreatingLot = false;
         private LotEditModel _lotEditor = new LotEditModel();
         private MudForm? _lotForm;
+        private List<string> _stockerCassetteIds = new List<string>();
+        private List<string> _lotEditorCassetteIds = new List<string>();
+        private string _selectedCassetteId = string.Empty;
 
         private bool _showStepEditor = false;
         private bool _isCreatingStep = false;
         private LotStepEditModel _stepEditor = new LotStepEditModel();
         private MudForm? _stepForm;
+        private List<string> _currentLotCassetteIdsForStep = new List<string>();
+        private HashSet<string> _stepEditorCassetteIds = new HashSet<string>();
 
         protected override async Task OnInitializedAsync()
         {
             await LoadLotsAsync();
+            await LoadStockerCassetteIdsAsync();
+        }
+
+        private async Task LoadStockerCassetteIdsAsync()
+        {
+            try
+            {
+                IReadOnlyList<Stocker> stockers = await StockerRepository.GetAllAsync();
+                List<string> list = new List<string>();
+                foreach (Stocker s in stockers)
+                {
+                    foreach (CassetteLocation cl in s.CassetteLocations)
+                    {
+                        if (!string.IsNullOrWhiteSpace(cl.CurrentItemId))
+                        {
+                            list.Add(cl.CurrentItemId);
+                        }
+                    }
+                }
+                _stockerCassetteIds = list.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x).ToList();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Failed to load stocker cassettes: {ex.Message}", Severity.Warning);
+                _stockerCassetteIds = new List<string>();
+            }
         }
 
         private async Task LoadLotsAsync()
@@ -186,7 +234,15 @@ namespace Nexus.Portal.Components.Pages.Production
                 {
                     return false;
                 }
-                return selected.Status == ELotStatus.None;
+                if (selected.Status != ELotStatus.None)
+                {
+                    return false;
+                }
+                if (selected.LotSteps == null)
+                {
+                    return false;
+                }
+                return selected.LotSteps.Count > 0;
             }
         }
 
@@ -207,6 +263,11 @@ namespace Nexus.Portal.Components.Pages.Production
             }
             if (selected.Status != ELotStatus.None)
             {
+                return;
+            }
+            if (selected.LotSteps == null || selected.LotSteps.Count == 0)
+            {
+                Snackbar.Add("Cannot publish a lot without steps.", Severity.Warning);
                 return;
             }
 
@@ -235,12 +296,15 @@ namespace Nexus.Portal.Components.Pages.Production
             }
         }
 
-        private void OnNewLot()
+private void OnNewLot()
         {
             _isCreatingLot = true;
             _lotEditor = LotEditModel.CreateNew();
             _lotEditor.Status = ELotStatus.None;
             _showLotEditor = true;
+            _lotEditorCassetteIds = new List<string>();
+            _selectedCassetteId = string.Empty;
+            _ = RecalculateLotQtyAsync();
         }
 
         private void OnEditLot(Lot lot)
@@ -252,6 +316,63 @@ namespace Nexus.Portal.Components.Pages.Production
             _lotEditor = LotEditModel.FromLot(lot);
             _showLotEditor = true;
             _isCreatingLot = false;
+            _lotEditorCassetteIds = lot.CassetteIds != null ? lot.CassetteIds.ToList() : new List<string>();
+            _selectedCassetteId = string.Empty;
+            _ = RecalculateLotQtyAsync();
+        }
+
+        private async Task RecalculateLotQtyAsync()
+        {
+            try
+            {
+                int total = 0;
+                foreach (string cassetteId in _lotEditorCassetteIds)
+                {
+                    ITransportable? tr = await TransportRepository.GetByIdAsync(cassetteId);
+                    Cassette? cassette = tr as Cassette;
+                    if (cassette == null)
+                    {
+                        continue;
+                    }
+                    foreach (Tray tray in cassette.Trays)
+                    {
+                        total += tray.Memories.Count;
+                    }
+                }
+                _lotEditor.Qty = total;
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Failed to recalc Qty: {ex.Message}", Severity.Warning);
+            }
+        }
+
+        private void OnAddCassetteToLot()
+        {
+            if (string.IsNullOrEmpty(_selectedCassetteId))
+            {
+                return;
+            }
+            if (!_lotEditorCassetteIds.Contains(_selectedCassetteId))
+            {
+                _lotEditorCassetteIds.Add(_selectedCassetteId);
+            }
+            _ = RecalculateLotQtyAsync();
+        }
+
+        private void OnRemoveCassetteFromLot(string cassetteId)
+        {
+            List<string> next = new List<string>();
+            foreach (string id in _lotEditorCassetteIds)
+            {
+                if (id != cassetteId)
+                {
+                    next.Add(id);
+                }
+            }
+            _lotEditorCassetteIds = next;
+            _ = RecalculateLotQtyAsync();
         }
 
         private async Task OnSaveLot()
@@ -270,6 +391,7 @@ namespace Nexus.Portal.Components.Pages.Production
                 if (_isCreatingLot)
                 {
                     Lot newLot = _lotEditor.ToLot();
+                    newLot.CassetteIds = _lotEditorCassetteIds.ToList();
                     await LotRepository.AddAsync(newLot);
                     Snackbar.Add($"Lot '{newLot.Id}' created", Severity.Success);
                 }
@@ -282,6 +404,7 @@ namespace Nexus.Portal.Components.Pages.Production
                         return;
                     }
                     _lotEditor.ApplyTo(target);
+                    target.CassetteIds = _lotEditorCassetteIds.ToList();
                     await LotRepository.UpdateAsync(target);
                     Snackbar.Add($"Lot '{target.Id}' updated", Severity.Success);
                 }
@@ -361,6 +484,16 @@ namespace Nexus.Portal.Components.Pages.Production
             Lot lot = _selectedLots.First();
             _stepEditor = LotStepEditModel.CreateNew(lot.Id);
             _stepEditor.Status = ELotStatus.None;
+            if (lot.CassetteIds != null)
+            {
+                _currentLotCassetteIdsForStep = lot.CassetteIds.ToList();
+            }
+            else
+            {
+                _currentLotCassetteIdsForStep = new List<string>();
+            }
+            _stepEditorCassetteIds = new HashSet<string>();
+            RecalculateStepPlanPercent();
         }
 
         private void OnEditStep(LotStep step)
@@ -372,6 +505,38 @@ namespace Nexus.Portal.Components.Pages.Production
             _isCreatingStep = false;
             _showStepEditor = true;
             _stepEditor = LotStepEditModel.FromStep(step);
+            if (_selectedLots != null)
+            {
+                if (_selectedLots.Count > 0)
+                {
+                    Lot lot = _selectedLots.First();
+                    if (lot != null && lot.CassetteIds != null)
+                    {
+                        _currentLotCassetteIdsForStep = lot.CassetteIds.ToList();
+                    }
+                    else
+                    {
+                        _currentLotCassetteIdsForStep = new List<string>();
+                    }
+                }
+                else
+                {
+                    _currentLotCassetteIdsForStep = new List<string>();
+                }
+            }
+            else
+            {
+                _currentLotCassetteIdsForStep = new List<string>();
+            }
+            if (step.CassetteIds != null)
+            {
+                _stepEditorCassetteIds = new HashSet<string>(step.CassetteIds);
+            }
+            else
+            {
+                _stepEditorCassetteIds = new HashSet<string>();
+            }
+            RecalculateStepPlanPercent();
         }
 
         private async Task OnSaveStep()
@@ -399,6 +564,15 @@ namespace Nexus.Portal.Components.Pages.Production
             {
                 if (_isCreatingStep)
                 {
+                    if (_stepEditorCassetteIds != null)
+                    {
+                        _stepEditor.CassetteIds = _stepEditorCassetteIds.ToList();
+                    }
+                    else
+                    {
+                        _stepEditor.CassetteIds = new List<string>();
+                    }
+                    RecalculateStepPlanPercent();
                     LotStep newStep = _stepEditor.ToLotStep();
                     await LotRepository.AddLotStepAsync(lot.Id, newStep);
                     Snackbar.Add($"Step '{newStep.Id}' added", Severity.Success);
@@ -417,6 +591,15 @@ namespace Nexus.Portal.Components.Pages.Production
                         Snackbar.Add("Step not found.", Severity.Warning);
                         return;
                     }
+                    if (_stepEditorCassetteIds != null)
+                    {
+                        _stepEditor.CassetteIds = _stepEditorCassetteIds.ToList();
+                    }
+                    else
+                    {
+                        _stepEditor.CassetteIds = new List<string>();
+                    }
+                    RecalculateStepPlanPercent();
                     _stepEditor.ApplyTo(target);
                     await LotRepository.UpdateAsync(fresh);
                     Snackbar.Add($"Step '{target.Id}' updated", Severity.Success);
@@ -429,6 +612,61 @@ namespace Nexus.Portal.Components.Pages.Production
             {
                 Snackbar.Add($"Failed to save step: {ex.Message}", Severity.Error);
             }
+        }
+
+        private void OnStepCassettesChanged(IEnumerable<string> values)
+        {
+            if (values != null)
+            {
+                _stepEditorCassetteIds = new HashSet<string>(values);
+            }
+            else
+            {
+                _stepEditorCassetteIds = new HashSet<string>();
+            }
+            RecalculateStepPlanPercent();
+        }
+
+        private void SelectAllStepCassettes()
+        {
+            _stepEditorCassetteIds = new HashSet<string>(_currentLotCassetteIdsForStep);
+            RecalculateStepPlanPercent();
+        }
+
+        private void ClearStepCassettes()
+        {
+            _stepEditorCassetteIds.Clear();
+            RecalculateStepPlanPercent();
+        }
+
+        private void RemoveCassetteFromStep(string cassetteId)
+        {
+            if (_stepEditorCassetteIds.Remove(cassetteId))
+            {
+                RecalculateStepPlanPercent();
+            }
+        }
+
+        private void RecalculateStepPlanPercent()
+        {
+            int lotCassetteCount = 0;
+            if (_currentLotCassetteIdsForStep != null)
+            {
+                lotCassetteCount = _currentLotCassetteIdsForStep.Count;
+            }
+            int stepCassetteCount = 0;
+            if (_stepEditorCassetteIds != null)
+            {
+                stepCassetteCount = _stepEditorCassetteIds.Count;
+            }
+            if (lotCassetteCount <= 0)
+            {
+                _stepEditor.PlanPercent = 0;
+                return;
+            }
+            double ratio = (double)stepCassetteCount / (double)lotCassetteCount;
+            int percent = (int)Math.Round(ratio * 100.0, MidpointRounding.AwayFromZero);
+            _stepEditor.PlanPercent = percent;
         }
 
         private void OnCancelStep()
@@ -602,6 +840,7 @@ namespace Nexus.Portal.Components.Pages.Production
             public string PGM { get; set; } = string.Empty;
             public int PlanPercent { get; set; } = 100;
             public ELotStatus Status { get; set; } = ELotStatus.None;
+            public List<string> CassetteIds { get; set; } = new List<string>();
 
             public static LotStepEditModel CreateNew(string lotId)
             {
@@ -623,12 +862,17 @@ namespace Nexus.Portal.Components.Pages.Production
                 m.PGM = step.PGM;
                 m.PlanPercent = step.PlanPercent;
                 m.Status = step.Status;
+                m.CassetteIds = step.CassetteIds != null ? step.CassetteIds.ToList() : new List<string>();
                 return m;
             }
 
             public LotStep ToLotStep()
             {
                 LotStep s = new LotStep(Id, LotId, Name, LoadingType, DpcType, Chipset, PGM, PlanPercent, Status);
+                if (CassetteIds != null)
+                {
+                    s.CassetteIds = CassetteIds.ToList();
+                }
                 return s;
             }
 
@@ -641,7 +885,16 @@ namespace Nexus.Portal.Components.Pages.Production
                 step.PGM = PGM;
                 step.PlanPercent = PlanPercent;
                 step.Status = Status;
+                if (CassetteIds != null)
+                {
+                    step.CassetteIds = CassetteIds.ToList();
+                }
+                else
+                {
+                    step.CassetteIds = new List<string>();
+                }
             }
         }
     }
 }
+

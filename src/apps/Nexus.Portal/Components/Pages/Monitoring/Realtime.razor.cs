@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.JSInterop;
 using Microsoft.Extensions.Logging;
@@ -7,6 +8,7 @@ using Nexus.Core.Domain.Models.Locations.DTO;
 using Nexus.Core.Domain.Models.Locations.Enums;
 using Nexus.Core.Domain.Models.Robots;
 using Nexus.Core.Domain.Models.Robots.DTO;
+using Nexus.Core.Domain.Standards;
 
 namespace Nexus.Portal.Components.Pages.Monitoring
 {
@@ -81,9 +83,9 @@ namespace Nexus.Portal.Components.Pages.Monitoring
 
             try
             {
-                var cassette = await DimensionRepository.GetByIdAsync("transport:cassette");
-                var tray = await DimensionRepository.GetByIdAsync("transport:tray");
-                var memory = await DimensionRepository.GetByIdAsync("transport:memory");
+                DimensionStandard? cassette = await DimensionRepository.GetByIdAsync("transport:cassette");
+                DimensionStandard? tray = await DimensionRepository.GetByIdAsync("transport:tray");
+                DimensionStandard? memory = await DimensionRepository.GetByIdAsync("transport:memory");
 
                 if (cassette != null)
                 {
@@ -197,7 +199,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "위치 데이터 로드 중 오류 발생: {Message}", ex.Message);
+                Logger.LogError(ex, "Location data load error: {Message}", ex.Message);
                 _locations = new List<Location>();
             }
         }
@@ -210,7 +212,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "로봇 데이터 로드 중 오류 발생: {Message}", ex.Message);
+                Logger.LogError(ex, "Location data load error: {Message}", ex.Message);
                 _robots = new List<Robot>();
             }
         }
@@ -257,6 +259,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             dto.Height = (int)location.Height;
             dto.Depth = (int)location.Depth;
             dto.CurrentItemId = location.CurrentItemId;
+            dto.Children = location.Children.ToList();
 
             Nexus.Core.Domain.Models.Locations.MarkerLocation? marker = location as Nexus.Core.Domain.Models.Locations.MarkerLocation;
             if (marker != null)
@@ -405,5 +408,6 @@ namespace Nexus.Portal.Components.Pages.Monitoring
         }
     }
 }
+
 
 

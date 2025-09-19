@@ -381,13 +381,13 @@ namespace Nexus.Infrastructure.Persistence.Redis
             ELocationStatus status = Helper.GetHashValueAsEnum<ELocationStatus>(hashEntries, "status");
             string currentItemId = Helper.GetHashValue(hashEntries, "current_item_id");
             string parentId = Helper.GetHashValue(hashEntries, "parent_id");
+            string childrenValue = Helper.GetHashValue(hashEntries, "children");
             string isVisibleRaw = Helper.GetHashValue(hashEntries, "is_visible");
             string isRelRaw = Helper.GetHashValue(hashEntries, "is_relative_position");
             bool isVisible = true;
             if (!string.IsNullOrEmpty(isVisibleRaw))
             {
-                bool parsed;
-                if (bool.TryParse(isVisibleRaw, out parsed))
+                if (bool.TryParse(isVisibleRaw, out bool parsed))
                 {
                     isVisible = parsed;
                 }
@@ -395,8 +395,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
             bool isRelative = false;
             if (!string.IsNullOrEmpty(isRelRaw))
             {
-                bool parsedRel;
-                if (bool.TryParse(isRelRaw, out parsedRel))
+                if (bool.TryParse(isRelRaw, out bool parsedRel))
                 {
                     isRelative = parsedRel;
                 }
@@ -407,7 +406,6 @@ namespace Nexus.Infrastructure.Persistence.Redis
             int rotateX = Helper.GetHashValueAsInt(hashEntries, "rotate_x");
             int rotateY = Helper.GetHashValueAsInt(hashEntries, "rotate_y");
             int rotateZ = Helper.GetHashValueAsInt(hashEntries, "rotate_z");
-            // backward compatibility: single 'rotate' as yaw
             if (rotateX == 0 && rotateY == 0 && rotateZ == 0)
             {
                 int legacyYaw = Helper.GetHashValueAsInt(hashEntries, "rotate");
@@ -417,7 +415,6 @@ namespace Nexus.Infrastructure.Persistence.Redis
             int widthValue = Helper.GetHashValueAsInt(hashEntries, "width");
             int heightValue = Helper.GetHashValueAsInt(hashEntries, "height");
             int depthValue = Helper.GetHashValueAsInt(hashEntries, "depth");
-            
 
             CassetteLocation loc = new CassetteLocation(id, name) { Status = status };
             loc.CurrentItemId = currentItemId;
@@ -438,9 +435,13 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 loc.Depth = (uint)depthValue;
             }
             loc.Rotation = new Rotation(rotateX, rotateY, rotateZ);
+            loc.Children = string.IsNullOrWhiteSpace(childrenValue)
+                ? new List<string>()
+                : childrenValue.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
 
             return loc;
         }
+
 
         private async Task<TrayLocation?> GetTrayLocationByIdAsync(string id)
         {
@@ -455,13 +456,13 @@ namespace Nexus.Infrastructure.Persistence.Redis
             ELocationStatus status = Helper.GetHashValueAsEnum<ELocationStatus>(hashEntries, "status");
             string currentItemId = Helper.GetHashValue(hashEntries, "current_item_id");
             string parentId = Helper.GetHashValue(hashEntries, "parent_id");
+            string childrenValue = Helper.GetHashValue(hashEntries, "children");
             string isVisibleRaw = Helper.GetHashValue(hashEntries, "is_visible");
             string isRelRaw = Helper.GetHashValue(hashEntries, "is_relative_position");
             bool isVisible = true;
             if (!string.IsNullOrEmpty(isVisibleRaw))
             {
-                bool parsed;
-                if (bool.TryParse(isVisibleRaw, out parsed))
+                if (bool.TryParse(isVisibleRaw, out bool parsed))
                 {
                     isVisible = parsed;
                 }
@@ -469,8 +470,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
             bool isRelative = false;
             if (!string.IsNullOrEmpty(isRelRaw))
             {
-                bool parsedRel;
-                if (bool.TryParse(isRelRaw, out parsedRel))
+                if (bool.TryParse(isRelRaw, out bool parsedRel))
                 {
                     isRelative = parsedRel;
                 }
@@ -490,7 +490,6 @@ namespace Nexus.Infrastructure.Persistence.Redis
             int widthValue = Helper.GetHashValueAsInt(hashEntries, "width");
             int heightValue = Helper.GetHashValueAsInt(hashEntries, "height");
             int depthValue = Helper.GetHashValueAsInt(hashEntries, "depth");
-            
 
             TrayLocation loc = new TrayLocation(id, name) { Status = status };
             loc.CurrentItemId = currentItemId;
@@ -511,9 +510,13 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 loc.Depth = (uint)depthValue;
             }
             loc.Rotation = new Rotation(rotateX, rotateY, rotateZ);
+            loc.Children = string.IsNullOrWhiteSpace(childrenValue)
+                ? new List<string>()
+                : childrenValue.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
 
             return loc;
         }
+
 
         private async Task<MemoryLocation?> GetMemoryLocationByIdAsync(string id)
         {
@@ -528,13 +531,13 @@ namespace Nexus.Infrastructure.Persistence.Redis
             ELocationStatus status = Helper.GetHashValueAsEnum<ELocationStatus>(hashEntries, "status");
             string currentItemId = Helper.GetHashValue(hashEntries, "current_item_id");
             string parentId = Helper.GetHashValue(hashEntries, "parent_id");
+            string childrenValue = Helper.GetHashValue(hashEntries, "children");
             string isVisibleRaw = Helper.GetHashValue(hashEntries, "is_visible");
             string isRelRaw = Helper.GetHashValue(hashEntries, "is_relative_position");
             bool isVisible = true;
             if (!string.IsNullOrEmpty(isVisibleRaw))
             {
-                bool parsed;
-                if (bool.TryParse(isVisibleRaw, out parsed))
+                if (bool.TryParse(isVisibleRaw, out bool parsed))
                 {
                     isVisible = parsed;
                 }
@@ -542,8 +545,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
             bool isRelative = false;
             if (!string.IsNullOrEmpty(isRelRaw))
             {
-                bool parsedRel;
-                if (bool.TryParse(isRelRaw, out parsedRel))
+                if (bool.TryParse(isRelRaw, out bool parsedRel))
                 {
                     isRelative = parsedRel;
                 }
@@ -563,7 +565,6 @@ namespace Nexus.Infrastructure.Persistence.Redis
             int widthValue = Helper.GetHashValueAsInt(hashEntries, "width");
             int heightValue = Helper.GetHashValueAsInt(hashEntries, "height");
             int depthValue = Helper.GetHashValueAsInt(hashEntries, "depth");
-            
 
             MemoryLocation loc = new MemoryLocation(id, name) { Status = status };
             loc.CurrentItemId = currentItemId;
@@ -584,9 +585,13 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 loc.Depth = (uint)depthValue;
             }
             loc.Rotation = new Rotation(rotateX, rotateY, rotateZ);
+            loc.Children = string.IsNullOrWhiteSpace(childrenValue)
+                ? new List<string>()
+                : childrenValue.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
 
             return loc;
         }
+
 
         private async Task<MarkerLocation?> GetMarkerLocationByIdAsync(string id)
         {
@@ -599,17 +604,47 @@ namespace Nexus.Infrastructure.Persistence.Redis
             string name = Helper.GetHashValue(hashEntries, "name");
             ELocationType locationType = Helper.GetHashValueAsEnum<ELocationType>(hashEntries, "location_type");
             ELocationStatus status = Helper.GetHashValueAsEnum<ELocationStatus>(hashEntries, "status");
+            string parentId = Helper.GetHashValue(hashEntries, "parent_id");
+            string childrenValue = Helper.GetHashValue(hashEntries, "children");
+            string isVisibleRaw = Helper.GetHashValue(hashEntries, "is_visible");
+            string isRelRaw = Helper.GetHashValue(hashEntries, "is_relative_position");
+            string markerRoleRaw = Helper.GetHashValue(hashEntries, "marker_role");
+            bool isVisible = true;
+            if (!string.IsNullOrEmpty(isVisibleRaw))
+            {
+                if (bool.TryParse(isVisibleRaw, out bool parsed))
+                {
+                    isVisible = parsed;
+                }
+            }
+            bool isRelative = false;
+            if (!string.IsNullOrEmpty(isRelRaw))
+            {
+                if (bool.TryParse(isRelRaw, out bool parsedRel))
+                {
+                    isRelative = parsedRel;
+                }
+            }
             int xValue = Helper.GetHashValueAsInt(hashEntries, "x");
             int yValue = Helper.GetHashValueAsInt(hashEntries, "y");
             int zValue = Helper.GetHashValueAsInt(hashEntries, "z");
+            int rotateX = Helper.GetHashValueAsInt(hashEntries, "rotate_x");
+            int rotateY = Helper.GetHashValueAsInt(hashEntries, "rotate_y");
+            int rotateZ = Helper.GetHashValueAsInt(hashEntries, "rotate_z");
+            if (rotateX == 0 && rotateY == 0 && rotateZ == 0)
+            {
+                int legacyYaw = Helper.GetHashValueAsInt(hashEntries, "rotate");
+                rotateY = legacyYaw;
+            }
 
             int widthValue = Helper.GetHashValueAsInt(hashEntries, "width");
             int heightValue = Helper.GetHashValueAsInt(hashEntries, "height");
             int depthValue = Helper.GetHashValueAsInt(hashEntries, "depth");
-            string markerRoleValue = Helper.GetHashValue(hashEntries, "marker_role");
-            
 
             MarkerLocation loc = new MarkerLocation(id, name) { Status = status };
+            loc.ParentId = parentId;
+            loc.IsVisible = isVisible;
+            loc.IsRelativePosition = isRelative;
             loc.Position = new Position((uint)xValue, (uint)yValue, (uint)zValue);
             if (widthValue > 0)
             {
@@ -623,30 +658,28 @@ namespace Nexus.Infrastructure.Persistence.Redis
             {
                 loc.Depth = (uint)depthValue;
             }
-
-            if (!string.IsNullOrEmpty(markerRoleValue))
+            loc.Rotation = new Rotation(rotateX, rotateY, rotateZ);
+            if (!string.IsNullOrEmpty(markerRoleRaw))
             {
-                try
+                EMarkerRole parsedRole;
+                if (Enum.TryParse(markerRoleRaw, out parsedRole))
                 {
-                    EMarkerRole roleParsed = (EMarkerRole)Enum.Parse(typeof(EMarkerRole), markerRoleValue, true);
-                    loc.MarkerRole = roleParsed;
-                }
-                catch
-                {
-                    loc.MarkerRole = EMarkerRole.None;
+                    loc.MarkerRole = parsedRole;
                 }
             }
+            loc.Children = string.IsNullOrWhiteSpace(childrenValue)
+                ? new List<string>()
+                : childrenValue.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
 
             return loc;
         }
 
+
         private async Task SaveCassetteLocationAsync(CassetteLocation loc)
         {
-            string currentItemId = string.Empty;
-            if (loc.CurrentItemId != null)
-            {
-                currentItemId = loc.CurrentItemId;
-            }
+            string currentItemId = loc.CurrentItemId ?? string.Empty;
+            string childrenValue = string.Join(",", loc.Children);
+
             HashEntry[] entries = new HashEntry[]
             {
                 new HashEntry("id", loc.Id),
@@ -655,6 +688,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("status", loc.Status.ToString()),
                 new HashEntry("current_item_id", currentItemId),
                 new HashEntry("parent_id", loc.ParentId ?? string.Empty),
+                new HashEntry("children", childrenValue),
                 new HashEntry("is_visible", loc.IsVisible.ToString()),
                 new HashEntry("is_relative_position", loc.IsRelativePosition.ToString()),
                 new HashEntry("x", loc.Position.X.ToString()),
@@ -667,17 +701,16 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("rotate_y", (loc.Rotation != null ? loc.Rotation.Y : 0).ToString()),
                 new HashEntry("rotate_z", (loc.Rotation != null ? loc.Rotation.Z : 0).ToString())
             };
+
             await _database.HashSetAsync($"{CASSETTE_LOCATION_KEY_PREFIX}{loc.Id}", entries);
             await _database.SetAddAsync(CASSETTE_LOCATIONS_ALL_KEY, loc.Id);
         }
 
         private async Task SaveTrayLocationAsync(TrayLocation loc)
         {
-            string currentItemId = string.Empty;
-            if (loc.CurrentItemId != null)
-            {
-                currentItemId = loc.CurrentItemId;
-            }
+            string currentItemId = loc.CurrentItemId ?? string.Empty;
+            string childrenValue = string.Join(",", loc.Children);
+
             HashEntry[] entries = new HashEntry[]
             {
                 new HashEntry("id", loc.Id),
@@ -686,6 +719,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("status", loc.Status.ToString()),
                 new HashEntry("current_item_id", currentItemId),
                 new HashEntry("parent_id", loc.ParentId ?? string.Empty),
+                new HashEntry("children", childrenValue),
                 new HashEntry("is_visible", loc.IsVisible.ToString()),
                 new HashEntry("is_relative_position", loc.IsRelativePosition.ToString()),
                 new HashEntry("x", loc.Position.X.ToString()),
@@ -698,17 +732,15 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("rotate_y", (loc.Rotation != null ? loc.Rotation.Y : 0).ToString()),
                 new HashEntry("rotate_z", (loc.Rotation != null ? loc.Rotation.Z : 0).ToString())
             };
+
             await _database.HashSetAsync($"{TRAY_LOCATION_KEY_PREFIX}{loc.Id}", entries);
             await _database.SetAddAsync(TRAY_LOCATIONS_ALL_KEY, loc.Id);
         }
 
         private async Task SaveMemoryLocationAsync(MemoryLocation loc)
         {
-            string currentItemId = string.Empty;
-            if (loc.CurrentItemId != null)
-            {
-                currentItemId = loc.CurrentItemId;
-            }
+            string currentItemId = loc.CurrentItemId ?? string.Empty;
+            string childrenValue = string.Join(",", loc.Children);
 
             HashEntry[] entries = new HashEntry[]
             {
@@ -718,6 +750,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("status", loc.Status.ToString()),
                 new HashEntry("current_item_id", currentItemId),
                 new HashEntry("parent_id", loc.ParentId ?? string.Empty),
+                new HashEntry("children", childrenValue),
                 new HashEntry("is_visible", loc.IsVisible.ToString()),
                 new HashEntry("is_relative_position", loc.IsRelativePosition.ToString()),
                 new HashEntry("x", loc.Position.X.ToString()),
@@ -730,12 +763,15 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("rotate_y", (loc.Rotation != null ? loc.Rotation.Y : 0).ToString()),
                 new HashEntry("rotate_z", (loc.Rotation != null ? loc.Rotation.Z : 0).ToString())
             };
+
             await _database.HashSetAsync($"{MEMORY_LOCATION_KEY_PREFIX}{loc.Id}", entries);
             await _database.SetAddAsync(MEMORY_LOCATIONS_ALL_KEY, loc.Id);
         }
 
         private async Task SaveMarkerLocationAsync(MarkerLocation loc)
         {
+            string childrenValue = string.Join(",", loc.Children);
+
             HashEntry[] entries = new HashEntry[]
             {
                 new HashEntry("id", loc.Id),
@@ -743,6 +779,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("location_type", loc.LocationType.ToString()),
                 new HashEntry("status", loc.Status.ToString()),
                 new HashEntry("parent_id", loc.ParentId ?? string.Empty),
+                new HashEntry("children", childrenValue),
                 new HashEntry("is_visible", loc.IsVisible.ToString()),
                 new HashEntry("is_relative_position", loc.IsRelativePosition.ToString()),
                 new HashEntry("x", loc.Position.X.ToString()),
@@ -756,6 +793,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("rotate_z", (loc.Rotation != null ? loc.Rotation.Z : 0).ToString()),
                 new HashEntry("marker_role", loc.MarkerRole.ToString())
             };
+
             await _database.HashSetAsync($"{MARKER_LOCATION_KEY_PREFIX}{loc.Id}", entries);
             await _database.SetAddAsync(MARKER_LOCATIONS_ALL_KEY, loc.Id);
         }
@@ -763,4 +801,8 @@ namespace Nexus.Infrastructure.Persistence.Redis
         #endregion
     }
 }
+
+
+
+
 

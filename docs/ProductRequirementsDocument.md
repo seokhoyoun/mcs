@@ -1,9 +1,9 @@
 # Product Requirements Document: Nexus
 
 ## Document Control
-- Author: Product & Engineering Team
+- Author: Seokho Youn
 - Version: 0.1 (Draft)
-- Last Updated: 2025-02-14
+- Last Updated: 2025-09-19
 - Status: In progress
 
 ## Related Artifacts

@@ -1,4 +1,7 @@
-﻿# Repository Guidelines
+# Repository Guidelines
+
+## Agent Communication
+- 모든 에이전트 응답은 한국어로 작성한다.
 
 ## Project Structure & Module Organization
 - `src/apps`: Executables — `Nexus.Gateway`, `Nexus.Orchestrator`, `Nexus.Portal`.
@@ -27,12 +30,12 @@
 - Do not use `var` for local declarations; always use explicit types.
 - Do not use the null-coalescing operators `??` or `??=`; prefer explicit null checks or conditional expressions.
 - Avoid ternary (`?:`) conditional operator in favor of clear `if/else` statements unless it materially improves readability.
- - Do not use tuples (ValueTuple or tuple literals) for return types or locals; avoid tuple deconstruction. Prefer dedicated types, records, or out parameters for multiple values.
+- Do not use tuples (ValueTuple or tuple literals) for return types or locals; avoid tuple deconstruction. Prefer dedicated types, records, or out parameters for multiple values.
 
 ## Testing Guidelines
 - Framework: xUnit (`Fact`/`Theory`); coverage via Coverlet collector.
 - Test naming: `ClassName_MethodUnderTest_ExpectedBehavior`.
-- File naming: `*Tests.cs` grouped by target area (e.g., `Core/…`).
+- File naming: `*Tests.cs` grouped by target area (e.g., `Core/...`).
 - Run all tests from repo root with `dotnet test`.
 
 ## Commit & Pull Request Guidelines
@@ -49,3 +52,20 @@
 ## Documentation References
 - Product Requirements Plan: docs/ProductRequirementsPlan.md
 - Product Requirements Document: docs/ProductRequirementsDocument.md
+
+## 한글 인코딩 주의
+- 파일 인코딩: 모든 소스/문서는 UTF-8(BOM 없음)로 저장한다.
+- Windows 터미널 출력 깨짐 대응:
+  - PowerShell: `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $OutputEncoding = [System.Text.UTF8Encoding]::new()` 실행.
+  - Command Prompt(cmd): `chcp 65001`로 코드 페이지를 UTF-8로 변경.
+  - 터미널 폰트는 CJK 지원 폰트(예: Cascadia Code PL, D2Coding) 사용.
+- .NET 콘솔 앱에서 한글 깨짐 시 `Program.cs` 초기에 다음을 설정한다:
+  - `using System.Text;`
+  - `Console.OutputEncoding = Encoding.UTF8; Console.InputEncoding = Encoding.UTF8;`
+- Git 출력/로그 인코딩 권장 설정:
+  - `git config --global core.quotepath false` (한글 파일명 이스케이프 방지)
+  - `git config --global i18n.commitEncoding utf-8`
+  - `git config --global i18n.logOutputEncoding utf-8`
+- VS Code 권장 설정: `"files.encoding": "utf8"`, 터미널 프로필은 PowerShell 사용 권장.
+- Docker/리눅스 환경: 로케일을 `C.UTF-8` 또는 `en_US.UTF-8`로 설정하고, 로그 수집기에서 UTF-8을 사용한다.
+

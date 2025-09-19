@@ -47,6 +47,8 @@ namespace Nexus.Sandbox.Seed
 
             for (int areaIdx = 1; areaIdx <= 2; areaIdx++)
             {
+                Dictionary<string, CassetteLocation> cassetteMap = new Dictionary<string, CassetteLocation>();
+                Dictionary<string, TrayLocation> trayMap = new Dictionary<string, TrayLocation>();
                 string areaId = $"A{areaIdx:00}";
                 string areaName = $"area{areaIdx:00}";
 
@@ -94,6 +96,7 @@ namespace Nexus.Sandbox.Seed
                         id: cassetteLocationId,
                         name: $"{areaName}_cp{cassetteIdx:00}");
 
+                    cassetteLocation.Children = new List<string>();
                     int cassetteZeroBased = cassetteIdx - 1;
                     int cassetteCol = cassetteZeroBased % cassetteColumns;
                     int cassetteRow = cassetteZeroBased / cassetteColumns;
@@ -108,6 +111,7 @@ namespace Nexus.Sandbox.Seed
                     cassetteLocation.ParentId = string.Empty;
                     cassetteLocation.IsVisible = true;
                     cassetteLocations.Add(cassetteLocation);
+                    cassetteMap[cassetteLocationId] = cassetteLocation;
 
                     uint baseTrayLocationZ = (cassetteLocation.Height - cassetteStd.Height) / 2;
 
@@ -117,6 +121,7 @@ namespace Nexus.Sandbox.Seed
                         TrayLocation tray = new TrayLocation(
                             id: trayLocationId,
                             name: $"{areaName}_cp{cassetteIdx:00}_tp{trayIdx:00}");
+                        tray.Children = new List<string>();
                         // Center trays inside the cassette footprint and stack vertically within cassette height
                         // Size first (from dimension standard)
                         tray.Width = trayLocationW;
@@ -143,6 +148,8 @@ namespace Nexus.Sandbox.Seed
                         tray.IsVisible = true;
                         tray.Position = new Position(trayX, trayY, trayZ);
                         trayLocations.Add(tray);
+                        cassetteLocation.Children.Add(trayLocationId);
+                        trayMap[trayLocationId] = tray;
                     }
                 }
 
@@ -192,6 +199,10 @@ namespace Nexus.Sandbox.Seed
                         memory.IsVisible = true;
 
                         memoryLocations.Add(memory);
+                        if (trayMap.TryGetValue(trayParentId, out TrayLocation parentTray))
+                        {
+                            parentTray.Children.Add(memory.Id);
+                        }
                     }
 
                     sets.Add(new Set(

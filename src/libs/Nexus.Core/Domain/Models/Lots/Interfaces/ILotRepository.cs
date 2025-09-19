@@ -10,35 +10,35 @@ namespace Nexus.Core.Domain.Models.Lots.Interfaces
     public interface ILotRepository : IRepository<Lot, string>
     {
         /// <summary>
-        /// Æ¯Á¤ »óÅÂÀÇ ¸ğµç LotÀ» Á¶È¸ÇÕ´Ï´Ù.
+        /// íŠ¹ì • ìƒíƒœì˜ ëª¨ë“  Lotì„ ì¡°íšŒí•©ë‹ˆë‹¤.
         /// </summary>
-        /// <param name="status">Á¶È¸ÇÒ Lot »óÅÂ</param>
-        /// <param name="cancellationToken">ÀÛ¾÷ Ãë¼Ò ÅäÅ«</param>
-        /// <returns>ÇØ´ç »óÅÂÀÇ Lot ¸ñ·Ï</returns>
+        /// <param name="status">ì¡°íšŒí•  Lot ìƒíƒœ</param>
+        /// <param name="cancellationToken">ì‘ì—… ì·¨ì†Œ í† í°</param>
+        /// <returns>í•´ë‹¹ ìƒíƒœì˜ Lot ëª©ë¡</returns>
         Task<IReadOnlyList<Lot>> GetLotsByStatusAsync(ELotStatus status, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Æ¯Á¤ ½Ã°£ ¹üÀ§ ³»¿¡ »ı¼ºµÈ LotÀ» Á¶È¸ÇÕ´Ï´Ù.
+        /// íŠ¹ì • ì‹œê°„ ë²”ìœ„ ë‚´ì— ìƒì„±ëœ Lotì„ ì¡°íšŒí•©ë‹ˆë‹¤.
         /// </summary>
-        /// <param name="startDate">½ÃÀÛ ÀÏ½Ã</param>
-        /// <param name="endDate">Á¾·á ÀÏ½Ã</param>
-        /// <param name="cancellationToken">ÀÛ¾÷ Ãë¼Ò ÅäÅ«</param>
-        /// <returns>ÇØ´ç ±â°£¿¡ »ı¼ºµÈ Lot ¸ñ·Ï</returns>
+        /// <param name="startDate">ì‹œì‘ ì¼ì‹œ</param>
+        /// <param name="endDate">ì¢…ë£Œ ì¼ì‹œ</param>
+        /// <param name="cancellationToken">ì‘ì—… ì·¨ì†Œ í† í°</param>
+        /// <returns>í•´ë‹¹ ê¸°ê°„ì— ìƒì„±ëœ Lot ëª©ë¡</returns>
         Task<IReadOnlyList<Lot>> GetLotsByDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Æ¯Á¤ Lot¿¡ StepÀ» Ãß°¡ÇÕ´Ï´Ù.
+        /// íŠ¹ì • Lotì— Stepì„ ì¶”ê°€í•©ë‹ˆë‹¤.
         /// </summary>
         /// <param name="lotId">Lot ID</param>
-        /// <param name="lotStep">Ãß°¡ÇÒ LotStep</param>
-        /// <param name="cancellationToken">ÀÛ¾÷ Ãë¼Ò ÅäÅ«</param>
-        /// <returns>¼º°ø ¿©ºÎ</returns>
+        /// <param name="lotStep">ì¶”ê°€í•  LotStep</param>
+        /// <param name="cancellationToken">ì‘ì—… ì·¨ì†Œ í† í°</param>
+        /// <returns>ì„±ê³µ ì—¬ë¶€</returns>
         Task<bool> AddLotStepAsync(string lotId, LotStep lotStep, CancellationToken cancellationToken = default);
 
   
         Task<IReadOnlyList<LotStep>> GetLotStepsByLotIdAsync(string lotId, CancellationToken cancellationToken = default);
 
 
-        Task<bool> AddCassetteToStepAsync(string lotId, string stepId, string cassetteId, CancellationToken cancellationToken = default);
+     
     }
 }

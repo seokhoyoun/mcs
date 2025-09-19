@@ -43,6 +43,8 @@ namespace Nexus.Sandbox.Seed
 
             List<CassetteLocation> cassetteLocations = new List<CassetteLocation>();
             List<TrayLocation> trayLocations = new List<TrayLocation>();
+            Dictionary<string, CassetteLocation> cassetteMap = new Dictionary<string, CassetteLocation>();
+            Dictionary<string, TrayLocation> trayMap = new Dictionary<string, TrayLocation>();
 
             int columns = 6; // 6 per floor
             int spacingX = 30;
@@ -73,6 +75,7 @@ namespace Nexus.Sandbox.Seed
                     id: portId,
                     name: $"{stockerName}_cp{i:00}"
                 );
+                cassetteLocation.Children = new List<string>();
 
                 int zeroBased = i - 1;
                 int floorIndex = zeroBased / itemsPerFloor; // 0 or 1
@@ -92,6 +95,7 @@ namespace Nexus.Sandbox.Seed
                 cassetteLocation.IsVisible = true;
 
                 cassetteLocations.Add(cassetteLocation);
+                cassetteMap[portId] = cassetteLocation;
 
                 uint baseTrayLocationZ = (cassetteLocation.Height - cassetteStd.Height) / 2;
 
@@ -103,6 +107,7 @@ namespace Nexus.Sandbox.Seed
                         id: trayLocationId,
                         name: $"{stockerName}_cp{i:00}_tp{trayIdx:00}");
 
+                    trayLocation.Children = new List<string>();
                     // 트레이 크기 설정 (dimension)
                     trayLocation.Width = trayLocationW;
                     trayLocation.Height = trayLocationH;
@@ -128,6 +133,8 @@ namespace Nexus.Sandbox.Seed
                     trayLocation.IsVisible = true;
                     trayLocation.Position = new Position(trayX, trayY, trayZ);
                     trayLocations.Add(trayLocation);
+                    cassetteLocation.Children.Add(trayLocationId);
+                    trayMap[trayLocationId] = trayLocation;
                 }
             }
 

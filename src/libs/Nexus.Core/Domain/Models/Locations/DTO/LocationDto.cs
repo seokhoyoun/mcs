@@ -1,3 +1,5 @@
+﻿using System.Collections.Generic;
+
 namespace Nexus.Core.Domain.Models.Locations.DTO
 {
     public class LocationDto
@@ -20,5 +22,6 @@ namespace Nexus.Core.Domain.Models.Locations.DTO
         public int Depth { get; set; }
         public string MarkerRole { get; set; } = string.Empty;
         public string CurrentItemId { get; set; } = string.Empty;
+        public List<string> Children { get; set; } = new List<string>();
     }
 }
