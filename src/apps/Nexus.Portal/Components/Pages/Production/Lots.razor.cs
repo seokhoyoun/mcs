@@ -66,6 +66,7 @@ namespace Nexus.Portal.Components.Pages.Production
         private MudForm? _stepForm;
         private List<string> _currentLotCassetteIdsForStep = new List<string>();
         private HashSet<string> _stepEditorCassetteIds = new HashSet<string>();
+        private string _selectedStepCassetteId = string.Empty;
 
         protected override async Task OnInitializedAsync()
         {
@@ -388,6 +389,16 @@ private void OnNewLot()
 
             try
             {
+                if (_lotEditorCassetteIds == null)
+                {
+                    Snackbar.Add("At least one cassette is required for a lot.", Severity.Warning);
+                    return;
+                }
+                if (_lotEditorCassetteIds.Count == 0)
+                {
+                    Snackbar.Add("At least one cassette is required for a lot.", Severity.Warning);
+                    return;
+                }
                 if (_isCreatingLot)
                 {
                     Lot newLot = _lotEditor.ToLot();
@@ -493,6 +504,7 @@ private void OnNewLot()
                 _currentLotCassetteIdsForStep = new List<string>();
             }
             _stepEditorCassetteIds = new HashSet<string>();
+            _selectedStepCassetteId = string.Empty;
             RecalculateStepPlanPercent();
         }
 
@@ -536,6 +548,7 @@ private void OnNewLot()
             {
                 _stepEditorCassetteIds = new HashSet<string>();
             }
+            _selectedStepCassetteId = string.Empty;
             RecalculateStepPlanPercent();
         }
 
@@ -562,6 +575,16 @@ private void OnNewLot()
 
             try
             {
+                if (_stepEditorCassetteIds == null)
+                {
+                    Snackbar.Add("At least one cassette is required for a lot step.", Severity.Warning);
+                    return;
+                }
+                if (_stepEditorCassetteIds.Count == 0)
+                {
+                    Snackbar.Add("At least one cassette is required for a lot step.", Severity.Warning);
+                    return;
+                }
                 if (_isCreatingStep)
                 {
                     if (_stepEditorCassetteIds != null)
@@ -623,6 +646,19 @@ private void OnNewLot()
             else
             {
                 _stepEditorCassetteIds = new HashSet<string>();
+            }
+            RecalculateStepPlanPercent();
+        }
+
+        private void OnAddCassetteToStep()
+        {
+            if (string.IsNullOrEmpty(_selectedStepCassetteId))
+            {
+                return;
+            }
+            if (!_stepEditorCassetteIds.Contains(_selectedStepCassetteId))
+            {
+                _stepEditorCassetteIds.Add(_selectedStepCassetteId);
             }
             RecalculateStepPlanPercent();
         }

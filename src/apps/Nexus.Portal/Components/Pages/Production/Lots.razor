@@ -131,10 +131,10 @@
                     <MudTextField T="string" Label="Part No" @bind-Value="_lotEditor.PartNo" />
                     <MudTextField T="string" Label="Line" @bind-Value="_lotEditor.Line" />
                     <MudDatePicker Label="Received Time" @bind-Date="_lotEditor.ReceivedTime" />
-                    <MudStack Row="true" Spacing="2">
-                        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@OnSaveLot">Save</MudButton>
-                        <MudButton Color="Color.Default" Variant="Variant.Outlined" OnClick="@OnCancelLot">Cancel</MudButton>
-                    </MudStack>
+                            <MudStack Row="true" Spacing="2">
+                                <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="@(_lotEditorCassetteIds.Count == 0)" OnClick="@OnSaveLot">Save</MudButton>
+                                <MudButton Color="Color.Default" Variant="Variant.Outlined" OnClick="@OnCancelLot">Cancel</MudButton>
+                            </MudStack>
                 </MudStack>
             </MudForm>
         </MudPaper>
@@ -223,32 +223,23 @@
 
 
                             <MudText Typo="Typo.subtitle2">Step Cassettes</MudText>
-                            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End">
-                                <MudSelect T="string"
-                                           Label="Select Cassettes"
-                                           Variant="Variant.Outlined"
-                                           Dense="true"
-                                           MultiSelection="true"
-                                           SelectedValues="_stepEditorCassetteIds"
-                                           SelectedValuesChanged="OnStepCassettesChanged">
+                            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                                <MudSelect T="string" Label="Cassettes (from lot)" @bind-Value="_selectedStepCassetteId">
                                     @foreach (string cid in _currentLotCassetteIdsForStep)
                                     {
                                         <MudSelectItem Value="@cid">@cid</MudSelectItem>
                                     }
                                 </MudSelect>
-                                <MudButton Variant="Variant.Outlined"
+                                <MudButton StartIcon="@Icons.Material.Filled.Add"
                                            Color="Color.Primary"
-                                           Disabled="@(_currentLotCassetteIdsForStep.Count == 0 || _stepEditorCassetteIds.SetEquals(_currentLotCassetteIdsForStep))"
-                                           OnClick="@SelectAllStepCassettes">All</MudButton>
-                                <MudButton Variant="Variant.Outlined"
-                                           Color="Color.Default"
-                                           Disabled="@(_stepEditorCassetteIds.Count == 0)"
-                                           OnClick="@ClearStepCassettes">Clear</MudButton>
+                                           Variant="Variant.Outlined"
+                                           Disabled="@string.IsNullOrEmpty(_selectedStepCassetteId)"
+                                           OnClick="@OnAddCassetteToStep">Add Cassette</MudButton>
                             </MudStack>
-                            <MudChipSet T="string">
+                            <MudChipSet T="string" OnClose="@((MudChip<string> chip) => RemoveCassetteFromStep(chip.Text))">
                                 @foreach (string cid in _stepEditorCassetteIds)
                                 {
-                                    <MudChip Color="Color.Info" Variant="Variant.Outlined">@cid</MudChip>
+                                    <MudChip Closeable="true" Color="Color.Info" Variant="Variant.Outlined">@cid</MudChip>
                                 }
                             </MudChipSet>
                             <MudNumericField T="int" Label="Plan %" @bind-Value="_stepEditor.PlanPercent" Disabled="true" />
@@ -259,7 +250,7 @@
                                 }
                             </MudSelect>
                             <MudStack Row="true" Spacing="2">
-                                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@OnSaveStep">Save</MudButton>
+                                <MudButton Color="Color.Primary" Variant="Variant.Filled" Disabled="@(_stepEditorCassetteIds.Count == 0)" OnClick="@OnSaveStep">Save</MudButton>
                                 <MudButton Color="Color.Default" Variant="Variant.Outlined" OnClick="@OnCancelStep">Cancel</MudButton>
                             </MudStack>
                         </MudStack>

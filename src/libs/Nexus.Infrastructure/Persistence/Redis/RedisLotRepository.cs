@@ -17,6 +17,9 @@ namespace Nexus.Infrastructure.Persistence.Redis
         private readonly IDatabase _database;
         private const string LOT_KEY_PREFIX = "lot:";
         private const string LOT_STEP_KEY_PREFIX = "lot_step:";
+        private const string LOTS_ALL_KEY = "lots:all";
+        private const string LOT_STEPS_ALL_KEY = "lot_steps:all";
+        private const string LOT_STEPS_BY_LOT_PREFIX = "lot:steps:"; // per-lot step id set
         private const string PLAN_GROUP_KEY_PREFIX = "plan_group:";
         private const string CASSETTE_KEY_PREFIX = "cassette:";
         private const string TRAY_KEY_PREFIX = "tray:";
@@ -42,13 +45,12 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         public async Task<IReadOnlyList<Lot>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            IServer server = _redis.GetServer(_redis.GetEndPoints().First());
-            IEnumerable<RedisKey> keys = server.Keys(pattern: $"{LOT_KEY_PREFIX}*");
+            RedisValue[] ids = await _database.SetMembersAsync(LOTS_ALL_KEY);
 
             List<Lot> lots = new List<Lot>();
-            foreach (RedisKey key in keys)
+            foreach (RedisValue val in ids)
             {
-                string id = key.ToString().Substring(LOT_KEY_PREFIX.Length);
+                string id = val.ToString();
                 Lot? lot = await GetByIdAsync(id, cancellationToken);
                 if (lot != null)
                 {
@@ -86,11 +88,45 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
             await _database.HashSetAsync($"{LOT_KEY_PREFIX}{entity.Id}", hashEntries);
 
-            // [cleaned]
+            // Maintain lots:all set
+            await _database.SetAddAsync(LOTS_ALL_KEY, entity.Id);
+
+            // Sync per-lot step id set with current entity state (no KEYS usage)
+            string perLotStepSetKey = $"{LOT_STEPS_BY_LOT_PREFIX}{entity.Id}";
+            RedisValue[] existingStepIds = await _database.SetMembersAsync(perLotStepSetKey);
+            HashSet<string> existing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (RedisValue rv in existingStepIds)
+            {
+                existing.Add(rv.ToString());
+            }
+
+            HashSet<string> desired = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (LotStep s in entity.LotSteps)
+            {
+                if (s != null && s.Id != null)
+                {
+                    desired.Add(s.Id);
+                }
+            }
+
+            // Remove no-longer-desired step ids from per-lot set and global set
+            foreach (string stepId in existing)
+            {
+                if (!desired.Contains(stepId))
+                {
+                    await _database.SetRemoveAsync(perLotStepSetKey, stepId);
+                    await _database.SetRemoveAsync(LOT_STEPS_ALL_KEY, stepId);
+                }
+            }
+
+            // Save/Upsert each step and ensure membership in sets
             foreach (LotStep lotStep in entity.LotSteps)
             {
                 await SaveLotStepAsync(lotStep, cancellationToken);
+                await _database.SetAddAsync(perLotStepSetKey, lotStep.Id);
+                await _database.SetAddAsync(LOT_STEPS_ALL_KEY, lotStep.Id);
             }
+
             return entity;
         }
 
@@ -114,20 +150,23 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
         {
-            HashEntry[] lotHashEntries = await _database.HashGetAllAsync($"{LOT_KEY_PREFIX}{id}");
-            if (lotHashEntries.Length > 0)
+            // Delete associated lot steps using per-lot step id set (no KEYS)
+            string perLotStepSetKey = $"{LOT_STEPS_BY_LOT_PREFIX}{id}";
+            RedisValue[] stepIds = await _database.SetMembersAsync(perLotStepSetKey);
+            foreach (RedisValue rv in stepIds)
             {
-                string lotStepIdsJson = Helper.GetHashValue(lotHashEntries, "lot_step_ids");
-                if (!string.IsNullOrEmpty(lotStepIdsJson))
+                string stepId = rv.ToString();
+                if (!string.IsNullOrEmpty(stepId))
                 {
-                    List<string> lotStepIds = JsonSerializer.Deserialize<List<string>>(lotStepIdsJson) ?? new List<string>();
-
-                    foreach (string stepId in lotStepIds)
-                    {
-                        await _database.KeyDeleteAsync($"{LOT_STEP_KEY_PREFIX}{stepId}");
-                    }
+                    await _database.KeyDeleteAsync($"{LOT_STEP_KEY_PREFIX}{stepId}");
+                    await _database.SetRemoveAsync(LOT_STEPS_ALL_KEY, stepId);
                 }
             }
+            // Remove the per-lot step id set
+            await _database.KeyDeleteAsync(perLotStepSetKey);
+
+            // Remove lot id from the global set
+            await _database.SetRemoveAsync(LOTS_ALL_KEY, id);
 
             return await _database.KeyDeleteAsync($"{LOT_KEY_PREFIX}{id}");
         }
@@ -154,9 +193,12 @@ namespace Nexus.Infrastructure.Persistence.Redis
         {
             if (predicate == null)
             {
-                IServer server = _redis.GetServer(_redis.GetEndPoints().First());
-                RedisKey[] keys = server.Keys(pattern: $"{LOT_KEY_PREFIX}*").ToArray();
-                return keys.Length;
+                long count = await _database.SetLengthAsync(LOTS_ALL_KEY);
+                if (count < 0)
+                {
+                    return 0;
+                }
+                return (int)count;
             }
 
             IReadOnlyList<Lot> filteredLots = await GetAsync(predicate, cancellationToken);
@@ -204,35 +246,28 @@ namespace Nexus.Infrastructure.Persistence.Redis
             HashSet<string> referenced = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (Lot lot in lots)
             {
-                foreach (LotStep step in lot.LotSteps)
+                string perLotStepSetKey = $"{LOT_STEPS_BY_LOT_PREFIX}{lot.Id}";
+                RedisValue[] stepIds = await _database.SetMembersAsync(perLotStepSetKey);
+                foreach (RedisValue rv in stepIds)
                 {
-                    if (step.Id != null)
+                    string sid = rv.ToString();
+                    if (!string.IsNullOrEmpty(sid))
                     {
-                        referenced.Add(step.Id);
+                        referenced.Add(sid);
                     }
                 }
             }
 
-            IServer server = _redis.GetServer(_redis.GetEndPoints().First());
-            IEnumerable<RedisKey> stepKeys = server.Keys(pattern: $"{LOT_STEP_KEY_PREFIX}*");
-
+            // Compare with global step id set
+            RedisValue[] allStepIds = await _database.SetMembersAsync(LOT_STEPS_ALL_KEY);
             int removed = 0;
-            foreach (RedisKey key in stepKeys)
+            foreach (RedisValue rv in allStepIds)
             {
-                string full = key.ToString();
-                string stepId;
-                if (full.StartsWith(LOT_STEP_KEY_PREFIX, StringComparison.Ordinal))
-                {
-                    stepId = full.Substring(LOT_STEP_KEY_PREFIX.Length);
-                }
-                else
-                {
-                    stepId = full;
-                }
-
+                string stepId = rv.ToString();
                 if (!referenced.Contains(stepId))
                 {
-                    bool deleted = await _database.KeyDeleteAsync(key);
+                    bool deleted = await _database.KeyDeleteAsync($"{LOT_STEP_KEY_PREFIX}{stepId}");
+                    await _database.SetRemoveAsync(LOT_STEPS_ALL_KEY, stepId);
                     if (deleted)
                     {
                         removed++;
@@ -266,6 +301,11 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
             lot.LotSteps.Add(lotStep);
             await UpdateAsync(lot, cancellationToken);
+
+            // Ensure step id sets are updated
+            string perLotStepSetKey = $"{LOT_STEPS_BY_LOT_PREFIX}{lotId}";
+            await _database.SetAddAsync(perLotStepSetKey, lotStep.Id);
+            await _database.SetAddAsync(LOT_STEPS_ALL_KEY, lotStep.Id);
             return true;
         }
 
@@ -277,31 +317,18 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         public async Task<IReadOnlyList<LotStep>> GetLotStepsByLotIdAsync(string lotId, CancellationToken cancellationToken = default)
         {
-            // [cleaned]
-            HashEntry[] lotHashEntries = await _database.HashGetAllAsync($"{LOT_KEY_PREFIX}{lotId}");
-            if (lotHashEntries.Length == 0)
-            {
-                return new List<LotStep>();
-            }
-
-            string lotStepIdsJson = Helper.GetHashValue(lotHashEntries, "lot_step_ids");
-            if (string.IsNullOrEmpty(lotStepIdsJson))
-            {
-                return new List<LotStep>();
-            }
-
-            List<string> lotStepIds = JsonSerializer.Deserialize<List<string>>(lotStepIdsJson) ?? new List<string>();
+            string perLotStepSetKey = $"{LOT_STEPS_BY_LOT_PREFIX}{lotId}";
+            RedisValue[] stepIds = await _database.SetMembersAsync(perLotStepSetKey);
             List<LotStep> lotSteps = new List<LotStep>();
-
-            foreach (string stepId in lotStepIds)
+            foreach (RedisValue rv in stepIds)
             {
+                string stepId = rv.ToString();
                 LotStep? lotStep = await GetLotStepByIdAsync(stepId, cancellationToken);
                 if (lotStep != null)
                 {
                     lotSteps.Add(lotStep);
                 }
             }
-
             return lotSteps;
         }
 
@@ -327,9 +354,13 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 cassetteIds: cassetteIds
             );
 
-            // [cleaned]
-            string lotStepIdsValue = Helper.GetHashValue(hashEntries, "lot_step_ids"); if (!string.IsNullOrEmpty(lotStepIdsValue)) { List<string> lotStepIds = lotStepIdsValue.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
-                foreach (string stepId in lotStepIds)
+            // Load lot steps from per-lot step id set (no KEYS, no hash list dependency)
+            string perLotStepSetKey = $"{LOT_STEPS_BY_LOT_PREFIX}{id}";
+            RedisValue[] stepIds = await _database.SetMembersAsync(perLotStepSetKey);
+            foreach (RedisValue rv in stepIds)
+            {
+                string stepId = rv.ToString();
+                if (!string.IsNullOrEmpty(stepId))
                 {
                     LotStep? lotStep = await GetLotStepByIdAsync(stepId, cancellationToken);
                     if (lotStep != null)
@@ -480,6 +511,11 @@ namespace Nexus.Infrastructure.Persistence.Redis
             };
 
             await _database.HashSetAsync($"{LOT_STEP_KEY_PREFIX}{lotStep.Id}", stepHashEntries);
+
+            // Maintain step id indexes
+            string perLotStepSetKey = $"{LOT_STEPS_BY_LOT_PREFIX}{lotStep.LotId}";
+            await _database.SetAddAsync(perLotStepSetKey, lotStep.Id);
+            await _database.SetAddAsync(LOT_STEPS_ALL_KEY, lotStep.Id);
         }
 
     
