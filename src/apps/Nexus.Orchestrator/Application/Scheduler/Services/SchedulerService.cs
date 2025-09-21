@@ -242,24 +242,11 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             {
                 _logger.LogInformation("Creating plan groups for LotStep: {LotStepId}", lotStep.Id);
 
-                // 1. StockerToArea PlanGroup 생성 (우선적으로 비어있는 Area 찾기)
+                // 현재 단계: StockerToArea만 생성
                 PlanGroup stockerToAreaPlanGroup = CreateStockerToAreaPlanGroup(lotStep);
                 lotStep.PlanGroups.Add(stockerToAreaPlanGroup);
 
-                // 2. AreaToSet PlanGroup 생성
-                PlanGroup areaToSetPlanGroup = CreateAreaToSetPlanGroup(lotStep);
-                lotStep.PlanGroups.Add(areaToSetPlanGroup);
-
-                // 3. SetToArea PlanGroup 생성
-                PlanGroup setToAreaPlanGroup = CreateSetToAreaPlanGroup(lotStep);
-                lotStep.PlanGroups.Add(setToAreaPlanGroup);
-
-                // 4. AreaToStocker PlanGroup 생성
-                PlanGroup areaToStockerPlanGroup = CreateAreaToStockerPlanGroup(lotStep);
-                lotStep.PlanGroups.Add(areaToStockerPlanGroup);
-
-                _logger.LogInformation("Created {PlanGroupCount} plan groups for LotStep: {LotStepId}",
-                    lotStep.PlanGroups.Count, lotStep.Id);
+                _logger.LogInformation("Created StockerToArea plan group for LotStep: {LotStepId}", lotStep.Id);
             }
         }
 
@@ -342,8 +329,8 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                         Guid.NewGuid().ToString(),
                         $"1. Load_{cassette.Id}_from_{stockerLocation.Id}",
                         1,
-                        stockerLocation,    // from: 스토커 포트
-                        amrLocation         // to: AMR 카세트 포트
+                        stockerLocation.Id,    // from: 스토커 포트
+                        amrLocation.Id         // to: AMR 카세트 포트
                     );
 
                     cassetteLoadStep.Jobs.Add(loadJob);
@@ -363,8 +350,8 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                         Guid.NewGuid().ToString(),
                         $"1. Unload_{cassette.Id}_to_Area",
                         1,
-                        amrLocation,        // from: AMR 카세트 포트
-                        targetCassettePort  // to: Area 카세트 포트
+                        amrLocation.Id,        // from: AMR 카세트 포트
+                        targetCassettePort.Id  // to: Area 카세트 포트
                     );
 
                     cassetteUnloadStep.Jobs.Add(unloadJob);
@@ -531,8 +518,8 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                         Guid.NewGuid().ToString(),
                         $"Load_{cassette.Id}_from_Area",
                         1,
-                        availableCassettePort,  // from: Area 카세트 포트
-                        amrLocation            // to: AMR 카세트 포트
+                        availableCassettePort.Id,  // from: Area 카세트 포트
+                        amrLocation.Id              // to: AMR 카세트 포트
                     );
 
                     // Job 2: AMR에서 스토커로 카세트 언로드
@@ -540,8 +527,8 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                         Guid.NewGuid().ToString(),
                         $"Unload_{cassette.Id}_to_Stocker",
                         1,
-                        amrLocation,           // from: AMR 카세트 포트
-                        stockerPortLocation    // to: 스토커 포트
+                        amrLocation.Id,            // from: AMR 카세트 포트
+                        stockerPortLocation.Id     // to: 스토커 포트
                     );
 
                     // PlanStep 1: CassetteLoad (Area → AMR)

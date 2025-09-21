@@ -1,4 +1,3 @@
-﻿using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Plans.Enums;
 using Nexus.Core.Domain.Shared.Bases;
 
@@ -10,19 +9,20 @@ namespace Nexus.Core.Domain.Models.Plans
         public string Name { get; set; } = string.Empty;
         public int JobNo { get; set; } = 0;
 
-        public Location FromLocation { get; set; }
-        public Location ToLocation { get; set; }
+        public string FromLocationId { get; set; } = string.Empty;
+        public string ToLocationId { get; set; } = string.Empty;
 
         public EJobStatus Status { get; set; } = EJobStatus.Pending;
 
-        public Job(string id, string name, int jobNo, Location fromLocation, Location toLocation)
+        public Job(string id, string name, int jobNo, string fromLocationId, string toLocationId)
         {
             Id = id;
             Name = name;
             JobNo = jobNo;
-            FromLocation = fromLocation;
-            ToLocation = toLocation;
+            FromLocationId = fromLocationId;
+            ToLocationId = toLocationId;
         }
 
     }
 }
+

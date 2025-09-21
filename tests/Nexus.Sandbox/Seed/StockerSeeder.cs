@@ -140,9 +140,17 @@ namespace Nexus.Sandbox.Seed
 
             Stocker stocker = new Stocker(stockerId, stockerName, cassetteLocations, trayLocations);
 
-            CassetteLocation? sample = cassetteLocations.LastOrDefault();
-            Debug.Assert(sample != null);
-            sample.CurrentItemId = "CST01";
+            // 샘플로 여러 카세트를 스토커 포트에 할당
+            int maxAssign = 6;
+            for (int assignIndex = 1; assignIndex <= maxAssign; assignIndex++)
+            {
+                if (assignIndex - 1 >= cassetteLocations.Count)
+                {
+                    break;
+                }
+                CassetteLocation targetPort = cassetteLocations[assignIndex - 1];
+                targetPort.CurrentItemId = $"CST{assignIndex:D2}";
+            }
 
             stockers.Add(stocker);
 

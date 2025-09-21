@@ -39,6 +39,7 @@ namespace Nexus.Sandbox
             RedisStockerRepository stockerRepo = new RedisStockerRepository(redis, locationRepo);
             RedisRobotRepository robotRepo = new RedisRobotRepository(redis, locationRepo);
             RedisDimensionRepository dimesionRepo = new RedisDimensionRepository(redis);
+            RedisLotRepository lotRepo = new RedisLotRepository(redis, transportRepo);
 
             List<IDataSeeder> seeders = new List<IDataSeeder>
             {
@@ -47,7 +48,8 @@ namespace Nexus.Sandbox
                 new AreaSeeder(areaRepo, dimesionRepo),
                 new StockerSeeder(stockerRepo, dimesionRepo),
                 new MarkerSeeder(locationRepo, areaRepo, stockerRepo),
-                new RobotSeeder(robotRepo, locationRepo, dimesionRepo)
+                new RobotSeeder(robotRepo, locationRepo, dimesionRepo),
+                new LotSeeder(lotRepo)
             };
 
             foreach (IDataSeeder seeder in seeders)

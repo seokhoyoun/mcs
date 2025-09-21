@@ -4,10 +4,10 @@ using Nexus.Core.Domain.Models.Lots.Interfaces;
 using Nexus.Core.Domain.Models.Plans;
 using Nexus.Core.Domain.Models.Plans.Enums;
 using Nexus.Core.Domain.Models.Transports;
+using Nexus.Core.Domain.Models.Transports.Interfaces;
 using StackExchange.Redis;
 using System.Diagnostics;
 using System.Linq.Expressions;
-using System.Text.Json;
 
 namespace Nexus.Infrastructure.Persistence.Redis
 {
@@ -15,21 +15,27 @@ namespace Nexus.Infrastructure.Persistence.Redis
     {
         private readonly IConnectionMultiplexer _redis;
         private readonly IDatabase _database;
+        private readonly ITransportRepository _transportRepository;
         private const string LOT_KEY_PREFIX = "lot:";
         private const string LOT_STEP_KEY_PREFIX = "lot_step:";
         private const string LOTS_ALL_KEY = "lots:all";
         private const string LOT_STEPS_ALL_KEY = "lot_steps:all";
         private const string LOT_STEPS_BY_LOT_PREFIX = "lot:steps:"; // per-lot step id set
         private const string PLAN_GROUP_KEY_PREFIX = "plan_group:";
-        private const string CASSETTE_KEY_PREFIX = "cassette:";
-        private const string TRAY_KEY_PREFIX = "tray:";
+        private const string PLAN_GROUP_PLANS_SET_PREFIX = "plan_group:plans:";
+        private const string PLAN_KEY_PREFIX = "plan:";
+        private const string PLAN_STEPS_SET_PREFIX = "plan:steps:";
+        private const string PLAN_STEP_KEY_PREFIX = "plan_step:";
+        private const string PLAN_STEP_JOBS_SET_PREFIX = "plan_step:jobs:";
+        private const string JOB_KEY_PREFIX = "job:";
 
         private const string ID_SEPARATOR = ",";
 
-        public RedisLotRepository(IConnectionMultiplexer redis)
+        public RedisLotRepository(IConnectionMultiplexer redis, ITransportRepository transportRepository)
         {
             _redis = redis;
             _database = redis.GetDatabase();
+            _transportRepository = transportRepository;
         }
 
         public async Task<Lot?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
@@ -406,7 +412,8 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 lotStep.CassetteIds = cassetteIds;
                 foreach (string cassetteId in cassetteIds)
                 {
-                    Cassette? cassette = await GetCassetteByIdAsync(cassetteId, cancellationToken);
+                    ITransportable? transport = await _transportRepository.GetByIdAsync(cassetteId, cancellationToken);
+                    Cassette? cassette = transport as Cassette;
                     if (cassette != null)
                     {
                         lotStep.Cassettes.Add(cassette);
@@ -431,45 +438,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
             return lotStep;
         }
 
-        private async Task<Cassette?> GetCassetteByIdAsync(string cassetteId, CancellationToken cancellationToken = default)
-        {
-            HashEntry[] hashEntries = await _database.HashGetAllAsync($"{CASSETTE_KEY_PREFIX}{cassetteId}");
-            if (hashEntries.Length == 0)
-            {
-                return null;
-            }
-
-            string cassetteName = Helper.GetHashValue(hashEntries, "name");
-
-            string trayIdsJson = Helper.GetHashValue(hashEntries, "tray_ids");
-            List<Tray> trays = new List<Tray>();
-
-            if (!string.IsNullOrEmpty(trayIdsJson))
-            {
-                List<string> trayIds = JsonSerializer.Deserialize<List<string>>(trayIdsJson) ?? new List<string>();
-                foreach (string trayId in trayIds)
-                {
-                    Tray? tray = await GetTrayByIdAsync(trayId, cancellationToken);
-                    if (tray != null)
-                    {
-                        trays.Add(tray);
-                    }
-                }
-            }
-
-            return new Cassette(cassetteId, cassetteName, trays);
-        }
-
-        private async Task<Tray?> GetTrayByIdAsync(string trayId, CancellationToken cancellationToken = default)
-        {
-            HashEntry[] hashEntries = await _database.HashGetAllAsync($"{TRAY_KEY_PREFIX}{trayId}");
-            if (hashEntries.Length == 0)
-            {
-                return null;
-            }
-
-            return null;
-        }
+        // Cassette/Tray 조회는 TransportRepository를 통해 위임 처리합니다.
 
         private async Task<PlanGroup?> GetPlanGroupByIdAsync(string planGroupId, CancellationToken cancellationToken = default)
         {
@@ -484,7 +453,110 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
             if (Enum.TryParse<EPlanGroupType>(groupTypeStr, out EPlanGroupType groupType))
             {
-                return new PlanGroup(planGroupId, planGroupName, groupType);
+                PlanGroup pg = new PlanGroup(planGroupId, planGroupName, groupType);
+
+                // Optional: Load nested plans and steps (no location resolution for jobs here)
+                RedisValue[] planIds = await _database.SetMembersAsync($"{PLAN_GROUP_PLANS_SET_PREFIX}{planGroupId}");
+                foreach (RedisValue pid in planIds)
+                {
+                    string planId = pid.ToString();
+                    if (string.IsNullOrEmpty(planId))
+                    {
+                        continue;
+                    }
+
+                    HashEntry[] planHash = await _database.HashGetAllAsync($"{PLAN_KEY_PREFIX}{planId}");
+                    if (planHash.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    string planName = Helper.GetHashValue(planHash, "name");
+                    Plan plan = new Plan(planId, planName);
+
+                    // Load steps
+                    RedisValue[] stepIds = await _database.SetMembersAsync($"{PLAN_STEPS_SET_PREFIX}{planId}");
+                    foreach (RedisValue sid in stepIds)
+                    {
+                        string stepId = sid.ToString();
+                        if (string.IsNullOrEmpty(stepId))
+                        {
+                            continue;
+                        }
+
+                        HashEntry[] stepHash = await _database.HashGetAllAsync($"{PLAN_STEP_KEY_PREFIX}{stepId}");
+                        if (stepHash.Length == 0)
+                        {
+                            continue;
+                        }
+
+                        string stepName = Helper.GetHashValue(stepHash, "name");
+                        int stepNo = Helper.GetHashValueAsInt(stepHash, "step_no");
+                        string position = Helper.GetHashValue(stepHash, "position");
+                        string actionStr = Helper.GetHashValue(stepHash, "action");
+                        string statusStr = Helper.GetHashValue(stepHash, "status");
+
+                        EPlanStepAction action;
+                        if (!Enum.TryParse<EPlanStepAction>(actionStr, out action))
+                        {
+                            action = EPlanStepAction.None;
+                        }
+                        EPlanStepStatus stepStatus;
+                        if (!Enum.TryParse<EPlanStepStatus>(statusStr, out stepStatus))
+                        {
+                            stepStatus = EPlanStepStatus.Pending;
+                        }
+
+                        PlanStep planStep = new PlanStep(stepId, stepName, stepNo, action, position);
+                        planStep.Status = stepStatus;
+
+                        // carrier ids (optional)
+                        string carrierIdsVal = Helper.GetHashValue(stepHash, "carrier_ids");
+                        if (!string.IsNullOrEmpty(carrierIdsVal))
+                        {
+                            List<string> carriers = carrierIdsVal.Split(ID_SEPARATOR, StringSplitOptions.RemoveEmptyEntries).ToList();
+                            planStep.CarrierIds = carriers;
+                        }
+
+                        // Load jobs for this plan step
+                        RedisValue[] jobIds = await _database.SetMembersAsync($"{PLAN_STEP_JOBS_SET_PREFIX}{stepId}");
+                        foreach (RedisValue jrv in jobIds)
+                        {
+                            string jobId = jrv.ToString();
+                            if (string.IsNullOrEmpty(jobId))
+                            {
+                                continue;
+                            }
+
+                            HashEntry[] jobHash = await _database.HashGetAllAsync($"{JOB_KEY_PREFIX}{jobId}");
+                            if (jobHash.Length == 0)
+                            {
+                                continue;
+                            }
+
+                            string jobName = Helper.GetHashValue(jobHash, "name");
+                            int jobNo = Helper.GetHashValueAsInt(jobHash, "job_no");
+                            string fromLocationId = Helper.GetHashValue(jobHash, "from_location_id");
+                            string toLocationId = Helper.GetHashValue(jobHash, "to_location_id");
+                            string jobStatusStr = Helper.GetHashValue(jobHash, "status");
+
+                            Job job = new Job(jobId, jobName, jobNo, fromLocationId, toLocationId);
+                            EJobStatus jobStatus;
+                            if (Enum.TryParse<EJobStatus>(jobStatusStr, out jobStatus))
+                            {
+                                job.Status = jobStatus;
+                            }
+
+                            planStep.Jobs.Add(job);
+                        }
+
+                        plan.PlanSteps.Add(planStep);
+                    }
+
+                    pg.Plans.Add(plan);
+                }
+
+                return pg;
             }
 
             return null;
@@ -492,9 +564,27 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         private async Task SaveLotStepAsync(LotStep lotStep, CancellationToken cancellationToken = default)
         {
-            List<string> cassetteIdsToPersist = (lotStep.CassetteIds != null && lotStep.CassetteIds.Count > 0)
-                ? lotStep.CassetteIds
-                : lotStep.Cassettes.Select(c => c.Id).ToList();
+            List<string> cassetteIdsToPersist = new List<string>();
+            if (lotStep.CassetteIds != null && lotStep.CassetteIds.Count > 0)
+            {
+                cassetteIdsToPersist = lotStep.CassetteIds;
+            }
+            else
+            {
+                foreach (Cassette cassette in lotStep.Cassettes)
+                {
+                    cassetteIdsToPersist.Add(cassette.Id);
+                }
+            }
+
+            // LotStep에 포함된 카세트가 전달된 경우 TransportRepository를 통해 등록을 위임합니다.
+            if (lotStep.Cassettes != null && lotStep.Cassettes.Count > 0)
+            {
+                foreach (Cassette cassette in lotStep.Cassettes)
+                {
+                    await _transportRepository.AddAsync(cassette, cancellationToken);
+                }
+            }
 
             HashEntry[] stepHashEntries = new HashEntry[]
             {
@@ -516,6 +606,116 @@ namespace Nexus.Infrastructure.Persistence.Redis
             string perLotStepSetKey = $"{LOT_STEPS_BY_LOT_PREFIX}{lotStep.LotId}";
             await _database.SetAddAsync(perLotStepSetKey, lotStep.Id);
             await _database.SetAddAsync(LOT_STEPS_ALL_KEY, lotStep.Id);
+
+            // Persist plan groups and nested plans/steps/jobs
+            if (lotStep.PlanGroups != null)
+            {
+                foreach (PlanGroup pg in lotStep.PlanGroups)
+                {
+                    await SavePlanGroupAsync(pg, cancellationToken);
+                }
+            }
+        }
+
+        private async Task SavePlanGroupAsync(PlanGroup planGroup, CancellationToken cancellationToken)
+        {
+            HashEntry[] pgHash = new HashEntry[]
+            {
+                new HashEntry("id", planGroup.Id),
+                new HashEntry("name", planGroup.Name),
+                new HashEntry("group_type", planGroup.GroupType.ToString())
+            };
+
+            await _database.HashSetAsync($"{PLAN_GROUP_KEY_PREFIX}{planGroup.Id}", pgHash);
+
+            if (planGroup.Plans != null)
+            {
+                foreach (Plan plan in planGroup.Plans)
+                {
+                    await SavePlanAsync(planGroup.Id, plan, cancellationToken);
+                }
+            }
+        }
+
+        private async Task SavePlanAsync(string planGroupId, Plan plan, CancellationToken cancellationToken)
+        {
+            HashEntry[] pHash = new HashEntry[]
+            {
+                new HashEntry("id", plan.Id),
+                new HashEntry("name", plan.Name),
+                new HashEntry("plan_group_id", planGroupId)
+            };
+
+            await _database.HashSetAsync($"{PLAN_KEY_PREFIX}{plan.Id}", pHash);
+            await _database.SetAddAsync($"{PLAN_GROUP_PLANS_SET_PREFIX}{planGroupId}", plan.Id);
+
+            if (plan.PlanSteps != null)
+            {
+                foreach (PlanStep step in plan.PlanSteps)
+                {
+                    await SavePlanStepAsync(plan.Id, step, cancellationToken);
+                }
+            }
+        }
+
+        private async Task SavePlanStepAsync(string planId, PlanStep step, CancellationToken cancellationToken)
+        {
+            string carriers = string.Empty;
+            if (step.CarrierIds != null && step.CarrierIds.Count > 0)
+            {
+                carriers = string.Join(ID_SEPARATOR, step.CarrierIds);
+            }
+
+            HashEntry[] sHash = new HashEntry[]
+            {
+                new HashEntry("id", step.Id),
+                new HashEntry("name", step.Name),
+                new HashEntry("plan_id", planId),
+                new HashEntry("step_no", step.StepNo),
+                new HashEntry("position", step.Position),
+                new HashEntry("action", step.Action.ToString()),
+                new HashEntry("status", step.Status.ToString()),
+                new HashEntry("carrier_ids", carriers)
+            };
+
+            await _database.HashSetAsync($"{PLAN_STEP_KEY_PREFIX}{step.Id}", sHash);
+            await _database.SetAddAsync($"{PLAN_STEPS_SET_PREFIX}{planId}", step.Id);
+
+            if (step.Jobs != null)
+            {
+                foreach (Job job in step.Jobs)
+                {
+                    await SaveJobAsync(step.Id, job, cancellationToken);
+                }
+            }
+        }
+
+        private async Task SaveJobAsync(string planStepId, Job job, CancellationToken cancellationToken)
+        {
+            string fromId = string.Empty;
+            if (job.FromLocationId != null)
+            {
+                fromId = job.FromLocationId;
+            }
+            string toId = string.Empty;
+            if (job.ToLocationId != null)
+            {
+                toId = job.ToLocationId;
+            }
+
+            HashEntry[] jHash = new HashEntry[]
+            {
+                new HashEntry("id", job.Id),
+                new HashEntry("name", job.Name),
+                new HashEntry("plan_step_id", planStepId),
+                new HashEntry("job_no", job.JobNo),
+                new HashEntry("from_location_id", fromId),
+                new HashEntry("to_location_id", toId),
+                new HashEntry("status", job.Status.ToString())
+            };
+
+            await _database.HashSetAsync($"{JOB_KEY_PREFIX}{job.Id}", jHash);
+            await _database.SetAddAsync($"{PLAN_STEP_JOBS_SET_PREFIX}{planStepId}", job.Id);
         }
 
     
