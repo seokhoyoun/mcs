@@ -126,7 +126,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                 }
 
                 // PlanGroup 생성 (조건 체크 없이 무조건 생성)
-                CreatePlanGroups(lot);
+                await CreatePlanGroupsAsync(lot, cancellationToken);
 
                 // Simulate robot motions for Stocker->Area paths
                 await SimulateStockerToAreaAsync(lot, cancellationToken);
@@ -189,10 +189,10 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
 
             foreach (LotStep step in lot.LotSteps)
             {
-                Area? emptyArea = GetEmptyAreaForCassettes(step.Cassettes.Count);
+                Area? emptyArea = await GetEmptyAreaForCassettesAsync(step.Cassettes.Count, cancellationToken);
                 if (emptyArea == null)
                 {
-                    emptyArea = _areaService.GetAvailableAreaForCassette();
+                    emptyArea = await _areaService.GetAvailableAreaForCassetteAsync(cancellationToken);
                 }
                 if (emptyArea == null)
                 {
@@ -201,18 +201,18 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                 }
 
                 string amrIdSim = $"{robot.Id}.CP01";
-                MarkerLocation amrLocation = GetOrCreateAMRLocation(amrIdSim, $"AMR Port of {robot.Id}");
+                MarkerLocation amrLocation = await GetOrCreateAMRLocationAsync(amrIdSim, $"AMR Port of {robot.Id}", cancellationToken);
 
                 foreach (Cassette cassette in step.Cassettes)
                 {
-                    CassetteLocation? stockerLocation = _locationService.GetCassetteLocationById(cassette.Id);
+                    CassetteLocation? stockerLocation = await _locationService.GetCassetteLocationByIdAsync(cassette.Id, cancellationToken);
                     if (stockerLocation == null)
                     {
                         _logger.LogWarning("Cannot find stocker location for cassette {CassetteId}", cassette.Id);
                         continue;
                     }
 
-                    CassetteLocation? targetCassettePort = _areaService.GetAvailableCassettePort(emptyArea);
+                    CassetteLocation? targetCassettePort = await _areaService.GetAvailableCassetteLocationAsync(emptyArea, cancellationToken);
                     if (targetCassettePort == null)
                     {
                         _logger.LogWarning("No available cassette port in area {AreaId} for cassette {CassetteId}", emptyArea.Id, cassette.Id);
@@ -236,14 +236,14 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             }
         }
 
-        private void CreatePlanGroups(Lot lot)
+        private async Task CreatePlanGroupsAsync(Lot lot, CancellationToken cancellationToken)
         {
             foreach (LotStep lotStep in lot.LotSteps)
             {
                 _logger.LogInformation("Creating plan groups for LotStep: {LotStepId}", lotStep.Id);
 
                 // 현재 단계: StockerToArea만 생성
-                PlanGroup stockerToAreaPlanGroup = CreateStockerToAreaPlanGroup(lotStep);
+                PlanGroup stockerToAreaPlanGroup = await CreateStockerToAreaPlanGroupAsync(lotStep, cancellationToken);
                 lotStep.PlanGroups.Add(stockerToAreaPlanGroup);
 
                 _logger.LogInformation("Created StockerToArea plan group for LotStep: {LotStepId}", lotStep.Id);
@@ -254,7 +254,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
 
         #region PlanGroup Creation Methods
 
-        private PlanGroup CreateStockerToAreaPlanGroup(LotStep lotStep)
+        private async Task<PlanGroup> CreateStockerToAreaPlanGroupAsync(LotStep lotStep, CancellationToken cancellationToken)
         {
             string planGroupId = Guid.NewGuid().ToString();
             PlanGroup planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_StockerToArea", EPlanGroupType.StockerToArea);
@@ -262,11 +262,11 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             _logger.LogInformation("Creating StockerToArea plan group for {CassetteCount} cassettes", lotStep.Cassettes.Count);
 
             // 비어있는 Area를 우선적으로 찾기
-            Area? emptyArea = GetEmptyAreaForCassettes(lotStep.Cassettes.Count);
+            Area? emptyArea = await GetEmptyAreaForCassettesAsync(lotStep.Cassettes.Count, cancellationToken);
             if (emptyArea == null)
             {
                 _logger.LogWarning("No empty area available for {CassetteCount} cassettes. Using available area instead", lotStep.Cassettes.Count);
-                emptyArea = _areaService.GetAvailableAreaForCassette();
+                emptyArea = await _areaService.GetAvailableAreaForCassetteAsync(cancellationToken);
             }
 
             if (emptyArea == null)
@@ -282,7 +282,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             string robotIdForAmr = "RBT01";
             try
             {
-                IReadOnlyList<Robot> robots = _robotRepository.GetAllAsync().GetAwaiter().GetResult();
+                IReadOnlyList<Robot> robots = await _robotRepository.GetAllAsync(cancellationToken);
                 if (robots != null && robots.Count > 0 && robots[0] != null)
                 {
                     robotIdForAmr = robots[0].Id;
@@ -290,14 +290,14 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             }
             catch { }
             string amrId = $"{robotIdForAmr}.CP01";
-            MarkerLocation amrLocation = GetOrCreateAMRLocation(amrId, $"AMR Port of {robotIdForAmr}");
+            MarkerLocation amrLocation = await GetOrCreateAMRLocationAsync(amrId, $"AMR Port of {robotIdForAmr}", cancellationToken);
 
             foreach (Cassette cassette in lotStep.Cassettes)
             {
                 try
                 {
                     // 1. 카세트의 현재 위치 조회 (스토커)
-                    CassetteLocation? stockerLocation = _locationService.GetCassetteLocationById(cassette.Id);
+                    CassetteLocation? stockerLocation = await _locationService.GetCassetteLocationByIdAsync(cassette.Id, cancellationToken);
                     if (stockerLocation == null)
                     {
                         _logger.LogWarning("Cassette location not found for CassetteId: {CassetteId}", cassette.Id);
@@ -305,7 +305,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                     }
 
                     // 2. Area에서 사용 가능한 카세트 포트 찾기 (목표 위치)
-                    CassetteLocation? targetCassettePort = _areaService.GetAvailableCassettePort(emptyArea);
+                    CassetteLocation? targetCassettePort = await _areaService.GetAvailableCassetteLocationAsync(emptyArea, cancellationToken);
                     if (targetCassettePort == null)
                     {
                         _logger.LogWarning("No available cassette port found in area {AreaId} for cassette {CassetteId}",
@@ -373,7 +373,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             return planGroup;
         }
 
-        private PlanGroup CreateAreaToSetPlanGroup(LotStep lotStep)
+        private async Task<PlanGroup> CreateAreaToSetPlanGroupAsync(LotStep lotStep, CancellationToken cancellationToken)
         {
             string planGroupId = Guid.NewGuid().ToString();
             PlanGroup planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_AreaToSet", EPlanGroupType.AreaToSet);
@@ -382,7 +382,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             {
                 try
                 {
-                    Area? availableArea = _areaService.GetAvailableAreaForCassette();
+                    Area? availableArea = await _areaService.GetAvailableAreaForCassetteAsync(cancellationToken);
                     if (availableArea == null)
                     {
                         _logger.LogWarning("No available area found for AreaToSet plan");
@@ -421,7 +421,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             return planGroup;
         }
 
-        private PlanGroup CreateSetToAreaPlanGroup(LotStep lotStep)
+        private async Task<PlanGroup> CreateSetToAreaPlanGroupAsync(LotStep lotStep, CancellationToken cancellationToken)
         {
             string planGroupId = Guid.NewGuid().ToString();
             PlanGroup planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_SetToArea", EPlanGroupType.SetToArea);
@@ -430,7 +430,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             {
                 try
                 {
-                    Area? availableArea = _areaService.GetAvailableAreaForCassette();
+                    Area? availableArea = await _areaService.GetAvailableAreaForCassetteAsync(cancellationToken);
                     if (availableArea == null)
                     {
                         _logger.LogWarning("No available area found for SetToArea plan");
@@ -469,7 +469,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             return planGroup;
         }
 
-        private PlanGroup CreateAreaToStockerPlanGroup(LotStep lotStep)
+        private async Task<PlanGroup> CreateAreaToStockerPlanGroupAsync(LotStep lotStep, CancellationToken cancellationToken)
         {
             string planGroupId = Guid.NewGuid().ToString();
             PlanGroup planGroup = new PlanGroup(planGroupId, $"{lotStep.Name}_AreaToStocker", EPlanGroupType.AreaToStocker);
@@ -478,7 +478,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             string robotIdForAmr2 = "RBT01";
             try
             {
-                IReadOnlyList<Robot> robots2 = _robotRepository.GetAllAsync().GetAwaiter().GetResult();
+                IReadOnlyList<Robot> robots2 = await _robotRepository.GetAllAsync(cancellationToken);
                 if (robots2 != null && robots2.Count > 0 && robots2[0] != null)
                 {
                     robotIdForAmr2 = robots2[0].Id;
@@ -486,7 +486,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             }
             catch { }
             string amrId2 = $"{robotIdForAmr2}.CP01";
-            MarkerLocation amrLocation = GetOrCreateAMRLocation(amrId2, $"AMR Port of {robotIdForAmr2}");
+            MarkerLocation amrLocation = await GetOrCreateAMRLocationAsync(amrId2, $"AMR Port of {robotIdForAmr2}", cancellationToken);
 
             const string stockerPrefix = "ST01.CP";
             int stockerPortIndex = 1;
@@ -495,14 +495,14 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
             {
                 try
                 {
-                    Area? availableArea = _areaService.GetAvailableAreaForCassette();
+                    Area? availableArea = await _areaService.GetAvailableAreaForCassetteAsync(cancellationToken);
                     if (availableArea == null)
                     {
                         _logger.LogWarning("No available area found for AreaToStocker plan");
                         continue;
                     }
 
-                    CassetteLocation? availableCassettePort = _areaService.GetAvailableCassettePort(availableArea);
+                    CassetteLocation? availableCassettePort = await _areaService.GetAvailableCassetteLocationAsync(availableArea, cancellationToken);
                     if (availableCassettePort == null)
                     {
                         _logger.LogWarning("No available cassette port found for AreaToStocker plan");
@@ -510,7 +510,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                     }
 
                     // 스토커 반납 위치 생성
-                    CassetteLocation stockerPortLocation = CreateOrGetStockerLocation($"{stockerPrefix}{stockerPortIndex:D2}");
+                    CassetteLocation stockerPortLocation = await CreateOrGetStockerLocationAsync($"{stockerPrefix}{stockerPortIndex:D2}", cancellationToken);
                     Plan plan = new Plan(Guid.NewGuid().ToString(), $"AreaToStocker_{cassette.Id}");
 
                     // Job 1: Area에서 AMR로 카세트 로드
@@ -581,9 +581,9 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
         /// <param name="locationId">AMR Location ID (예: AMR.CP01)</param>
         /// <param name="locationName">AMR Location 이름</param>
         /// <returns>AMR MarkerLocation</returns>
-        private MarkerLocation GetOrCreateAMRLocation(string locationId, string locationName)
+        private async Task<MarkerLocation> GetOrCreateAMRLocationAsync(string locationId, string locationName, CancellationToken cancellationToken = default)
         {
-            MarkerLocation? amrLocation = _locationService.GetMarkerLocationById(locationId);
+            MarkerLocation? amrLocation = await _locationService.GetMarkerLocationByIdAsync(locationId, cancellationToken);
             if (amrLocation == null)
             {
                 // AMR Location이 없으면 생성
@@ -603,9 +603,9 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
         /// </summary>
         /// <param name="locationId">스토커 Location ID (예: ST01.CP01)</param>
         /// <returns>스토커 CassetteLocation</returns>
-        private CassetteLocation CreateOrGetStockerLocation(string locationId)
+        private async Task<CassetteLocation> CreateOrGetStockerLocationAsync(string locationId, CancellationToken cancellationToken = default)
         {
-            CassetteLocation? stockerLocation = _locationService.GetCassetteLocationById(locationId);
+            CassetteLocation? stockerLocation = await _locationService.GetCassetteLocationByIdAsync(locationId, cancellationToken);
             if (stockerLocation == null)
             {
                 // 스토커 Location이 없으면 생성
@@ -625,55 +625,9 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
         /// </summary>
         /// <param name="requiredCassetteSlots">필요한 카세트 슬롯 수</param>
         /// <returns>비어있는 Area 또는 null</returns>
-        private Area? GetEmptyAreaForCassettes(int requiredCassetteSlots)
+        private async Task<Area?> GetEmptyAreaForCassettesAsync(int requiredCassetteSlots, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                // 모든 Area 중에서 Idle 상태인 것을 우선적으로 선택
-                List<Area> emptyAreas = _areaService.Areas
-                    .Where(area => area.Status == EAreaStatus.Idle)
-                    .Where(area => GetAvailableCassettePortCount(area) >= requiredCassetteSlots)
-                    .OrderBy(area => GetCassetteOccupancy(area)) // 가장 비어있는 것부터
-                    .ToList();
-
-                if (emptyAreas.Any())
-                {
-                    Area selectedArea = emptyAreas.First();
-                    _logger.LogInformation("Found empty area {AreaId} with {AvailableSlots} available cassette slots",
-                        selectedArea.Id, GetAvailableCassettePortCount(selectedArea));
-                    return selectedArea;
-                }
-
-                _logger.LogWarning("No empty area found with {RequiredSlots} available slots", requiredCassetteSlots);
-                return null;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error while searching for empty area");
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Area의 사용 가능한 카세트 포트 수를 계산합니다.
-        /// </summary>
-        private int GetAvailableCassettePortCount(Area area)
-        {
-            return area.CassetteLocations.Count(cp => cp.CurrentItemId == null);
-        }
-
-        /// <summary>
-        /// Area의 카세트 점유율을 계산합니다 (0.0 = 비어있음, 1.0 = 가득참).
-        /// </summary>
-        private double GetCassetteOccupancy(Area area)
-        {
-            if (area.CassetteLocations.Count == 0)
-            {
-                return 1.0; // 포트가 없으면 가득 찬 것으로 간주
-            }
-
-            int occupiedPorts = area.CassetteLocations.Count(cp => cp.CurrentItemId != null);
-            return (double)occupiedPorts / area.CassetteLocations.Count;
+            return await _areaService.GetEmptyAreaForCassettesAsync(requiredCassetteSlots, cancellationToken);
         }
 
         #endregion

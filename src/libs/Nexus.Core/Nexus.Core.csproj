@@ -8,8 +8,14 @@
 
 	<ItemGroup>
 	  <Compile Remove="Domain\Models\Locations\Events\**" />
+	  <Compile Remove="Domain\Models\Lots\Events\**" />
+	  <Compile Remove="Domain\Models\Plans\Events\**" />
 	  <EmbeddedResource Remove="Domain\Models\Locations\Events\**" />
+	  <EmbeddedResource Remove="Domain\Models\Lots\Events\**" />
+	  <EmbeddedResource Remove="Domain\Models\Plans\Events\**" />
 	  <None Remove="Domain\Models\Locations\Events\**" />
+	  <None Remove="Domain\Models\Lots\Events\**" />
+	  <None Remove="Domain\Models\Plans\Events\**" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -19,11 +25,6 @@
 		<PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
 
  
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Domain\Models\Lots\Events\" />
-	  <Folder Include="Domain\Models\Plans\Events\" />
 	</ItemGroup>
 
 </Project>

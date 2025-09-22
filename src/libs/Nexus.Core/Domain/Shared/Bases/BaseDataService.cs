@@ -93,8 +93,5 @@ namespace Nexus.Core.Domain.Shared.Bases
             }
         }
 
-        public abstract Task InitializeAsync(CancellationToken cancellationToken = default);
-      
-
     }
 }

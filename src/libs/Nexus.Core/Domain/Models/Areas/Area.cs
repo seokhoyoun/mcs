@@ -1,4 +1,4 @@
-﻿using Nexus.Core.Domain.Models.Areas.Enums;
+using Nexus.Core.Domain.Models.Areas.Enums;
 using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Transports;

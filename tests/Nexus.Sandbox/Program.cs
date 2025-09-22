@@ -15,6 +15,7 @@ namespace Nexus.Sandbox
     {
         static async Task Main(string[] args)
         {
+          
 
             ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost:6379,allowAdmin=true");
 
@@ -41,16 +42,15 @@ namespace Nexus.Sandbox
             RedisDimensionRepository dimesionRepo = new RedisDimensionRepository(redis);
             RedisLotRepository lotRepo = new RedisLotRepository(redis, transportRepo);
 
-            List<IDataSeeder> seeders = new List<IDataSeeder>
-            {
-                new DimensionSeeder(dimesionRepo),
-                new CassetteSeeder(transportRepo),
-                new AreaSeeder(areaRepo, dimesionRepo),
-                new StockerSeeder(stockerRepo, dimesionRepo),
-                new MarkerSeeder(locationRepo, areaRepo, stockerRepo),
-                new RobotSeeder(robotRepo, locationRepo, dimesionRepo),
-                new LotSeeder(lotRepo)
-            };
+            List<IDataSeeder> seeders = new List<IDataSeeder>();
+            seeders.Add(new DimensionSeeder(dimesionRepo));
+            seeders.Add(new CassetteSeeder(transportRepo));
+            seeders.Add(new AreaSeeder(areaRepo, dimesionRepo));
+            seeders.Add(new StockerSeeder(stockerRepo, dimesionRepo));
+            seeders.Add(new MarkerSeeder(locationRepo, areaRepo, stockerRepo));
+            seeders.Add(new RobotSeeder(robotRepo, locationRepo, dimesionRepo));
+            seeders.Add(new LotSeeder(lotRepo));
+            
 
             foreach (IDataSeeder seeder in seeders)
             {

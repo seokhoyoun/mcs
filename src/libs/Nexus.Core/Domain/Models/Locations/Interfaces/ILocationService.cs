@@ -19,29 +19,46 @@ namespace Nexus.Core.Domain.Models.Locations.Interfaces
         /// </summary>
         /// <param name="id">카세트 위치 ID</param>
         /// <returns>해당 ID의 카세트 위치 또는 null</returns>
-        CassetteLocation? GetCassetteLocationById(string id);
+        Task<CassetteLocation?> GetCassetteLocationByIdAsync(string id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// ID로 트레이 위치를 조회합니다.
         /// </summary>
         /// <param name="id">트레이 위치 ID</param>
         /// <returns>해당 ID의 트레이 위치 또는 null</returns>
-        TrayLocation? GetTrayLocationById(string id);
+        Task<TrayLocation?> GetTrayLocationByIdAsync(string id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// ID로 메모리 위치를 조회합니다.
         /// </summary>
         /// <param name="id">메모리 위치 ID</param>
         /// <returns>해당 ID의 메모리 위치 또는 null</returns>
-        MemoryLocation? GetMemoryLocationById(string id);
+        Task<MemoryLocation?> GetMemoryLocationByIdAsync(string id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// ID로 마커 위치를 조회합니다. (포지션 전용)
         /// </summary>
         /// <param name="id">마커 위치 ID</param>
         /// <returns>해당 ID의 마커 위치 또는 null</returns>
-        MarkerLocation? GetMarkerLocationById(string id);
+        Task<MarkerLocation?> GetMarkerLocationByIdAsync(string id, CancellationToken cancellationToken = default);
 
-     
+        /// <summary>
+        /// 위치에 아이템을 할당합니다. 이미 점유 중이면 false를 반환합니다.
+        /// </summary>
+        /// <param name="locationId">위치 ID</param>
+        /// <param name="itemId">아이템 ID</param>
+        /// <param name="cancellationToken">취소 토큰</param>
+        /// <returns>성공 여부</returns>
+        Task<bool> TryAssignItemAsync(string locationId, string itemId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 위치에서 아이템을 해제합니다. 비어있으면 false를 반환합니다.
+        /// </summary>
+        /// <param name="locationId">위치 ID</param>
+        /// <param name="cancellationToken">취소 토큰</param>
+        /// <returns>성공 여부</returns>
+        Task<bool> TryClearItemAsync(string locationId, CancellationToken cancellationToken = default);
+
+    
     }
 }

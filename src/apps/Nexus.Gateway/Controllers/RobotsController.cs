@@ -16,6 +16,7 @@ namespace Nexus.Gateway.Controllers
     public class RobotsController : ControllerBase
     {
         private readonly ILocationRepository _locationRepository;
+        private readonly ILocationService _locationService;
         private readonly IRobotRepository _robotRepository;
         private readonly ITransportRepository _transportRepository;
         private readonly IConfiguration _configuration;
@@ -23,12 +24,14 @@ namespace Nexus.Gateway.Controllers
         public RobotsController(ILocationRepository locationRepository,
                                 IRobotRepository robotRepository,
                                 ITransportRepository transportRepository,
-                                IConfiguration configuration)
+                                IConfiguration configuration,
+                                ILocationService locationService)
         {
             _locationRepository = locationRepository;
             _robotRepository = robotRepository;
             _transportRepository = transportRepository;
             _configuration = configuration;
+            _locationService = locationService;
         }
 
         public class MoveRequest
@@ -137,11 +140,17 @@ namespace Nexus.Gateway.Controllers
                 return Conflict("Robot storage location is already occupied.");
             }
 
-            source.CurrentItemId = string.Empty;
-            await _locationRepository.UpdateAsync(source, cancellationToken);
+            bool cleared = await _locationService.TryClearItemAsync(source.Id, cancellationToken);
+            if (!cleared)
+            {
+                return Conflict("Failed to clear source location.");
+            }
 
-            carryLocation.CurrentItemId = request.ItemId;
-            await _locationRepository.UpdateAsync(carryLocation, cancellationToken);
+            bool assigned = await _locationService.TryAssignItemAsync(carryLocation.Id, request.ItemId, cancellationToken);
+            if (!assigned)
+            {
+                return Conflict("Failed to assign item to robot storage location.");
+            }
 
             return Ok();
         }
@@ -204,12 +213,17 @@ namespace Nexus.Gateway.Controllers
                 return Conflict("Destination location is occupied.");
             }
 
-            dest.CurrentItemId = itemId;
-            await _locationRepository.UpdateAsync(dest, cancellationToken);
+            bool assigned = await _locationService.TryAssignItemAsync(dest.Id, itemId, cancellationToken);
+            if (!assigned)
+            {
+                return Conflict("Failed to assign item to destination location.");
+            }
 
-            // Clear robot storage
-            carryLocation.CurrentItemId = string.Empty;
-            await _locationRepository.UpdateAsync(carryLocation, cancellationToken);
+            bool cleared = await _locationService.TryClearItemAsync(carryLocation.Id, cancellationToken);
+            if (!cleared)
+            {
+                return Conflict("Failed to clear robot storage location.");
+            }
             return Ok();
         }
     }

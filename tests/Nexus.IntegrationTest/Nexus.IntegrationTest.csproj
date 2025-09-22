@@ -23,4 +23,9 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\libs\Nexus.Core\Nexus.Core.csproj" />
+    <ProjectReference Include="..\..\src\libs\Nexus.Infrastructure\Nexus.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>

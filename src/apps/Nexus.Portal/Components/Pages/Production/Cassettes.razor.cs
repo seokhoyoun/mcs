@@ -159,11 +159,11 @@ namespace Nexus.Portal.Components.Pages.Production
                 return;
             }
 
-            Location? location = await LocationRepository.GetByIdAsync(currentLocationId);
-            if (location != null)
+            bool cleared = await LocationService.TryClearItemAsync(currentLocationId);
+            if (!cleared)
             {
-                location.CurrentItemId = string.Empty;
-                await LocationRepository.UpdateAsync(location);
+                // 실패 시 UI 갱신만 하지 않고 반환
+                return;
             }
 
             UpdateLocationForTransport(locationType, transportId, string.Empty);
@@ -174,22 +174,20 @@ namespace Nexus.Portal.Components.Pages.Production
         {
             if (!string.IsNullOrEmpty(currentLocationId))
             {
-                Location? oldLocation = await LocationRepository.GetByIdAsync(currentLocationId);
-                if (oldLocation != null)
+                bool cleared = await LocationService.TryClearItemAsync(currentLocationId);
+                if (!cleared)
                 {
-                    oldLocation.CurrentItemId = string.Empty;
-                    await LocationRepository.UpdateAsync(oldLocation);
+                    return;
                 }
             }
 
-            Location? newLocation = await LocationRepository.GetByIdAsync(newLocationId);
-            if (newLocation != null)
+            bool assigned = await LocationService.TryAssignItemAsync(newLocationId, transportId);
+            if (!assigned)
             {
-                newLocation.CurrentItemId = transportId;
-                await LocationRepository.UpdateAsync(newLocation);
-                UpdateLocationForTransport(locationType, transportId, newLocationId);
-                StateHasChanged();
+                return;
             }
+            UpdateLocationForTransport(locationType, transportId, newLocationId);
+            StateHasChanged();
         }
 
         private void UpdateLocationForTransport(ELocationType locationType, string transportId, string locationId)

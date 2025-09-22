@@ -50,6 +50,7 @@ namespace Nexus.Orchestrator.Application.Robots
                                            string fromLocationId,
                                            string itemId,
                                            ILocationRepository locationRepository,
+                                           ILocationService locationService,
                                            ITransportRepository transportRepository,
                                            IRobotRepository robotRepository,
                                            IConnectionMultiplexer redis,
@@ -92,8 +93,11 @@ namespace Nexus.Orchestrator.Application.Robots
                 throw new InvalidOperationException("A different item is present at the source location.");
             }
 
-            source.CurrentItemId = string.Empty;
-            await locationRepository.UpdateAsync(source, cancellationToken);
+            bool cleared = await locationService.TryClearItemAsync(source.Id, cancellationToken);
+            if (!cleared)
+            {
+                throw new InvalidOperationException("Failed to clear source location.");
+            }
 
             IDatabase db = redis.GetDatabase();
             string carryKey = ROBOT_CARRY_KEY_PREFIX + robot.Id + ROBOT_CARRY_KEY_SUFFIX;
@@ -103,6 +107,7 @@ namespace Nexus.Orchestrator.Application.Robots
         public static async Task UnloadAsync(this Robot robot,
                                              string toLocationId,
                                              ILocationRepository locationRepository,
+                                             ILocationService locationService,
                                              IRobotRepository robotRepository,
                                              IConnectionMultiplexer redis,
                                              CancellationToken cancellationToken = default)
@@ -146,10 +151,12 @@ namespace Nexus.Orchestrator.Application.Robots
                 throw new InvalidOperationException("Destination location is occupied.");
             }
 
-            dest.CurrentItemId = itemId;
-            await locationRepository.UpdateAsync(dest, cancellationToken);
+            bool assigned = await locationService.TryAssignItemAsync(dest.Id, itemId, cancellationToken);
+            if (!assigned)
+            {
+                throw new InvalidOperationException("Failed to assign item to destination location.");
+            }
             await db.KeyDeleteAsync(carryKey);
         }
     }
 }
-

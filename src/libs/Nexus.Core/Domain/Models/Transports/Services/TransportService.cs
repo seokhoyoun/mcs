@@ -19,6 +19,9 @@ namespace Nexus.Core.Domain.Models.Transports.Services
         private readonly List<Memory> _memories = new();
 
         private readonly Dictionary<string, ITransportable> _transportMap = new();
+        private bool _initialized = false;
+        private readonly object _initLock = new object();
+        private Task? _initTask;
 
         public TransportService(
             ILogger<LocationService> logger, 
@@ -27,30 +30,71 @@ namespace Nexus.Core.Domain.Models.Transports.Services
             _transportRepository = transportRepository;
         }
 
-        public override async Task InitializeAsync(CancellationToken cancellationToken = default)
+        private async Task EnsureInitializedAsync(CancellationToken cancellationToken = default)
         {
-            // 모든 Transport 데이터 조회
-            IReadOnlyList<ITransportable> allTransports = await _transportRepository.GetAllAsync();
-
-            // 타입별로 분류하여 초기화
-            foreach (ITransportable transport in allTransports)
+            if (_initialized)
             {
-                switch (transport.TransportType)
+                return;
+            }
+            Task? startTask = null;
+            lock (_initLock)
+            {
+                if (_initialized)
                 {
-                    case ETransportType.Cassette:
-                        _cassettes.Add((Cassette)transport);
-                        break;
-                    case ETransportType.Tray:
-                        _trays.Add((Tray)transport);
-                        break;
-                    case ETransportType.Memory:
-                        _memories.Add((Memory)transport);
-                        break;
-                    default:
-                        Debug.Assert(false, $"Unknown transport type: {transport.TransportType}");
-                        break;
+                    return;
                 }
-                _transportMap[transport.Id] = transport;
+                if (_initTask == null)
+                {
+                    _initTask = InitializeCoreAsync(cancellationToken);
+                }
+                startTask = _initTask;
+            }
+            await startTask;
+        }
+
+        private async Task InitializeCoreAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                IReadOnlyList<ITransportable> allTransports = await _transportRepository.GetAllAsync(cancellationToken);
+
+                _cassettes.Clear();
+                _trays.Clear();
+                _memories.Clear();
+                _transportMap.Clear();
+
+                if (allTransports == null || allTransports.Count == 0)
+                {
+                    _logger.LogWarning("초기화된 Transport 데이터가 없습니다.");
+                }
+                else
+                {
+                    foreach (ITransportable transport in allTransports)
+                    {
+                        switch (transport.TransportType)
+                        {
+                            case ETransportType.Cassette:
+                                _cassettes.Add((Cassette)transport);
+                                break;
+                            case ETransportType.Tray:
+                                _trays.Add((Tray)transport);
+                                break;
+                            case ETransportType.Memory:
+                                _memories.Add((Memory)transport);
+                                break;
+                            default:
+                                Debug.Assert(false, $"Unknown transport type: {transport.TransportType}");
+                                break;
+                        }
+                        _transportMap[transport.Id] = transport;
+                    }
+                }
+                _initialized = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "TransportService 초기화 중 오류 발생");
+                throw;
             }
         }
 

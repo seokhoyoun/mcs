@@ -8,6 +8,9 @@ namespace Nexus.Core.Domain.Models.Robots.Services
     {
         private readonly IRobotRepository _robotRepository;
         private readonly List<Robot> _robots;
+        private bool _initialized = false;
+        private readonly object _initLock = new object();
+        private Task? _initTask;
 
         public IReadOnlyList<Robot> Robots => _robots.AsReadOnly();
 
@@ -17,22 +20,55 @@ namespace Nexus.Core.Domain.Models.Robots.Services
             _robots = new List<Robot>();
         }
 
-        public override async Task InitializeAsync(CancellationToken cancellationToken = default)
+        private async Task EnsureInitializedAsync(CancellationToken cancellationToken = default)
         {
-            IReadOnlyList<Robot> robots = await _robotRepository.GetAllAsync(cancellationToken);
-
-            if (robots == null || robots.Count == 0)
+            if (_initialized)
             {
-                _logger.LogWarning("초기화된 Robot 데이터가 없습니다.");
                 return;
             }
+            Task? startTask = null;
+            lock (_initLock)
+            {
+                if (_initialized)
+                {
+                    return;
+                }
+                if (_initTask == null)
+                {
+                    _initTask = InitializeCoreAsync(cancellationToken);
+                }
+                startTask = _initTask;
+            }
+            await startTask;
+        }
 
-            _robots.Clear();
-            _robots.AddRange(robots);
+        private async Task InitializeCoreAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                IReadOnlyList<Robot> robots = await _robotRepository.GetAllAsync(cancellationToken);
+
+                _robots.Clear();
+                if (robots != null && robots.Count > 0)
+                {
+                    _robots.AddRange(robots);
+                }
+                else
+                {
+                    _logger.LogWarning("초기화된 Robot 데이터가 없습니다.");
+                }
+                _initialized = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "RobotService 초기화 중 오류 발생");
+                throw;
+            }
         }
 
         public async Task<bool> UpdatePositionAsync(string robotId, Position position, CancellationToken cancellationToken = default)
         {
+            await EnsureInitializedAsync(cancellationToken);
             bool updated = await _robotRepository.UpdatePositionAsync(robotId, position, cancellationToken);
             if (updated)
             {
@@ -47,6 +83,7 @@ namespace Nexus.Core.Domain.Models.Robots.Services
 
         public async Task<Position?> GetPositionAsync(string robotId, CancellationToken cancellationToken = default)
         {
+            await EnsureInitializedAsync(cancellationToken);
             Robot? local = _robots.FirstOrDefault(r => r.Id == robotId);
             if (local != null)
             {
