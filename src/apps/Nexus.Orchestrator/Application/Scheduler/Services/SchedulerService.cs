@@ -205,7 +205,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
 
                 foreach (Cassette cassette in step.Cassettes)
                 {
-                    CassetteLocation? stockerLocation = await _locationService.GetCassetteLocationByIdAsync(cassette.Id, cancellationToken);
+                    CassetteLocation? stockerLocation = await _locationService.FindCassetteLocationByItemIdAsync(cassette.Id, cancellationToken);
                     if (stockerLocation == null)
                     {
                         _logger.LogWarning("Cannot find stocker location for cassette {CassetteId}", cassette.Id);
@@ -245,7 +245,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                 // 현재 단계: StockerToArea만 생성
                 PlanGroup stockerToAreaPlanGroup = await CreateStockerToAreaPlanGroupAsync(lotStep, cancellationToken);
                 lotStep.PlanGroups.Add(stockerToAreaPlanGroup);
-
+                _logger.LogInformation("Created Plan Count : {stockerToAreaPlanGroup.Plans.Count} ", stockerToAreaPlanGroup.Plans.Count);
                 _logger.LogInformation("Created StockerToArea plan group for LotStep: {LotStepId}", lotStep.Id);
             }
         }
@@ -297,7 +297,7 @@ namespace Nexus.Orchestrator.Application.Scheduler.Services
                 try
                 {
                     // 1. 카세트의 현재 위치 조회 (스토커)
-                    CassetteLocation? stockerLocation = await _locationService.GetCassetteLocationByIdAsync(cassette.Id, cancellationToken);
+                    CassetteLocation? stockerLocation = await _locationService.FindCassetteLocationByItemIdAsync(cassette.Id, cancellationToken);
                     if (stockerLocation == null)
                     {
                         _logger.LogWarning("Cassette location not found for CassetteId: {CassetteId}", cassette.Id);

@@ -216,7 +216,12 @@ namespace Nexus.Sandbox.Seed
             }
 
 
-            areas.First().CassetteLocations.First().CurrentItemId = "CST02";
+            //// 초기 스토커 적재 상태: 두 개 카세트를 A01의 앞 슬롯 두 곳에 배치
+            //if (areas.Count > 0 && areas[0].CassetteLocations.Count >= 2)
+            //{
+            //    areas[0].CassetteLocations[0].CurrentItemId = "CST01";
+            //    areas[0].CassetteLocations[1].CurrentItemId = "CST02";
+            //}
 
             // 파일로 저장
             Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);

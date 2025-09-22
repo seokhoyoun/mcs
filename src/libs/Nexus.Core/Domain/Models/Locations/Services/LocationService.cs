@@ -62,51 +62,57 @@ namespace Nexus.Core.Domain.Models.Locations.Services
         {
             try
             {
-                IReadOnlyList<Location> locations = await _locationRepository.GetAllAsync(cancellationToken);
-
-                _locations.Clear();
-                _cassetteLocations.Clear();
-                _trayLocations.Clear();
-                _memoryLocations.Clear();
-                _markerLocations.Clear();
-
-                if (locations == null || locations.Count == 0)
-                {
-                    _logger.LogWarning("초기화된 Location 데이터가 없습니다.");
-                }
-                else
-                {
-                    foreach (Location location in locations)
-                    {
-                        _locations[location.Id] = location;
-
-                        switch (location.LocationType)
-                        {
-                            case ELocationType.Cassette:
-                                _cassetteLocations.Add((CassetteLocation)location);
-                                break;
-                            case ELocationType.Tray:
-                                _trayLocations.Add((TrayLocation)location);
-                                break;
-                            case ELocationType.Memory:
-                                _memoryLocations.Add((MemoryLocation)location);
-                                break;
-                            case ELocationType.Marker:
-                                _markerLocations.Add((MarkerLocation)location);
-                                break;
-                            default:
-                                Debug.Assert(false, $"Unknown location type: {location.LocationType}");
-                                _logger.LogError($"Unknown location type: {location.LocationType}");
-                                break;
-                        }
-                    }
-                }
+                await ReloadAsync(cancellationToken);
                 _initialized = true;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "LocationService 초기화 중 오류 발생");
                 throw;
+            }
+        }
+
+        private async Task ReloadAsync(CancellationToken cancellationToken)
+        {
+            IReadOnlyList<Location> locations = await _locationRepository.GetAllAsync(cancellationToken);
+
+            _locations.Clear();
+            _cassetteLocations.Clear();
+            _trayLocations.Clear();
+            _memoryLocations.Clear();
+            _markerLocations.Clear();
+
+            if (locations == null || locations.Count == 0)
+            {
+                _logger.LogWarning("초기화된 Location 데이터가 없습니다.");
+                return;
+            }
+
+            foreach (Location location in locations)
+            {
+                _locations[location.Id] = location;
+
+                if (location.LocationType == ELocationType.Cassette)
+                {
+                    _cassetteLocations.Add((CassetteLocation)location);
+                }
+                else if (location.LocationType == ELocationType.Tray)
+                {
+                    _trayLocations.Add((TrayLocation)location);
+                }
+                else if (location.LocationType == ELocationType.Memory)
+                {
+                    _memoryLocations.Add((MemoryLocation)location);
+                }
+                else if (location.LocationType == ELocationType.Marker)
+                {
+                    _markerLocations.Add((MarkerLocation)location);
+                }
+                else
+                {
+                    Debug.Assert(false, "Unknown location type");
+                    _logger.LogError("Unknown location type: {Type}", location.LocationType);
+                }
             }
         }
 
@@ -183,6 +189,36 @@ namespace Nexus.Core.Domain.Models.Locations.Services
             if (_locations.TryGetValue(id, out Location? location))
             {
                 return location as MarkerLocation;
+            }
+            return null;
+        }
+
+        public async Task<CassetteLocation?> FindCassetteLocationByItemIdAsync(string itemId, CancellationToken cancellationToken = default)
+        {
+            await EnsureInitializedAsync(cancellationToken);
+            foreach (CassetteLocation loc in _cassetteLocations)
+            {
+                string current = loc.CurrentItemId ?? string.Empty;
+                if (!string.IsNullOrEmpty(current))
+                {
+                    if (string.Equals(current, itemId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return loc;
+                    }
+                }
+            }
+            // 캐시에 없으면 리로드 후 한 번 더 검색 (시드 타이밍 차이 대비)
+            await ReloadAsync(cancellationToken);
+            foreach (CassetteLocation loc in _cassetteLocations)
+            {
+                string current = loc.CurrentItemId ?? string.Empty;
+                if (!string.IsNullOrEmpty(current))
+                {
+                    if (string.Equals(current, itemId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return loc;
+                    }
+                }
             }
             return null;
         }

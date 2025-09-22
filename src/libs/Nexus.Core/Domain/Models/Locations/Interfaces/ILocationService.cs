@@ -43,6 +43,14 @@ namespace Nexus.Core.Domain.Models.Locations.Interfaces
         Task<MarkerLocation?> GetMarkerLocationByIdAsync(string id, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// 현재 아이템 ID로 카세트 위치를 조회합니다.
+        /// </summary>
+        /// <param name="itemId">위치에 적재된 아이템 ID</param>
+        /// <param name="cancellationToken">취소 토큰</param>
+        /// <returns>해당 아이템을 보유한 카세트 위치 또는 null</returns>
+        Task<CassetteLocation?> FindCassetteLocationByItemIdAsync(string itemId, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// 위치에 아이템을 할당합니다. 이미 점유 중이면 false를 반환합니다.
         /// </summary>
         /// <param name="locationId">위치 ID</param>

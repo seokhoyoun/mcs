@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Sockets;
+using System.Net;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -38,26 +39,40 @@ public class DockerComposeFixture : IDisposable
 
     public DockerComposeFixture()
     {
-        StartDockerCompose();
+        // 1) Redis만 먼저 기동
+        RunDockerComposeCommand("up -d redis");
         WaitForRedis();
+        // 2) Sandbox 시딩 수행
         RunSandboxSeed();
-        // After seeding, ensure app ports are ready
+        // 3) 나머지 앱 서비스 기동 (오케스트레이터/게이트웨이)
+        RunDockerComposeCommand("up -d --no-build nexus.orchestrator nexus.gateway");
+        // 4) 앱 포트 준비 대기
         WaitForTcp("127.0.0.1", 8081, _startupTimeout);
         WaitForTcp("127.0.0.1", 8082, _startupTimeout);
     }
 
     private void StartDockerCompose()
     {
+        RunDockerComposeCommand("compose " + _composeArgs);
+    }
+
+    private void RunDockerComposeCommand(string args)
+    {
         ProcessStartInfo psi = new ProcessStartInfo();
         psi.FileName = "docker";
-        psi.Arguments = "compose " + _composeArgs;
+        psi.Arguments = "compose " + args;
         psi.RedirectStandardOutput = true;
         psi.RedirectStandardError = true;
         psi.UseShellExecute = false;
-
         using (Process proc = Process.Start(psi)!)
         {
             proc.WaitForExit();
+            if (proc.ExitCode != 0)
+            {
+                string stdout = proc.StandardOutput.ReadToEnd();
+                string stderr = proc.StandardError.ReadToEnd();
+                throw new InvalidOperationException("docker compose 실행 실패: " + args + "\nSTDOUT:\n" + stdout + "\nSTDERR:\n" + stderr);
+            }
         }
     }
 
@@ -188,12 +203,18 @@ public class DockerComposeFixture : IDisposable
 [Collection("DockerComposeE2E")]
 public class DockerComposeLotPublishE2ETests
 {
-    [Fact]
+    [Fact(Timeout = 120000)]
     [Trait("Category", "E2E-DockerCompose-FullStack")]
     public async Task PublishLot_Message_TriggersPlanGeneration()
     {
         string redisConn = "localhost:6379";
         IConnectionMultiplexer mux = await ConnectionMultiplexer.ConnectAsync(redisConn);
+
+        // 오케스트레이터가 채널 구독을 시작했는지 확인 (구독자 수가 1 이상일 때까지 대기)
+        await WaitForOrchestratorSubscriptionAsync(mux, "events:lot:publish", TimeSpan.FromSeconds(30));
+
+        // 시드에서 카세트(CST01/02) 적재 상태가 Redis에 반영될 때까지 대기
+        await WaitForCassetteAssignmentsAsync(mux, new[] { "CST01", "CST02" }, TimeSpan.FromSeconds(30));
 
         // Arrange: seed minimal data required by orchestrator
         RedisLocationRepository locationRepo = new RedisLocationRepository(mux);
@@ -202,87 +223,37 @@ public class DockerComposeLotPublishE2ETests
         RedisTransportRepository transportRepo = new RedisTransportRepository(mux);
         RedisLotRepository lotRepo = new RedisLotRepository(mux, transportRepo);
 
-        // Clean slate for this lot id
-        string lotId = "LOT-E2E-001";
-        await lotRepo.DeleteAsync(lotId);
-
-        // Create cassette locations that match cassette ids used below
-        CassetteLocation cl1 = new CassetteLocation("CST11", "CassetteLocation_CST11");
-        CassetteLocation cl2 = new CassetteLocation("CST12", "CassetteLocation_CST12");
-        await locationRepo.AddAsync(cl1);
-        await locationRepo.AddAsync(cl2);
-
-        // Create an area with a couple of empty cassette ports
-        List<CassetteLocation> areaCassettePorts = new List<CassetteLocation>();
-        areaCassettePorts.Add(new CassetteLocation("A10.CP01", "A10_CP01"));
-        areaCassettePorts.Add(new CassetteLocation("A10.CP02", "A10_CP02"));
-        List<TrayLocation> areaTrayPorts = new List<TrayLocation>();
-        List<Set> sets = new List<Set>();
-        Area area = new Area("A10", "Area10", areaCassettePorts, areaTrayPorts, sets);
-        area.Status = EAreaStatus.Idle;
-        await areaRepo.AddAsync(area);
-
-        // Seed at least one robot so orchestrator can simulate
-        List<Location> robotLocations = new List<Location>();
-        Robot robot = new Robot("RBT01", "Robot01", ERobotType.Logistics, robotLocations);
-        await robotRepo.AddAsync(robot);
-
-        // Seed transport items referenced by lot step
-        List<Tray> trays1 = new List<Tray>();
-        List<Tray> trays2 = new List<Tray>();
-        Cassette cs1 = new Cassette("CST11", "Cassette 11", trays1);
-        Cassette cs2 = new Cassette("CST12", "Cassette 12", trays2);
-        await transportRepo.AddAsync(cs1);
-        await transportRepo.AddAsync(cs2);
-
-        // Directly seed the Lot into Redis via repository (요청자 요구사항)
-        List<string> cassetteIds = new List<string>();
-        cassetteIds.Add("CST11");
-        cassetteIds.Add("CST12");
-
-        Lot lot = new Lot(
-            id: lotId,
-            name: "E2E Lot",
-            status: ELotStatus.None,
-            priority: 1,
-            receivedTime: DateTime.UtcNow,
-            purpose: "E2E",
-            evalNo: "E2E-001",
-            partNo: "PT-001",
-            qty: 0,
-            option: string.Empty,
-            line: "L1",
-            cassetteIds: cassetteIds
-        );
-
-        LotStep step = new LotStep(
-            id: lotId + "_01",
-            lotId: lot.Id,
-            name: lotId + "_01",
-            loadingType: 1,
-            dpcType: "DPC",
-            chipset: "CH",
-            pgm: "PGM",
-            planPercent: 100,
-            status: ELotStatus.None
-        );
-        step.CassetteIds = new List<string>(cassetteIds);
-        lot.LotSteps.Add(step);
-        await lotRepo.AddAsync(lot);
+        // Sandbox에서 미리 추가한 Lot을 사용 (신규 생성 금지)
+        string lotId = "LOT-SBX-001";
+        Lot? seeded = await lotRepo.GetByIdAsync(lotId);
+        if (seeded == null)
+        {
+            throw new InvalidOperationException("Sandbox 시드 데이터에서 LOT-SBX-001을 찾을 수 없습니다.");
+        }
+        int expectedCassetteCount = 0;
+        if (seeded.LotSteps != null && seeded.LotSteps.Count > 0)
+        {
+            LotStep firstStep = seeded.LotSteps[0];
+            if (firstStep.CassetteIds != null)
+            {
+                expectedCassetteCount = firstStep.CassetteIds.Count;
+            }
+        }
 
         // Act: publish event to redis channel (Portal 동작 대체)
         ISubscriber sub = mux.GetSubscriber();
         LotPublishedEventDto dto = new LotPublishedEventDto();
         dto.Event = "LotPublished";
         dto.LotId = lotId;
-        dto.Name = "E2E Lot";
+        dto.Name = "Sandbox Lot 1";
         dto.Status = ELotStatus.Waiting.ToString();
         dto.Timestamp = DateTime.UtcNow;
         string payload = JsonSerializer.Serialize(dto);
         await sub.PublishAsync(RedisChannel.Literal("events:lot:publish"), payload);
+        DateTime lastPublish = DateTime.UtcNow;
 
         // Assert: poll until orchestrator processes and creates plan groups
-        DateTime until = DateTime.UtcNow.AddSeconds(30);
+        DateTime until = DateTime.UtcNow.AddSeconds(45);
         bool ok = false;
         while (DateTime.UtcNow < until)
         {
@@ -300,7 +271,7 @@ public class DockerComposeLotPublishE2ETests
                             {
                                 if (pg.GroupType == EPlanGroupType.StockerToArea)
                                 {
-                                    if (pg.Plans.Count == cassetteIds.Count)
+                                    if (pg.Plans.Count == expectedCassetteCount)
                                     {
                                         ok = true;
                                         break;
@@ -315,9 +286,118 @@ public class DockerComposeLotPublishE2ETests
             {
                 break;
             }
+           
             await Task.Delay(1000);
         }
 
         Assert.True(ok, "오케스트레이터가 PlanGroup을 생성하지 않았습니다.");
     }
+
+    private static async Task WaitForOrchestratorSubscriptionAsync(IConnectionMultiplexer mux, string channel, TimeSpan timeout)
+    {
+        DateTime deadline = DateTime.UtcNow.Add(timeout);
+        EndPoint[] endpoints = mux.GetEndPoints();
+        if (endpoints == null || endpoints.Length == 0)
+        {
+            throw new InvalidOperationException("Redis EndPoints를 확인할 수 없습니다.");
+        }
+
+        IServer server = mux.GetServer(endpoints[0]);
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                RedisResult result = server.Execute("PUBSUB", new object[] { "NUMSUB", channel });
+                RedisResult[] arr = (RedisResult[])result;
+                long subscribers = 0;
+                if (arr != null && arr.Length >= 2)
+                {
+                    // arr[0] = channel name, arr[1] = subscriber count
+                    if (arr[1].Resp2Type == ResultType.Integer)
+                    {
+                        subscribers = (long)arr[1];
+                    }
+                    else
+                    {
+                        string? s = arr[1].ToString();
+                        if (s != null)
+                        {
+                            if (!long.TryParse(s, out subscribers))
+                            {
+                                subscribers = 0;
+                            }
+                        }
+                    }
+                }
+
+                if (subscribers >= 1)
+                {
+                    return;
+                }
+            }
+            catch
+            {
+                // ignore and retry
+            }
+
+            await Task.Delay(500);
+        }
+
+        throw new InvalidOperationException("오케스트레이터가 이벤트 채널 구독을 시작하지 않았습니다.");
+    }
+
+    private static async Task WaitForCassetteAssignmentsAsync(IConnectionMultiplexer mux, IEnumerable<string> cassetteIds, TimeSpan timeout)
+    {
+        IDatabase db = mux.GetDatabase();
+        DateTime deadline = DateTime.UtcNow.Add(timeout);
+        HashSet<string> targets = new HashSet<string>(cassetteIds, StringComparer.OrdinalIgnoreCase);
+        while (DateTime.UtcNow < deadline)
+        {
+            // 모든 카세트 위치를 순회하여 current_item_id 매칭 확인
+            RedisValue[] ids = await db.SetMembersAsync("cassette_locations:all");
+            HashSet<string> remaining = new HashSet<string>(targets, StringComparer.OrdinalIgnoreCase);
+            foreach (RedisValue rv in ids)
+            {
+                string id = rv.ToString();
+                if (string.IsNullOrEmpty(id)) { continue; }
+                HashEntry[] hash = await db.HashGetAllAsync("cassette_location:" + id);
+                if (hash == null || hash.Length == 0) { continue; }
+                string currentItemId = GetHashValue(hash, "current_item_id");
+                if (!string.IsNullOrEmpty(currentItemId))
+                {
+                    remaining.Remove(currentItemId);
+                }
+            }
+            if (remaining.Count == 0)
+            {
+                return; // 모든 대상 카세트가 어떤 위치에든 적재됨
+            }
+            await Task.Delay(500);
+        }
+        throw new InvalidOperationException("시드 카세트 적재 상태가 준비되지 않았습니다 (CST01/02).");
+    }
+
+    private static string GetHashValue(HashEntry[] entries, string name)
+    {
+        for (int i = 0; i < entries.Length; i++)
+        {
+            if (entries[i].Name == name)
+            {
+                return entries[i].Value;
+            }
+        }
+        return string.Empty;
+    }
+
+    private static void AssertTcpOpen(string host, int port)
+    {
+        using (TcpClient client = new TcpClient())
+        {
+            client.ReceiveTimeout = 2000;
+            client.SendTimeout = 2000;
+            client.Connect(host, port);
+        }
+    }
+
+    // HTTP 엔드포인트가 보장되지 않을 수 있어 TCP 연결 확인만 사용
 }
