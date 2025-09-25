@@ -22,11 +22,25 @@ namespace Nexus.Portal.Components.Pages.Monitoring
         private string _selectedRobotId = string.Empty;
         private string _selectedLocationId = string.Empty;
         private double _moveSpeed = 10;
+        private bool _usePositionMode = false;
+        public bool UsePositionMode
+        {
+            get { return _usePositionMode; }
+            set
+            {
+                _usePositionMode = value;
+                InvokeAsync(StateHasChanged);
+            }
+        }
+        private double _targetX = 0;
+        private double _targetY = 0;
         private string _loadItemId = string.Empty;
         private bool _threeInitialized = false;
         private HubConnection? _hubConnection;
         private Random _random = new Random();
         private bool _showTestPanel = true;
+
+        
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (!firstRender)
@@ -305,7 +319,7 @@ namespace Nexus.Portal.Components.Pages.Monitoring
 
         private async Task MoveSelectedRobot()
         {
-            if (string.IsNullOrEmpty(_selectedRobotId) || string.IsNullOrEmpty(_selectedLocationId))
+            if (string.IsNullOrEmpty(_selectedRobotId))
             {
                 return;
             }
@@ -313,11 +327,23 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             {
                 HttpClient client = new HttpClient();
                 string baseUrl = GetGatewayBaseUrl().TrimEnd('/');
-                var payload = new { LocationId = _selectedLocationId, Speed = _moveSpeed };
-                HttpResponseMessage res = await client.PostAsJsonAsync($"{baseUrl}/api/v1/robots/{_selectedRobotId}/move", payload);
-                Logger.LogInformation("Move result: {StatusCode}", (int)res.StatusCode);
 
-                // path drawing removed in 3D-only mode
+                if (_usePositionMode)
+                {
+                    var payloadPos = new { X = _targetX, Y = _targetY, Speed = _moveSpeed };
+                    HttpResponseMessage resPos = await client.PostAsJsonAsync($"{baseUrl}/api/v1/robots/{_selectedRobotId}/move-to-position", payloadPos);
+                    Logger.LogInformation("Move-to-position result: {StatusCode}", (int)resPos.StatusCode);
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(_selectedLocationId))
+                    {
+                        return;
+                    }
+                    var payloadLoc = new { LocationId = _selectedLocationId, Speed = _moveSpeed };
+                    HttpResponseMessage resLoc = await client.PostAsJsonAsync($"{baseUrl}/api/v1/robots/{_selectedRobotId}/move", payloadLoc);
+                    Logger.LogInformation("Move-to-location result: {StatusCode}", (int)resLoc.StatusCode);
+                }
             }
             catch (Exception ex)
             {

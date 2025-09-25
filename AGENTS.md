@@ -53,6 +53,16 @@
 - Product Requirements Plan: docs/ProductRequirementsPlan.md
 - Product Requirements Document: docs/ProductRequirementsDocument.md
 
+## Portal UI (MudBlazor 8.x) 주의사항
+- Nexus.Portal은 MudBlazor 8.x(현재 csproj 기준 8.12.0)를 사용한다.
+- 입력 컴포넌트 바인딩은 `@bind-Value`를 기본으로 사용한다.
+  - 예) `MudSwitch`는 `@bind-Value`를 사용한다. `@bind-Checked`는 동작하지 않는다.
+- 제네릭 타입을 명시한다.
+  - 예) `MudRadioGroup T="string"`, `MudNumericField T="double"` 등.
+- `MudRadioGroup` 바인딩 시 타입 유추 문제가 발생할 수 있으므로, 필요 시 이벤트를 명시한다.
+  - 예) `SelectedOption="@state" SelectedOptionChanged="@((string v) => OnChanged(v))"` 형태로 사용.
+- MudBlazor Analyzer 경고(MUD000x)가 보이면 먼저 속성명이 해당 버전에서 유효한지 확인하고, 가능한 최신 API(`Value/ValueChanged/ValueExpression`, `SelectedOption/SelectedOptionChanged`) 패턴을 따른다.
+
 ## 한글 인코딩 주의
 - 파일 인코딩: 모든 소스/문서는 UTF-8(BOM 없음)로 저장한다.
 - Windows 터미널 출력 깨짐 대응:

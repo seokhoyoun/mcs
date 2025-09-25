@@ -1,9 +1,16 @@
-﻿services:
+services:
   redis:
     image: redis:7-alpine
     container_name: redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
+    volumes:
+      - ./artifacts/redis/data:/data
+      - ./src/data/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command:
+      - redis-server
+      - /usr/local/etc/redis/redis.conf
  
   supabase:
     image: postgres:15-alpine
@@ -154,4 +161,3 @@
 
 volumes:
   grafana_data:
-
