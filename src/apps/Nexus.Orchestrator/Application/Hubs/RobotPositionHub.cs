@@ -41,6 +41,21 @@ namespace Nexus.Orchestrator.Application.Hubs
 
             _motionService.ScheduleMove(robotId, location.Position.X, location.Position.Y, speed);
         }
+
+        public async Task ScheduleMoveToPosition(string robotId, double targetX, double targetY, double speed)
+        {
+            if (string.IsNullOrEmpty(robotId))
+            {
+                throw new HubException("RobotId is required.");
+            }
+            if (speed <= 0)
+            {
+                throw new HubException("Speed must be greater than 0.");
+            }
+
+            _motionService.ScheduleMove(robotId, targetX, targetY, speed);
+            await Task.CompletedTask;
+        }
     }
 }
 

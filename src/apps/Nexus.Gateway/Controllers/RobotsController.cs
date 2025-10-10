@@ -76,6 +76,45 @@ namespace Nexus.Gateway.Controllers
             return Accepted();
         }
 
+        public class MoveToPositionRequest
+        {
+            public double X { get; set; }
+            public double Y { get; set; }
+            public double Speed { get; set; }
+        }
+
+        [HttpPost("{id}/move-to-position")]
+        public async Task<ActionResult> MoveToPosition(string id, [FromBody] MoveToPositionRequest request, CancellationToken cancellationToken = default)
+        {
+            if (request == null)
+            {
+                return BadRequest("Request body is required.");
+            }
+            if (request.Speed <= 0)
+            {
+                return BadRequest("Speed must be greater than 0.");
+            }
+
+            string? configuredUrl = _configuration["SignalR:RobotHubUrl"];
+            string hubUrl = !string.IsNullOrEmpty(configuredUrl)
+                ? configuredUrl
+                : "http://nexus.orchestrator:8081/hubs/robotPosition";
+
+            HubConnection connection = new HubConnectionBuilder()
+                .WithUrl(hubUrl)
+                .WithAutomaticReconnect()
+                .Build();
+
+            await connection.StartAsync(cancellationToken);
+            await connection.InvokeCoreAsync(
+                "ScheduleMoveToPosition",
+                args: new object?[] { id, request.X, request.Y, request.Speed },
+                cancellationToken: cancellationToken);
+            await connection.DisposeAsync();
+
+            return Accepted();
+        }
+
         public class LoadRequest
         {
             public string FromLocationId { get; set; } = string.Empty;

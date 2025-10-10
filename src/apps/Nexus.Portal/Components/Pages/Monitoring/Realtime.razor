@@ -1,4 +1,4 @@
-﻿@page "/monitoring/realtime"
+@page "/monitoring/realtime"
 @using System.Linq
 @using System.Net.Http.Json
 @using Microsoft.AspNetCore.SignalR.Client
@@ -68,16 +68,35 @@
 					}
 				</MudSelect>
 
+					<MudSwitch T="bool" @bind-Value="UsePositionMode" Color="Color.Primary" Label="좌표로 이동" Class="mb-2" />
+
 				<MudSelect T="string"
 						   Label="위치 선택"
 						   @bind-Value="_selectedLocationId"
 						   Variant="Variant.Outlined"
-						   Margin="Margin.Dense">
+						   Margin="Margin.Dense"
+						   Disabled="@UsePositionMode">
 					@foreach (Location loc in _locations)
 					{
 						<MudSelectItem Value="@loc.Id">@loc.Id</MudSelectItem>
 					}
 				</MudSelect>
+
+					@if (UsePositionMode)
+					{
+						<MudNumericField T="double"
+								 Label="Target X"
+								 @bind-Value="_targetX"
+								 Variant="Variant.Outlined"
+								 Margin="Margin.Dense"
+								 Step="10" />
+						<MudNumericField T="double"
+								 Label="Target Y"
+								 @bind-Value="_targetY"
+								 Variant="Variant.Outlined"
+								 Margin="Margin.Dense"
+								 Step="10" />
+					}
 
 				<MudNumericField T="double"
 								 Label="속도"
