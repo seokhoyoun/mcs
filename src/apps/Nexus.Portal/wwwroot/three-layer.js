@@ -6,6 +6,19 @@
 
     // Expose as window.nexus3d
     const nexus3dInstance = window.nexus3d || (window.nexus3d = {});
+    nexus3dInstance._interaction = nexus3dInstance._interaction || {
+        dotnetRef: null,
+        hoverMethod: null,
+        clickMethod: null,
+        lastHoverKey: null
+    };
+    nexus3dInstance.registerInteraction = function (dotnetRef, hoverMethodName, clickMethodName) {
+        try {
+            nexus3dInstance._interaction.dotnetRef = dotnetRef || null;
+            nexus3dInstance._interaction.hoverMethod = (hoverMethodName && typeof hoverMethodName === 'string') ? hoverMethodName : null;
+            nexus3dInstance._interaction.clickMethod = (clickMethodName && typeof clickMethodName === 'string') ? clickMethodName : null;
+        } catch { }
+    };
 
     function convertToIntegerColor(colorValue) {
         if (typeof colorValue === 'number') {
@@ -732,6 +745,66 @@
         const mousePointer = new THREE.Vector2();
         const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
+        function findHitTarget(object3D) {
+            let current = object3D;
+            while (current) {
+                if (current.userData && (current.userData.type === 'location' || current.userData.robotType || current.userData.tag === 'item')) {
+                    return current;
+                }
+                current = current.parent;
+            }
+            return null;
+        }
+
+        function buildEventPayload(target) {
+            const ud = (target && target.userData) ? target.userData : {};
+            if (ud && ud.tag === 'item') {
+                return { kind: 'item', itemId: ud.itemId || '', parentId: (target.parent && target.parent.userData && target.parent.userData.id) ? target.parent.userData.id : '' };
+            }
+            if (ud && ud.type === 'location') {
+                return { kind: 'location', id: ud.id || '', role: ud.role || '', locationType: ud.locationType || '', status: ud.status || '', itemId: ud.currentItemId || '' };
+            }
+            if (ud && ud.robotType) {
+                return { kind: 'robot', id: ud.id || '', robotType: ud.robotType };
+            }
+            return { kind: 'unknown' };
+        }
+
+        function hoverKeyFromTarget(target) {
+            if (!target || !target.userData) return null;
+            if (target.userData.tag === 'item') return `item:${target.userData.itemId}`;
+            if (target.userData.type === 'location') return `location:${target.userData.id}`;
+            if (target.userData.robotType) return `robot:${target.userData.id}`;
+            return null;
+        }
+
+        function setHoverVisual(target, enabled) {
+            try {
+                if (!target) return;
+                const helper = target.userData && target.userData._hoverHelper ? target.userData._hoverHelper : null;
+                if (enabled) {
+                    if (!helper) {
+                        const hh = new THREE.BoxHelper(target, 0xffcc00);
+                        hh.userData = { tag: 'hoverHelper' };
+                        sceneObject.add(hh);
+                        if (!target.userData) target.userData = {};
+                        target.userData._hoverHelper = hh;
+                    } else {
+                        helper.update();
+                    }
+                    document.body.style.cursor = 'pointer';
+                } else {
+                    if (helper) {
+                        try { sceneObject.remove(helper); } catch { }
+                        try { if (helper.geometry && helper.geometry.dispose) helper.geometry.dispose(); } catch { }
+                        try { if (helper.material && helper.material.dispose) helper.material.dispose(); } catch { }
+                        try { delete target.userData._hoverHelper; } catch { }
+                    }
+                    document.body.style.cursor = '';
+                }
+            } catch { }
+        }
+
         const handleMouseMovement = (mouseEvent) => {
             const canvasRect = webglRenderer.domElement.getBoundingClientRect();
             mousePointer.set(
@@ -741,12 +814,17 @@
 
             raycastHelper.setFromCamera(mousePointer, perspectiveCamera);
             let intersectionPoint = null;
+            let hitTarget = null;
 
             try {
                 const intersectedObjects = raycastHelper.intersectObjects(sceneObject.children, true);
 
                 if (intersectedObjects && intersectedObjects.length > 0) {
                     intersectionPoint = intersectedObjects[0].point.clone();
+                    for (let i = 0; i < intersectedObjects.length; i++) {
+                        const t = findHitTarget(intersectedObjects[i].object);
+                        if (t) { hitTarget = t; break; }
+                    }
                 }
             } catch {
                 // 에러 무시
@@ -775,9 +853,67 @@
                     coordinateDisplayElement.textContent = `X: ${domainX}  Y: ${domainY}  Z: ${domainZ}`;
                 }
             }
+
+            // Hover handling
+            try {
+                const key = hoverKeyFromTarget(hitTarget);
+                const prevKey = nexus3dInstance._interaction.lastHoverKey;
+                if (key !== prevKey) {
+                    // clear previous visual
+                    if (prevKey) {
+                        // find previously hovered target by matching collections
+                        let prevTarget = null;
+                        if (prevKey.startsWith('location:')) {
+                            const id = prevKey.substring('location:'.length);
+                            prevTarget = locationMeshCollection.get(id) || null;
+                        } else if (prevKey.startsWith('robot:')) {
+                            const id = prevKey.substring('robot:'.length);
+                            prevTarget = robotMeshCollection.get(id) || null;
+                        }
+                        setHoverVisual(prevTarget, false);
+                    }
+                    setHoverVisual(hitTarget, !!key);
+                    nexus3dInstance._interaction.lastHoverKey = key;
+
+                    // notify dotnet on change only
+                    if (nexus3dInstance._interaction.dotnetRef && nexus3dInstance._interaction.hoverMethod) {
+                        const payload = hitTarget ? buildEventPayload(hitTarget) : null;
+                        try { nexus3dInstance._interaction.dotnetRef.invokeMethodAsync(nexus3dInstance._interaction.hoverMethod, payload); } catch { }
+                    }
+                } else {
+                    // maintain helper
+                    if (hitTarget && hitTarget.userData && hitTarget.userData._hoverHelper) {
+                        try { hitTarget.userData._hoverHelper.update(); } catch { }
+                    }
+                }
+            } catch { }
         };
 
         webglRenderer.domElement.addEventListener('mousemove', handleMouseMovement);
+
+        const handleClick = (mouseEvent) => {
+            try {
+                const canvasRect = webglRenderer.domElement.getBoundingClientRect();
+                mousePointer.set(
+                    ((mouseEvent.clientX - canvasRect.left) / canvasRect.width) * 2 - 1,
+                    -((mouseEvent.clientY - canvasRect.top) / canvasRect.height) * 2 + 1
+                );
+                raycastHelper.setFromCamera(mousePointer, perspectiveCamera);
+                const intersects = raycastHelper.intersectObjects(sceneObject.children, true);
+                if (intersects && intersects.length > 0) {
+                    let target = null;
+                    for (let i = 0; i < intersects.length; i++) {
+                        const t = findHitTarget(intersects[i].object);
+                        if (t) { target = t; break; }
+                    }
+                    if (target && nexus3dInstance._interaction.dotnetRef && nexus3dInstance._interaction.clickMethod) {
+                        const payload = buildEventPayload(target);
+                        nexus3dInstance._interaction.dotnetRef.invokeMethodAsync(nexus3dInstance._interaction.clickMethod, payload);
+                    }
+                }
+            } catch { }
+        };
+        webglRenderer.domElement.addEventListener('click', handleClick);
 
         // 창 크기 조정
         const handleWindowResize = () => {
@@ -814,6 +950,7 @@
             robotMeshes: robotMeshCollection,
             onResize: handleWindowResize,
             onMove: handleMouseMovement,
+            onClick: handleClick,
             animationRequestId: 0
         };
 

@@ -13,6 +13,7 @@ using Nexus.Core.Domain.Models.Transports.Services;
 using Nexus.Core.Domain.Shared.Bases;
 using Nexus.Infrastructure.Persistence.Redis;
 using Nexus.Portal.Components;
+using Nexus.Portal.Components.Layout;
 using StackExchange.Redis;
 using Nexus.Core.Domain.Standards.Interfaces;
 
@@ -62,6 +63,7 @@ namespace Nexus.Portal
             
 
             builder.Services.AddMudServices();
+            builder.Services.AddScoped<DockService>();
 
             WebApplication app = builder.Build();
 

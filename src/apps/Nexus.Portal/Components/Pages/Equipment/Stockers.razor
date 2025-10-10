@@ -1,47 +1,52 @@
 ﻿@page "/equipment/stocker"
 @using MudBlazor
+@using MudBlazor.Components
+@using Nexus.Core.Domain.Models.Stockers
+@using Nexus.Core.Domain.Models.Locations
+@using Nexus.Core.Domain.Models.Locations.Enums
+@inject Nexus.Core.Domain.Models.Stockers.Interfaces.IStockerRepository StockerRepository
 
-<PageTitle>스토커 관리</PageTitle>
+<PageTitle>Stocker Management</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
-    <MudText Typo="Typo.h3" GutterBottom="true">스토커 관리</MudText>
-    <MudText Typo="Typo.subtitle1" Class="mb-4">스토커 설비 상태 및 카세트 포트 관리</MudText>
+    <MudText Typo="Typo.h4" GutterBottom="true">Stocker Management</MudText>
+    <MudText Typo="Typo.subtitle1" Class="mb-4">Monitor stocker status and manage cassette ports</MudText>
 
     <MudGrid>
         <MudItem xs="12" md="6">
             <MudCard>
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">ST01 - 메인 스토커</MudText>
+                        <MudText Typo="Typo.h6">@(_stocker != null ? $"{_stocker.Id} - {_stocker.Name}" : "No stocker")</MudText>
                     </CardHeaderContent>
                     <CardHeaderActions>
-                        <MudChip T="string" Color="Color.Success" Size="Size.Small">온라인</MudChip>
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small">Online</MudChip>
                     </CardHeaderActions>
                 </MudCardHeader>
                 <MudCardContent>
                     <MudGrid>
                         <MudItem xs="6">
-                            <MudText Typo="Typo.body2">총 포트 수</MudText>
-                            <MudText Typo="Typo.h5" Color="Color.Primary">6개</MudText>
+                            <MudText Typo="Typo.body2">Total Ports</MudText>
+                            <MudText Typo="Typo.h5" Color="Color.Primary">@_totalPorts</MudText>
                         </MudItem>
                         <MudItem xs="6">
-                            <MudText Typo="Typo.body2">사용 중인 포트</MudText>
-                            <MudText Typo="Typo.h5" Color="Color.Secondary">4개</MudText>
+                            <MudText Typo="Typo.body2">Occupied Ports</MudText>
+                            <MudText Typo="Typo.h5" Color="Color.Secondary">@_occupiedPorts</MudText>
                         </MudItem>
                         <MudItem xs="6">
-                            <MudText Typo="Typo.body2">가동률</MudText>
-                            <MudProgressLinear Color="Color.Primary" Value="67" />
-                            <MudText Typo="Typo.caption">67%</MudText>
+                            <MudText Typo="Typo.body2">Utilization</MudText>
+                            <MudProgressLinear Color="Color.Primary" Value="@_utilization" />
+                            <MudText Typo="Typo.caption">@_utilization%</MudText>
                         </MudItem>
                         <MudItem xs="6">
-                            <MudText Typo="Typo.body2">마지막 점검</MudText>
-                            <MudText Typo="Typo.body2">2025-01-01 09:00</MudText>
+                            <MudText Typo="Typo.body2">Last Inspection</MudText>
+                            <MudText Typo="Typo.body2">-</MudText>
                         </MudItem>
                     </MudGrid>
                 </MudCardContent>
                 <MudCardActions>
-                    <MudButton StartIcon="@Icons.Material.Filled.Settings" Color="Color.Primary">설정</MudButton>
-                    <MudButton StartIcon="@Icons.Material.Filled.Build" Color="Color.Secondary">점검</MudButton>
+                    <MudButton StartIcon="@Icons.Material.Filled.Settings" Color="Color.Primary">Settings</MudButton>
+                    <MudButton StartIcon="@Icons.Material.Filled.Build" Color="Color.Secondary">Maintenance</MudButton>
                 </MudCardActions>
             </MudCard>
         </MudItem>
@@ -50,27 +55,31 @@
             <MudCard>
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">카세트 포트 맵</MudText>
+                        <MudText Typo="Typo.h6">Cassette Port Map</MudText>
                     </CardHeaderContent>
                 </MudCardHeader>
-                <MudCardContent>
-                    <MudGrid Spacing="1">
-                        @for (int index = 1; index <= 6; index++)
+                <MudCardContent Class="port-map-compact">
+                    <MudGrid Spacing="0">
+                        @if (_portDetails.Count == 0)
                         {
-                            int portNumber = index;
-                            <MudItem xs="4">
-                                <MudCard Outlined="true" Class="@GetPortCardClass(portNumber)">
-                                    <MudCardContent Class="pa-2">
-                                        <MudText Typo="Typo.caption" Align="Align.Center">CP@(portNumber.ToString("D2"))</MudText>
-                                        <MudText Typo="Typo.body2" Align="Align.Center">
-                                            @GetPortStatus(portNumber)
-                                        </MudText>
-                                        <MudText Typo="Typo.caption" Align="Align.Center">
-                                            @GetCassetteId(portNumber)
-                                        </MudText>
-                                    </MudCardContent>
-                                </MudCard>
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.body2">No port data.</MudText>
                             </MudItem>
+                        }
+                        else
+                        {
+                            @foreach (PortDetail detail in _portDetails)
+                            {
+                                <MudItem xs="4">
+                                    <MudCard Outlined="true" Class="@($"{GetPortCardClass(detail)} port-compact-card")">
+                                        <MudCardContent Class="pa-1">
+                                            <MudText Typo="Typo.caption" Align="Align.Center">@detail.PortId</MudText>
+                                            <MudText Typo="Typo.caption" Align="Align.Center">@GetPortStatus(detail)</MudText>
+                                            <MudText Typo="Typo.caption" Align="Align.Center">@detail.CassetteId</MudText>
+                                        </MudCardContent>
+                                    </MudCard>
+                                </MudItem>
+                            }
                         }
                     </MudGrid>
                 </MudCardContent>
@@ -81,33 +90,31 @@
             <MudCard>
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">카세트 포트 상세 정보</MudText>
+                        <MudText Typo="Typo.h6">Cassette Port Details</MudText>
                     </CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
                     <MudTable Items="@_portDetails" Hover="true" Breakpoint="Breakpoint.Sm">
                         <HeaderContent>
-                            <MudTh>포트 ID</MudTh>
-                            <MudTh>위치</MudTh>
-                            <MudTh>상태</MudTh>
-                            <MudTh>카세트 ID</MudTh>
-                            <MudTh>로드 시간</MudTh>
-                            <MudTh>다음 작업</MudTh>
-                            <MudTh>작업</MudTh>
+                            <MudTh>Port ID</MudTh>
+                            <MudTh>Position</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Cassette ID</MudTh>
+                            <MudTh>Load Time</MudTh>
+                            <MudTh>Next Action</MudTh>
+                            <MudTh>Actions</MudTh>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd DataLabel="포트 ID">@context.PortId</MudTd>
-                            <MudTd DataLabel="위치">@context.Position</MudTd>
-                            <MudTd DataLabel="상태">
-                                    @context.Status
-                            </MudTd>
-                            <MudTd DataLabel="카세트 ID">@context.CassetteId</MudTd>
-                            <MudTd DataLabel="로드 시간">@context.LoadTime?.ToString("HH:mm:ss")</MudTd>
-                            <MudTd DataLabel="다음 작업">@context.NextAction</MudTd>
-                            <MudTd DataLabel="작업">
+                            <MudTd DataLabel="Port ID">@context.PortId</MudTd>
+                            <MudTd DataLabel="Position">@context.Position</MudTd>
+                            <MudTd DataLabel="Status">@context.Status</MudTd>
+                            <MudTd DataLabel="Cassette ID">@context.CassetteId</MudTd>
+                            <MudTd DataLabel="Load Time">@context.LoadTime?.ToString("HH:mm:ss")</MudTd>
+                            <MudTd DataLabel="Next Action">@context.NextAction</MudTd>
+                            <MudTd DataLabel="Actions">
                                 <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small">
-                                    <MudButton StartIcon="@Icons.Material.Filled.Eject">언로드</MudButton>
-                                    <MudButton StartIcon="@Icons.Material.Filled.Block">차단</MudButton>
+                                    <MudButton StartIcon="@Icons.Material.Filled.Eject">Unload</MudButton>
+                                    <MudButton StartIcon="@Icons.Material.Filled.Block">Block</MudButton>
                                 </MudButtonGroup>
                             </MudTd>
                         </RowTemplate>
@@ -118,61 +125,125 @@
     </MudGrid>
 </MudContainer>
 
+<Nexus.Portal.Components.Layout.DockPortal>
+   
+
+    <MudDataGrid T="PortDetail"
+                 Items="_portDetails"
+                 Dense="true"
+                 Hover="true"
+                 Bordered="true"
+                 Striped="true"
+                 FixedHeader="true"
+                 RowsPerPage="10"
+                 Virtualize="false"
+                 ReadOnly="true"
+                 Hideable="true">
+        <Columns>
+            <PropertyColumn Property="x => x.PortId" Title="Port ID" Sortable="true" />
+            <PropertyColumn Property="x => x.Position" Title="Position" Sortable="true" />
+            <PropertyColumn Property="x => x.Status" Title="Status" Sortable="true" />
+            <PropertyColumn Property="x => x.CassetteId" Title="Cassette ID" Sortable="true" />
+            <TemplateColumn Title="Load Time" Sortable="true">
+                <CellTemplate>
+                    @if (context.Item.LoadTime.HasValue)
+                    {
+                        @context.Item.LoadTime.Value.ToString("HH:mm:ss")
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+            <PropertyColumn Property="x => x.NextAction" Title="Next Action" />
+        </Columns>
+
+        <PagerContent>
+            <MudDataGridPager />
+        </PagerContent>
+    </MudDataGrid>
+</Nexus.Portal.Components.Layout.DockPortal>
+
 @code {
-    private readonly List<PortDetail> _portDetails = new()
-    {
-        new PortDetail { PortId = "CP01", Position = "ST01.CP01", Status = "Occupied", CassetteId = "CASS_001", LoadTime = DateTime.Now.AddHours(-2), NextAction = "언로드 대기" },
-        new PortDetail { PortId = "CP02", Position = "ST01.CP02", Status = "Occupied", CassetteId = "CASS_002", LoadTime = DateTime.Now.AddHours(-1), NextAction = "로봇 이송" },
-        new PortDetail { PortId = "CP03", Position = "ST01.CP03", Status = "Empty", CassetteId = "", LoadTime = null, NextAction = "로드 대기" },
-        new PortDetail { PortId = "CP04", Position = "ST01.CP04", Status = "Occupied", CassetteId = "CASS_004", LoadTime = DateTime.Now.AddMinutes(-30), NextAction = "테스트 중" },
-        new PortDetail { PortId = "CP05", Position = "ST01.CP05", Status = "Empty", CassetteId = "", LoadTime = null, NextAction = "로드 대기" },
-        new PortDetail { PortId = "CP06", Position = "ST01.CP06", Status = "Occupied", CassetteId = "CASS_006", LoadTime = DateTime.Now.AddHours(-3), NextAction = "완료 대기" }
-    };
+    private Stocker? _stocker;
+    private List<PortDetail> _portDetails = new List<PortDetail>();
+    private int _totalPorts = 0;
+    private int _occupiedPorts = 0;
+    private int _utilization = 0;
 
-    private string GetPortCardClass(int portNumber)
+    protected override async Task OnInitializedAsync()
     {
-        string portStatus = GetPortStatus(portNumber);
-        return portStatus switch
+        IReadOnlyList<Stocker> stockers = await StockerRepository.GetAllAsync();
+        if (stockers != null)
         {
-            "사용 중" => "mud-theme-success",
-            "비어 있음" => "mud-theme-info",
-            "오류" => "mud-theme-error",
-            _ => ""
-        };
+            if (stockers.Count > 0)
+            {
+                _stocker = stockers[0];
+            }
+        }
+
+        if (_stocker != null)
+        {
+            BuildPortDetailsFromStocker(_stocker);
+        }
     }
 
-    private string GetPortStatus(int portNumber)
+    private void BuildPortDetailsFromStocker(Stocker stocker)
     {
-        return portNumber switch
+        _portDetails.Clear();
+
+        foreach (CassetteLocation loc in stocker.CassetteLocations)
         {
-            1 or 2 or 4 or 6 => "사용 중",
-            3 or 5 => "비어 있음",
-            _ => "알 수 없음"
-        };
+            PortDetail detail = new PortDetail();
+            detail.PortId = loc.Id;
+            detail.Position = loc.Name;
+            detail.Status = loc.Status.ToString();
+            detail.CassetteId = string.IsNullOrEmpty(loc.CurrentItemId) ? string.Empty : loc.CurrentItemId;
+            detail.LoadTime = null;
+            detail.NextAction = string.Empty;
+            _portDetails.Add(detail);
+        }
+
+        _totalPorts = _portDetails.Count;
+        _occupiedPorts = _portDetails.Count(d => !string.IsNullOrEmpty(d.CassetteId));
+        if (_totalPorts > 0)
+        {
+            _utilization = (int)Math.Round(100.0 * _occupiedPorts / _totalPorts);
+        }
+        else
+        {
+            _utilization = 0;
+        }
     }
 
-    private string GetCassetteId(int portNumber)
+    private string GetPortCardClass(PortDetail detail)
     {
-        return portNumber switch
+        string statusText = GetPortStatus(detail);
+        if (statusText == "In Use")
         {
-            1 => "CASS_001",
-            2 => "CASS_002",
-            4 => "CASS_004",
-            6 => "CASS_006",
-            _ => ""
-        };
+            return "mud-theme-success";
+        }
+        if (statusText == "Error")
+        {
+            return "mud-theme-error";
+        }
+        if (statusText == "Empty")
+        {
+            return "mud-theme-info";
+        }
+        return string.Empty;
     }
 
-    private Color GetPortDetailStatusColor(string status)
+    private string GetPortStatus(PortDetail detail)
     {
-        return status switch
+        if (!string.IsNullOrEmpty(detail.CassetteId))
         {
-            "Occupied" => Color.Success,
-            "Empty" => Color.Info,
-            "Error" => Color.Error,
-            "Maintenance" => Color.Warning,
-            _ => Color.Default
-        };
+            return "In Use";
+        }
+
+        if (string.Equals(detail.Status, ELocationStatus.OutOfService.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            return "Error";
+        }
+
+        return "Empty";
     }
 
     public class PortDetail

@@ -1,0 +1,21 @@
+@using Microsoft.AspNetCore.Components
+@implements IDisposable
+@inject Nexus.Portal.Components.Layout.DockService Dock
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (ChildContent != null)
+        {
+            Dock.Set(ChildContent);
+        }
+    }
+
+    public void Dispose()
+    {
+        Dock.Clear();
+    }
+}

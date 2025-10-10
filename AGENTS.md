@@ -17,7 +17,7 @@
   - `dotnet run --project src/apps/Nexus.Portal` (UI)
   - `dotnet run --project src/apps/Nexus.Gateway`
   - `dotnet run --project src/apps/Nexus.Orchestrator`
-- Compose stack: `docker compose up -d` (Redis, Postgres, n8n, Prometheus, Loki, apps).
+- Compose stack: `docker compose up -d` (Redis, Prometheus, Loki, apps).
 - Tests: `dotnet test -c Debug` (coverage: `dotnet test --collect:"XPlat Code Coverage"`).
 
 ## Coding Style & Naming Conventions

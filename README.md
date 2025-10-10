@@ -3,7 +3,7 @@
 
 ## Introduction
 The **mcs** project (code: Nexus) is designed to manage real-time operations in automated environments such as semiconductor or warehouse systems.  
-It leverages **Redis** for in-memory event-driven communication, **PostgreSQL (via Supabase)** for relational persistence, and **Blazor Server** for UI.  
+It leverages **Redis** for in-memory event-driven communication and **Blazor Server** for UI.  
 The system follows an **event-driven architecture (EDA)** and is containerized using **Docker Compose** for easy deployment. [(https://portal.stone2on.cloud)](https://portal.stone2on.cloud)
 
 
@@ -28,7 +28,6 @@ graph TD
 
     subgraph Infrastructure
         Redis[(Redis Cache<br/>Pub/Sub, State)]
-        Postgres[(PostgreSQL DB via Supabase)]
     end
 
     subgraph Services
@@ -41,7 +40,7 @@ graph TD
     Orchestrator --> Core
     Core --> Infra
     Infra --> Redis
-    Infra --> Postgres
+    
 ````
 
 ---
@@ -74,7 +73,6 @@ docker-compose up --build
 This will start:
 
 * Redis (port 6379)
-* PostgreSQL (Supabase) (port 5432)
 * Nexus Orchestrator
 * Nexus UI (Blazor Server)
 

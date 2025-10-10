@@ -1,0 +1,4 @@
+@page "/production/schedules"
+
+<h3>생산 계획</h3>
+<p>Manage production schedules here.</p>

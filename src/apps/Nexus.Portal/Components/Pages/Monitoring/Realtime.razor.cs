@@ -3,12 +3,17 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.JSInterop;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
 using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Locations.DTO;
 using Nexus.Core.Domain.Models.Locations.Enums;
 using Nexus.Core.Domain.Models.Robots;
 using Nexus.Core.Domain.Models.Robots.DTO;
 using Nexus.Core.Domain.Standards;
+using Nexus.Portal.Components.Layout;
+using Nexus.Portal.Components.Shared;
+using Nexus.Core.Domain.Models.Transports.Interfaces;
+using Nexus.Core.Domain.Models.Transports;
 
 namespace Nexus.Portal.Components.Pages.Monitoring
 {
@@ -39,6 +44,11 @@ namespace Nexus.Portal.Components.Pages.Monitoring
         private HubConnection? _hubConnection;
         private Random _random = new Random();
         private bool _showTestPanel = true;
+        private DotNetObjectReference<Realtime>? _dotNetRef;
+        [Inject]
+        private DockService Dock { get; set; } = default!;
+        [Inject]
+        private ITransportRepository TransportRepository { get; set; } = default!;
 
         
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -80,6 +90,17 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             await JS.InvokeVoidAsync("nexus3d.loadRobots3D", (object)robots);
 
             _threeInitialized = true;
+
+            // Register interaction callbacks (hover + click)
+            try
+            {
+                _dotNetRef = DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("nexus3d.registerInteraction", _dotNetRef, nameof(OnSceneHover), nameof(OnSceneClick));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to register interaction handlers");
+            }
 
             try
             {
@@ -444,6 +465,120 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             {
                 await _hubConnection.DisposeAsync();
             }
+            try
+            {
+                if (_dotNetRef != null)
+                {
+                    _dotNetRef.Dispose();
+                    _dotNetRef = null;
+                }
+            }
+            catch { }
+        }
+
+        public class InteractionEvent
+        {
+            public string Kind { get; set; } = string.Empty; // 'location' | 'robot' | 'item'
+            public string? Id { get; set; }
+            public string? Role { get; set; }
+            public string? LocationType { get; set; }
+            public string? Status { get; set; }
+            public string? ItemId { get; set; }
+            public string? ParentId { get; set; }
+            public string? RobotType { get; set; }
+        }
+
+        [JSInvokable]
+        public Task OnSceneHover(InteractionEvent? e)
+        {
+            // 향후: 툴팁/정보패널 업데이트 등으로 확장 가능
+            if (e != null)
+            {
+                Logger.LogDebug("Hover: {Kind} {Id} {ItemId}", e.Kind, e.Id, e.ItemId);
+            }
+            return Task.CompletedTask;
+        }
+
+        [JSInvokable]
+        public async Task OnSceneClick(InteractionEvent? e)
+        {
+            if (e == null)
+            {
+                return;
+            }
+            Logger.LogInformation("Click: {Kind} {Id} {ItemId}", e.Kind, e.Id, e.ItemId);
+
+            string? name = null;
+            string? itemType = null;
+            string? itemName = null;
+            if (!string.IsNullOrEmpty(e.Id))
+            {
+                try
+                {
+                    if (string.Equals(e.Kind, "location", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Location? loc = await LocationRepository.GetByIdAsync(e.Id!);
+                        if (loc != null)
+                        {
+                            name = loc.Name;
+                            if (!string.IsNullOrEmpty(e.ItemId))
+                            {
+                                ITransportable? t = await TransportRepository.GetByIdAsync(e.ItemId!);
+                                if (t != null)
+                                {
+                                    itemType = t.TransportType.ToString();
+                                    if (t is Cassette c) itemName = c.Name;
+                                    else if (t is Tray tr) itemName = tr.Name;
+                                    else if (t is Memory m) itemName = m.Name;
+                                }
+                            }
+                        }
+                    }
+                    else if (string.Equals(e.Kind, "robot", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Robot? rob = await RobotRepository.GetByIdAsync(e.Id!);
+                        if (rob != null)
+                        {
+                            name = rob.Name;
+                        }
+                    }
+                    else if (string.Equals(e.Kind, "item", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(e.ItemId))
+                    {
+                        ITransportable? t = await TransportRepository.GetByIdAsync(e.ItemId!);
+                        if (t != null)
+                        {
+                            itemType = t.TransportType.ToString();
+                            if (t is Cassette c) { itemName = c.Name; name = c.Name; }
+                            else if (t is Tray tr) { itemName = tr.Name; name = tr.Name; }
+                            else if (t is Memory m) { itemName = m.Name; name = m.Name; }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogWarning(ex, "Failed to enrich selection details");
+                }
+            }
+
+            RenderFragment content = delegate (RenderTreeBuilder b)
+            {
+                b.OpenComponent<DockSelectionSummary>(0);
+                b.AddAttribute(1, "Title", "Selection");
+                b.AddAttribute(2, "Kind", e.Kind ?? string.Empty);
+                b.AddAttribute(3, "Id", e.Id);
+                b.AddAttribute(4, "Name", name);
+                b.AddAttribute(5, "Role", e.Role);
+                b.AddAttribute(6, "LocationType", e.LocationType);
+                b.AddAttribute(7, "Status", e.Status);
+                b.AddAttribute(8, "ItemId", e.ItemId);
+                b.AddAttribute(9, "ItemType", itemType);
+                b.AddAttribute(10, "ItemName", itemName);
+                b.AddAttribute(11, "ParentId", e.ParentId);
+                b.AddAttribute(12, "RobotType", e.RobotType);
+                b.CloseComponent();
+            };
+
+            Dock.Set(content);
         }
     }
 }

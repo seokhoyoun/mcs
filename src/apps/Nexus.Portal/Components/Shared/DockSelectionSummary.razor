@@ -1,0 +1,69 @@
+@using MudBlazor
+@namespace Nexus.Portal.Components.Shared
+
+<MudStack Spacing="1">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+        <MudText Typo="Typo.subtitle2">@Title</MudText>
+        <MudChip T="string" Size="Size.Small" Color="Color.Info">@Kind</MudChip>
+    </MudStack>
+
+    <MudSimpleTable Dense="true" Striped="true">
+        <tbody>
+            @if (!string.IsNullOrEmpty(Id))
+            {
+                <tr><td>Id</td><td>@Id</td></tr>
+            }
+            @if (!string.IsNullOrEmpty(Name))
+            {
+                <tr><td>Name</td><td>@Name</td></tr>
+            }
+            @if (!string.IsNullOrEmpty(Role))
+            {
+                <tr><td>Role</td><td>@Role</td></tr>
+            }
+            @if (!string.IsNullOrEmpty(LocationType))
+            {
+                <tr><td>Location Type</td><td>@LocationType</td></tr>
+            }
+            @if (!string.IsNullOrEmpty(Status))
+            {
+                <tr><td>Status</td><td>@Status</td></tr>
+            }
+            @if (!string.IsNullOrEmpty(ItemId))
+            {
+                <tr><td>Item Id</td><td>@ItemId</td></tr>
+            }
+            @if (!string.IsNullOrEmpty(ItemType))
+            {
+                <tr><td>Item Type</td><td>@ItemType</td></tr>
+            }
+            @if (!string.IsNullOrEmpty(ItemName))
+            {
+                <tr><td>Item Name</td><td>@ItemName</td></tr>
+            }
+            @if (!string.IsNullOrEmpty(ParentId))
+            {
+                <tr><td>Parent Id</td><td>@ParentId</td></tr>
+            }
+            @if (!string.IsNullOrEmpty(RobotType))
+            {
+                <tr><td>Robot Type</td><td>@RobotType</td></tr>
+            }
+        </tbody>
+    </MudSimpleTable>
+</MudStack>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Selection";
+    [Parameter] public string Kind { get; set; } = string.Empty;
+    [Parameter] public string? Id { get; set; }
+    [Parameter] public string? Name { get; set; }
+    [Parameter] public string? Role { get; set; }
+    [Parameter] public string? LocationType { get; set; }
+    [Parameter] public string? Status { get; set; }
+    [Parameter] public string? ItemId { get; set; }
+    [Parameter] public string? ItemType { get; set; }
+    [Parameter] public string? ItemName { get; set; }
+    [Parameter] public string? ParentId { get; set; }
+    [Parameter] public string? RobotType { get; set; }
+}

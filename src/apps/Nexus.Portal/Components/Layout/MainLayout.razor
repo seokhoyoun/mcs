@@ -25,13 +25,25 @@
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
     </MudAppBar>
 
-    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+@inject Nexus.Portal.Components.Layout.DockService _dockService
+
+<MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <NavMenu />
     </MudDrawer>
     <MudMainContent>
-        <MudContainer Class="mt-16 px-8" MaxWidth="MaxWidth.False">
-            @Body
-        </MudContainer>
+        <div class="nexus-content-shell">
+            <div class="nexus-scroll-body">
+                <MudContainer Class="mt-16 px-8" MaxWidth="MaxWidth.ExtraExtraLarge">
+                    @Body
+                </MudContainer>
+            </div>
+            @if (_dockService.BottomContent != null)
+            {
+                <div class="nexus-bottom-dock">
+                    @_dockService.BottomContent
+                </div>
+            }
+        </div>
     </MudMainContent>
 </MudLayout>
 
@@ -51,6 +63,13 @@
                 PaletteDark = _evergreenPalette,
                 LayoutProperties = new LayoutProperties()
             };
+
+            _dockService.Changed += OnDockChanged;
+        }
+
+        private void OnDockChanged()
+        {
+            InvokeAsync(StateHasChanged);
         }
 
         private readonly PaletteLight _lightPalette = new()

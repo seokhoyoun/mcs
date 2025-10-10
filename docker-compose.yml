@@ -11,39 +11,6 @@ services:
       - redis-server
       - /usr/local/etc/redis/redis.conf
  
-  supabase:
-    image: postgres:15-alpine
-    ports:
-        - "5432:5432"
-    environment:
-        POSTGRES_USER: "postgres"
-        POSTGRES_PASSWORD: "1234"
-        POSTGRES_DB: "postgres"
-
-  n8n:
-    image: n8nio/n8n:1.109.0
-    restart: always
-    ports:
-      - "5678:5678"
-    volumes:
-      # './src/' 경로 추가
-      - ./src/n8n_data:/home/node/.n8n
-      - ./src/data:/home/node/data
-    environment:
-      - N8N_HOST=localhost
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - N8N_BASIC_AUTH_ACTIVE=false
-      - DB_SQLITE_POOL_SIZE=10
-      - N8N_RUNNERS_ENABLED=true
-      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
-      - POSTGRES_HOST=supabase
-      - POSTGRES_DATABASE=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=1234
-    depends_on:
-      - supabase
-
   nexus.orchestrator:
     image: ghcr.io/seokhoyoun/nexus-orchestrator:latest
     build:

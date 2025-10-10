@@ -1,4 +1,222 @@
-﻿@page "/production/schedules"
+@page "/production/schedules"
+@using MudBlazor
+@using Nexus.Core.Domain.Models.Lots
+@using Nexus.Core.Domain.Models.Plans
+@using Nexus.Core.Domain.Models.Plans.Enums
+@inject Nexus.Core.Domain.Models.Lots.Interfaces.ILotRepository LotRepository
+@inject ISnackbar Snackbar
 
-<h3>생산 계획</h3>
-<p>Manage production schedules here.</p>
+<PageTitle>Schedules</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" GutterBottom="true">Schedules</MudText>
+
+    <MudPaper Class="pa-3 mb-4">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+            <MudSelect T="string" Label="Select Lot" @bind-Value="SelectedLotId">
+                @foreach (Lot lot in _lots)
+                {
+                    <MudSelectItem Value="@lot.Id">@lot.Id (@lot.Name)</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudSelect T="string" Label="Select Step" @bind-Value="SelectedStepId" Disabled="@(_steps.Count == 0)">
+                @foreach (LotStep step in _steps)
+                {
+                    <MudSelectItem Value="@step.Id">@step.Id (@step.Name)</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudButton StartIcon="@Icons.Material.Filled.Refresh" Variant="Variant.Outlined" OnClick="@ReloadAsync">Refresh</MudButton>
+        </MudStack>
+    </MudPaper>
+
+    <MudPaper Class="pa-3">
+        <MudText Typo="Typo.h6" GutterBottom="true">Plans by Lot / Step</MudText>
+
+        @if (_selectedStep != null)
+        {
+            if (_selectedStep.PlanGroups != null && _selectedStep.PlanGroups.Count > 0)
+            {
+                <MudExpansionPanels>
+                    @foreach (PlanGroup pg in _selectedStep.PlanGroups)
+                    {
+                        <MudExpansionPanel Text="@($"PlanGroup: {pg.Name} ({pg.GroupType})")">
+                            @if (pg.Plans != null && pg.Plans.Count > 0)
+                            {
+                                @foreach (Plan plan in pg.Plans)
+                                {
+                                    <MudText Typo="Typo.subtitle2">@plan.Name</MudText>
+                                    @if (plan.PlanSteps != null && plan.PlanSteps.Count > 0)
+                                    {
+                                        <MudSimpleTable Dense="true" Striped="true">
+                                            <thead>
+                                                <tr>
+                                                    <th>StepNo</th>
+                                                    <th>Name</th>
+                                                    <th>Action</th>
+                                                    <th>Status</th>
+                                                    <th>Jobs</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (PlanStep ps in plan.PlanSteps.OrderBy(s => s.StepNo))
+                                                {
+                                                    <tr>
+                                                        <td>@ps.StepNo</td>
+                                                        <td>@ps.Name</td>
+                                                        <td>@ps.Action</td>
+                                                        <td>@ps.Status</td>
+                                                        <td>
+                                                            @if (ps.Jobs != null && ps.Jobs.Count > 0)
+                                                            {
+                                                                @foreach (Job job in ps.Jobs.OrderBy(j => j.JobNo))
+                                                                {
+                                                                    <div>
+                                                                        <span>@job.Name</span>
+                                                                        <span class="mud-typography mud-typography-caption"> (@job.FromLocationId → @job.ToLocationId)</span>
+                                                                    </div>
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="mud-typography mud-typography-caption">No jobs</span>
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </MudSimpleTable>
+                                    }
+                                    else
+                                    {
+                                        <MudText Typo="Typo.caption">No steps</MudText>
+                                    }
+                                    <MudDivider Class="my-2" />
+                                }
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.caption">No plans</MudText>
+                            }
+                        </MudExpansionPanel>
+                    }
+                </MudExpansionPanels>
+            }
+            else
+            {
+                <MudText Typo="Typo.caption">No plan groups for the selected step.</MudText>
+            }
+        }
+        else
+        {
+            <MudText Typo="Typo.caption">Select a lot and step to view plans.</MudText>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private List<Lot> _lots = new List<Lot>();
+    private List<LotStep> _steps = new List<LotStep>();
+
+    private string _selectedLotId = string.Empty;
+    private string _selectedStepId = string.Empty;
+
+    private string SelectedLotId
+    {
+        get
+        {
+            return _selectedLotId;
+        }
+        set
+        {
+            if (value != _selectedLotId)
+            {
+                _selectedLotId = value ?? string.Empty;
+                _ = OnLotChanged(_selectedLotId);
+            }
+        }
+    }
+
+    private string SelectedStepId
+    {
+        get
+        {
+            return _selectedStepId;
+        }
+        set
+        {
+            if (value != _selectedStepId)
+            {
+                _selectedStepId = value ?? string.Empty;
+                _ = OnStepChanged(_selectedStepId);
+            }
+        }
+    }
+
+    private LotStep? _selectedStep
+    {
+        get
+        {
+            return _steps.FirstOrDefault(s => s.Id == _selectedStepId);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        try
+        {
+            IReadOnlyList<Lot> lots = await LotRepository.GetAllAsync();
+            _lots = lots.ToList();
+
+            if (!string.IsNullOrEmpty(_selectedLotId))
+            {
+                await LoadStepsForLotAsync(_selectedLotId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OnLotChanged(string lotId)
+    {
+        _selectedLotId = lotId;
+        _selectedStepId = string.Empty;
+        await LoadStepsForLotAsync(lotId);
+    }
+
+    private async Task LoadStepsForLotAsync(string lotId)
+    {
+        _steps = new List<LotStep>();
+        try
+        {
+            Lot? lot = await LotRepository.GetByIdAsync(lotId);
+            if (lot != null)
+            {
+                if (lot.LotSteps != null)
+                {
+                    _steps = lot.LotSteps.ToList();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load steps: {ex.Message}", Severity.Warning);
+        }
+        StateHasChanged();
+    }
+
+    private Task OnStepChanged(string stepId)
+    {
+        _selectedStepId = stepId;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+}
