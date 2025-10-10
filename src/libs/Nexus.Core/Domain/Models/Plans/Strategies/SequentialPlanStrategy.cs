@@ -12,7 +12,7 @@ namespace Nexus.Core.Domain.Models.Plans.Strategies
             if (completedPlanId == null)
                 return planGroup.Plans.Take(1); // 첫 1건부터
 
-            var completedIndex = planGroup.Plans.FindIndex(p => p.Id == completedPlanId);
+            int completedIndex = planGroup.Plans.FindIndex(p => p.Id == completedPlanId);
             if (completedIndex < 0 || completedIndex + 1 >= planGroup.Plans.Count)
                 return Enumerable.Empty<Plan>();
 

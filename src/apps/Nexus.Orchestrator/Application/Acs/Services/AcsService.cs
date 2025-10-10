@@ -30,7 +30,15 @@ namespace Nexus.Orchestrator.Application.Acs.Services
             _httpListener = new HttpListener();
             _clients = new ConcurrentDictionary<string, WebSocket>();
             _clientInfos = new ConcurrentDictionary<string, string>();
-            _address = configuration["AcsServer:Address"] ?? "http://*:8080/acs/";
+            string? configuredAddress = configuration["AcsServer:Address"];
+            if (!string.IsNullOrEmpty(configuredAddress))
+            {
+                _address = configuredAddress;
+            }
+            else
+            {
+                _address = "http://*:8080/acs/";
+            }
             _registeredClientId = string.Empty;
             _hasRegisteredClient = false;
         }
@@ -280,8 +288,24 @@ namespace Nexus.Orchestrator.Application.Acs.Services
         // Ack 메시지 로깅
         private void LogAckMessage(AcsMessage message)
         {
-            string result = message.Result ?? "Unknown";
-            string transactionId = message.TransactionId ?? "Unknown";
+            string result;
+            if (message.Result != null)
+            {
+                result = message.Result;
+            }
+            else
+            {
+                result = "Unknown";
+            }
+            string transactionId;
+            if (message.TransactionId != null)
+            {
+                transactionId = message.TransactionId;
+            }
+            else
+            {
+                transactionId = "Unknown";
+            }
 
             if (result.Equals("Success", StringComparison.OrdinalIgnoreCase))
             {

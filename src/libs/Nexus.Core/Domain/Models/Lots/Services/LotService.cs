@@ -21,14 +21,14 @@ namespace Nexus.Core.Domain.Models.Lots.Services
         }
         public async Task<LotStep?> GetLotStepAsync(string lotId, string stepId)
         {
-            var lot = await _lotRepository.GetByIdAsync(lotId);
+            Lot? lot = await _lotRepository.GetByIdAsync(lotId);
             return lot?.LotSteps.FirstOrDefault(s => s.Id == stepId);
         }
 
         public async Task<bool> AddCassetteToStepAsync(string lotId, string stepId, string cassetteId)
         {
-            var lot = await _lotRepository.GetByIdAsync(lotId);
-            var step = lot?.LotSteps.FirstOrDefault(s => s.Id == stepId);
+            Lot? lot = await _lotRepository.GetByIdAsync(lotId);
+            LotStep? step = lot?.LotSteps.FirstOrDefault(s => s.Id == stepId);
 
             if (step != null)
             {

@@ -14,6 +14,7 @@ using Nexus.Infrastructure.Persistence.Redis;
 using StackExchange.Redis;
 using System.Text.Json;
 using Nexus.Core.Domain.Models.Robots.Interfaces;
+using Prometheus;
 
 namespace Nexus.Gateway
 {
@@ -89,6 +90,12 @@ namespace Nexus.Gateway
             builder.Services.AddScoped<ICassetteCreationService, CassetteCreationService>();
             builder.Services.AddScoped<IAreaCreationService, AreaCreationService>();
 
+            // Prometheus metrics server for Gateway (separate port 9092)
+            builder.Services.AddMetricServer(options =>
+            {
+                options.Port = 9092;
+            });
+
             WebApplication app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -99,6 +106,8 @@ namespace Nexus.Gateway
             }
 
             app.UseHttpsRedirection();
+            // HTTP request metrics instrumentation
+            app.UseHttpMetrics();
             app.UseAuthorization();
             app.MapControllers();
 

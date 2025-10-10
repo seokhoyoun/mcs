@@ -53,7 +53,7 @@ namespace Nexus.Core.Domain.Models.Transports
         }
         public bool RemoveMemory(string memoryId)
         {
-            var memory = _memories.FirstOrDefault(m => m.Id == memoryId);
+            Memory? memory = _memories.FirstOrDefault(m => m.Id == memoryId);
             if (memory != null)
             {
                 return _memories.Remove(memory);
@@ -68,11 +68,11 @@ namespace Nexus.Core.Domain.Models.Transports
 
         public static Tray CreateFullTray(string trayId, string trayName = "")
         {
-            var memories = new List<Memory>();
+            List<Memory> memories = new List<Memory>();
 
             for (int memoryIndex = 1; memoryIndex <= MAX_MEMORY_CAPACITY; memoryIndex++)
             {
-                var memoryId = Guid.NewGuid().ToString();
+                string memoryId = Guid.NewGuid().ToString();
                 memories.Add(new Memory(memoryId, ""));
             }
 

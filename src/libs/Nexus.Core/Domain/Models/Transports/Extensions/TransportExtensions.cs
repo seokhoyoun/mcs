@@ -11,8 +11,8 @@ namespace Nexus.Core.Domain.Models.Transports.Extensions
 
             for (int trayIndex = 1; trayIndex <= Cassette.MAX_TRAY_CAPACITY; trayIndex++)
             {
-                var trayId = $"{cassette.Id}_T{trayIndex:D2}";
-                var tray = new Tray(id: trayId,
+                string trayId = $"{cassette.Id}_T{trayIndex:D2}";
+                Tray tray = new Tray(id: trayId,
                                     name: trayId,
                                     memories: new List<Memory>());
 
@@ -28,7 +28,7 @@ namespace Nexus.Core.Domain.Models.Transports.Extensions
         {
             for (int memoryIndex = 1; memoryIndex <= Tray.MAX_MEMORY_CAPACITY; memoryIndex++)
             {
-                var memoryId = $"{tray.Id}_M{memoryIndex:D2}";
+                string memoryId = $"{tray.Id}_M{memoryIndex:D2}";
                 tray.AddMemory(new Memory(id: memoryId,
                                           name: string.Empty));
             }

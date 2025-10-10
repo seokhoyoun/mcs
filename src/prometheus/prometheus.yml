@@ -8,6 +8,10 @@ scrape_configs:
     static_configs:
       - targets: ['nexus.orchestrator:9091'] # docker-compose 서비스 이름을 사용
 
+  - job_name: 'nexus-gateway'
+    static_configs:
+      - targets: ['nexus.gateway:9092']
+
   - job_name: 'node-exporter'
     static_configs:
       - targets: ['node-exporter:9100'] 

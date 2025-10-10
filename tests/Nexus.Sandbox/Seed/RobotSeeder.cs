@@ -27,7 +27,7 @@ namespace Nexus.Sandbox.Seed
             List<Robot> robots = new List<Robot>();
 
             // Load tray dimension
-            var trayStd = await _dimRepo.GetByIdAsync("location:tray");
+            Nexus.Core.Domain.Standards.DimensionStandard? trayStd = await _dimRepo.GetByIdAsync("location:tray");
             uint trayW = trayStd != null ? trayStd.Width : 20u;
             uint trayH = trayStd != null ? trayStd.Height : 20u;
             uint trayD = trayStd != null ? trayStd.Depth : 20u;

@@ -35,20 +35,21 @@ public class DockerComposeFixture : IDisposable
 {
     private readonly string _composeArgs = "up -d";
     private readonly string _composeDownArgs = "down -v";
+    private const int RedisHostPort = 6380;
     private readonly TimeSpan _startupTimeout = TimeSpan.FromSeconds(60);
 
     public DockerComposeFixture()
     {
-        // 1) Redis만 먼저 기동
-        RunDockerComposeCommand("up -d redis");
+        // 1) Redis만 먼저 기동 (itest override로 포트 6380 사용)
+        RunDockerComposeCommand("--env-file .env.itest -f docker-compose.yml -f docker-compose.itest.yml up -d redis");
         WaitForRedis();
         // 2) Sandbox 시딩 수행
         RunSandboxSeed();
         // 3) 나머지 앱 서비스 기동 (오케스트레이터/게이트웨이)
-        RunDockerComposeCommand("up -d --no-build nexus.orchestrator nexus.gateway");
-        // 4) 앱 포트 준비 대기
-        WaitForTcp("127.0.0.1", 8081, _startupTimeout);
-        WaitForTcp("127.0.0.1", 8082, _startupTimeout);
+        RunDockerComposeCommand("--env-file .env.itest -f docker-compose.yml -f docker-compose.itest.yml up -d --no-build nexus.orchestrator nexus.gateway");
+        // 4) 앱 포트 준비 대기 (itest override 포트)
+        WaitForTcp("127.0.0.1", 18081, _startupTimeout);
+        WaitForTcp("127.0.0.1", 18082, _startupTimeout);
     }
 
     private void StartDockerCompose()
@@ -58,9 +59,15 @@ public class DockerComposeFixture : IDisposable
 
     private void RunDockerComposeCommand(string args)
     {
+        string? solutionRoot = FindSolutionRoot();
+        if (solutionRoot == null)
+        {
+            throw new InvalidOperationException("솔루션 루트를 찾을 수 없습니다 (docker compose 실행 경로).");
+        }
         ProcessStartInfo psi = new ProcessStartInfo();
         psi.FileName = "docker";
         psi.Arguments = "compose " + args;
+        psi.WorkingDirectory = solutionRoot;
         psi.RedirectStandardOutput = true;
         psi.RedirectStandardError = true;
         psi.UseShellExecute = false;
@@ -88,7 +95,7 @@ public class DockerComposeFixture : IDisposable
                 {
                     client.ReceiveTimeout = 2000;
                     client.SendTimeout = 2000;
-                    client.Connect("127.0.0.1", 6379);
+                    client.Connect("127.0.0.1", RedisHostPort);
                     connected = true;
                     break;
                 }
@@ -141,6 +148,7 @@ public class DockerComposeFixture : IDisposable
         psi.FileName = "dotnet";
         // 기본 시드 전체 수행 (Lot 포함)
         psi.Arguments = $"run -c Debug --project \"{sandboxProj}\"";
+        psi.Environment["ITEST_REDIS_PORT"] = RedisHostPort.ToString();
         psi.RedirectStandardOutput = true;
         psi.RedirectStandardError = true;
         psi.UseShellExecute = false;
@@ -182,9 +190,15 @@ public class DockerComposeFixture : IDisposable
     {
         try
         {
+            string? solutionRoot = FindSolutionRoot();
+            if (solutionRoot == null)
+            {
+                return;
+            }
             ProcessStartInfo psi = new ProcessStartInfo();
             psi.FileName = "docker";
-            psi.Arguments = "compose " + _composeDownArgs;
+            psi.Arguments = "compose --env-file .env.itest -f docker-compose.yml -f docker-compose.itest.yml " + _composeDownArgs;
+            psi.WorkingDirectory = solutionRoot;
             psi.RedirectStandardOutput = true;
             psi.RedirectStandardError = true;
             psi.UseShellExecute = false;
@@ -203,11 +217,12 @@ public class DockerComposeFixture : IDisposable
 [Collection("DockerComposeE2E")]
 public class DockerComposeLotPublishE2ETests
 {
+    private const int RedisHostPort = 6380;
     [Fact(Timeout = 120000)]
     [Trait("Category", "E2E-DockerCompose-FullStack")]
     public async Task PublishLot_Message_TriggersPlanGeneration()
     {
-        string redisConn = "localhost:6379";
+        string redisConn = "localhost:" + RedisHostPort.ToString();
         IConnectionMultiplexer mux = await ConnectionMultiplexer.ConnectAsync(redisConn);
 
         // 오케스트레이터가 채널 구독을 시작했는지 확인 (구독자 수가 1 이상일 때까지 대기)

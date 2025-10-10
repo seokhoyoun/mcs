@@ -88,6 +88,8 @@ namespace Nexus.Orchestrator
             WebApplication app = builder.Build();
 
             app.UseCors();
+            // Expose default HTTP metrics for incoming requests
+            app.UseHttpMetrics();
             app.MapHub<Nexus.Orchestrator.Application.Hubs.RobotPositionHub>("/hubs/robotPosition");
 
             app.Run();

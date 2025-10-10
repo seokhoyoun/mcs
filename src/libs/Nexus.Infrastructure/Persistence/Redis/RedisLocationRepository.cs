@@ -677,8 +677,25 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         private async Task SaveCassetteLocationAsync(CassetteLocation loc)
         {
-            string currentItemId = loc.CurrentItemId ?? string.Empty;
+            string currentItemId;
+            if (loc.CurrentItemId != null)
+            {
+                currentItemId = loc.CurrentItemId;
+            }
+            else
+            {
+                currentItemId = string.Empty;
+            }
             string childrenValue = string.Join(",", loc.Children);
+            string parentId;
+            if (loc.ParentId != null)
+            {
+                parentId = loc.ParentId;
+            }
+            else
+            {
+                parentId = string.Empty;
+            }
 
             HashEntry[] entries = new HashEntry[]
             {
@@ -687,7 +704,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("location_type", loc.LocationType.ToString()),
                 new HashEntry("status", loc.Status.ToString()),
                 new HashEntry("current_item_id", currentItemId),
-                new HashEntry("parent_id", loc.ParentId ?? string.Empty),
+                new HashEntry("parent_id", parentId),
                 new HashEntry("children", childrenValue),
                 new HashEntry("is_visible", loc.IsVisible.ToString()),
                 new HashEntry("is_relative_position", loc.IsRelativePosition.ToString()),
@@ -708,8 +725,25 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         private async Task SaveTrayLocationAsync(TrayLocation loc)
         {
-            string currentItemId = loc.CurrentItemId ?? string.Empty;
+            string currentItemId;
+            if (loc.CurrentItemId != null)
+            {
+                currentItemId = loc.CurrentItemId;
+            }
+            else
+            {
+                currentItemId = string.Empty;
+            }
             string childrenValue = string.Join(",", loc.Children);
+            string parentId;
+            if (loc.ParentId != null)
+            {
+                parentId = loc.ParentId;
+            }
+            else
+            {
+                parentId = string.Empty;
+            }
 
             HashEntry[] entries = new HashEntry[]
             {
@@ -718,7 +752,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("location_type", loc.LocationType.ToString()),
                 new HashEntry("status", loc.Status.ToString()),
                 new HashEntry("current_item_id", currentItemId),
-                new HashEntry("parent_id", loc.ParentId ?? string.Empty),
+                new HashEntry("parent_id", parentId),
                 new HashEntry("children", childrenValue),
                 new HashEntry("is_visible", loc.IsVisible.ToString()),
                 new HashEntry("is_relative_position", loc.IsRelativePosition.ToString()),
@@ -739,8 +773,25 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         private async Task SaveMemoryLocationAsync(MemoryLocation loc)
         {
-            string currentItemId = loc.CurrentItemId ?? string.Empty;
+            string currentItemId;
+            if (loc.CurrentItemId != null)
+            {
+                currentItemId = loc.CurrentItemId;
+            }
+            else
+            {
+                currentItemId = string.Empty;
+            }
             string childrenValue = string.Join(",", loc.Children);
+            string parentId;
+            if (loc.ParentId != null)
+            {
+                parentId = loc.ParentId;
+            }
+            else
+            {
+                parentId = string.Empty;
+            }
 
             HashEntry[] entries = new HashEntry[]
             {
@@ -749,7 +800,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("location_type", loc.LocationType.ToString()),
                 new HashEntry("status", loc.Status.ToString()),
                 new HashEntry("current_item_id", currentItemId),
-                new HashEntry("parent_id", loc.ParentId ?? string.Empty),
+                new HashEntry("parent_id", parentId),
                 new HashEntry("children", childrenValue),
                 new HashEntry("is_visible", loc.IsVisible.ToString()),
                 new HashEntry("is_relative_position", loc.IsRelativePosition.ToString()),
@@ -771,6 +822,15 @@ namespace Nexus.Infrastructure.Persistence.Redis
         private async Task SaveMarkerLocationAsync(MarkerLocation loc)
         {
             string childrenValue = string.Join(",", loc.Children);
+            string parentId;
+            if (loc.ParentId != null)
+            {
+                parentId = loc.ParentId;
+            }
+            else
+            {
+                parentId = string.Empty;
+            }
 
             HashEntry[] entries = new HashEntry[]
             {
@@ -778,7 +838,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("name", loc.Name),
                 new HashEntry("location_type", loc.LocationType.ToString()),
                 new HashEntry("status", loc.Status.ToString()),
-                new HashEntry("parent_id", loc.ParentId ?? string.Empty),
+                new HashEntry("parent_id", parentId),
                 new HashEntry("children", childrenValue),
                 new HashEntry("is_visible", loc.IsVisible.ToString()),
                 new HashEntry("is_relative_position", loc.IsRelativePosition.ToString()),

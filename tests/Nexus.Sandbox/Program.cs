@@ -15,9 +15,17 @@ namespace Nexus.Sandbox
     {
         static async Task Main(string[] args)
         {
-          
-
-            ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost:6379,allowAdmin=true");
+            string? itestPortEnv = Environment.GetEnvironmentVariable("ITEST_REDIS_PORT");
+            int port = 6379;
+            if (!string.IsNullOrEmpty(itestPortEnv))
+            {
+                if (!int.TryParse(itestPortEnv, out port))
+                {
+                    port = 6379;
+                }
+            }
+            string conn = "localhost:" + port.ToString() + ",allowAdmin=true";
+            ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(conn);
 
             // Always FLUSHALL before running seeders
             EndPoint[] endpoints = redis.GetEndPoints();

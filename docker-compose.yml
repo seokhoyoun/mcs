@@ -1,13 +1,11 @@
 ﻿services:
   redis:
     image: redis:7-alpine
-    container_name: redis
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
  
   supabase:
     image: postgres:15-alpine
-    container_name: supabase_db
     ports:
         - "5432:5432"
     environment:
@@ -17,7 +15,6 @@
 
   n8n:
     image: n8nio/n8n:1.109.0
-    container_name: n8n
     restart: always
     ports:
       - "5678:5678"
@@ -46,11 +43,10 @@
       context: .
       # 'src/' 경로 추가
       dockerfile: src/apps/Nexus.Orchestrator/Dockerfile
-    container_name: nexus.orchestrator
     depends_on:
       - redis
     ports:
-      - "8081:8081"
+      - "${ORCH_PORT:-8081}:8081"
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - ASPNETCORE_URLS=http://+:8081
@@ -66,11 +62,10 @@
       context: .
       # 'src/' 경로 추가
       dockerfile: src/apps/Nexus.Gateway/Dockerfile
-    container_name: nexus_gateway
     depends_on:
       - redis
     ports:
-      - "8082:8082"
+      - "${GATEWAY_PORT:-8082}:8082"
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - ASPNETCORE_URLS=http://+:8082
@@ -91,7 +86,6 @@
 
   prometheus:
     image: prom/prometheus:latest
-    container_name: prometheus
     volumes:
       # './src/' 경로 추가
       - ./src/prometheus:/etc/prometheus
@@ -104,7 +98,6 @@
 
   grafana:
     image: grafana/grafana:latest
-    container_name: grafana
     ports:
       - "3000:3000"
     depends_on:
@@ -115,7 +108,6 @@
 
   loki:
     image: grafana/loki:latest
-    container_name: loki
     ports:
       - "3100:3100"
     command: -config.file=/etc/loki/config.yml
@@ -127,7 +119,6 @@
 
   promtail:
     image: grafana/promtail:latest
-    container_name: promtail
     volumes:
       - //./pipe/docker_engine://./pipe/docker_engine
       # './src/' 경로 추가
@@ -138,7 +129,6 @@
 
   node-exporter:
     image: prom/node-exporter:latest
-    container_name: node-exporter
     restart: unless-stopped
     pid: "host"
     volumes:

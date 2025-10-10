@@ -198,7 +198,15 @@ namespace Nexus.Core.Domain.Models.Locations.Services
             await EnsureInitializedAsync(cancellationToken);
             foreach (CassetteLocation loc in _cassetteLocations)
             {
-                string current = loc.CurrentItemId ?? string.Empty;
+                string current;
+                if (loc.CurrentItemId != null)
+                {
+                    current = loc.CurrentItemId;
+                }
+                else
+                {
+                    current = string.Empty;
+                }
                 if (!string.IsNullOrEmpty(current))
                 {
                     if (string.Equals(current, itemId, StringComparison.OrdinalIgnoreCase))
@@ -211,7 +219,15 @@ namespace Nexus.Core.Domain.Models.Locations.Services
             await ReloadAsync(cancellationToken);
             foreach (CassetteLocation loc in _cassetteLocations)
             {
-                string current = loc.CurrentItemId ?? string.Empty;
+                string current;
+                if (loc.CurrentItemId != null)
+                {
+                    current = loc.CurrentItemId;
+                }
+                else
+                {
+                    current = string.Empty;
+                }
                 if (!string.IsNullOrEmpty(current))
                 {
                     if (string.Equals(current, itemId, StringComparison.OrdinalIgnoreCase))

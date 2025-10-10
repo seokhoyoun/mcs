@@ -313,7 +313,11 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             {
                 HttpClient client = new HttpClient();
                 string baseUrl = GetGatewayBaseUrl().TrimEnd('/');
-                var payload = new { LocationId = _selectedLocationId, Speed = _moveSpeed };
+                Nexus.Portal.Contracts.Robots.MoveRobotRequest payload = new Nexus.Portal.Contracts.Robots.MoveRobotRequest
+                {
+                    LocationId = _selectedLocationId,
+                    Speed = _moveSpeed
+                };
                 HttpResponseMessage res = await client.PostAsJsonAsync($"{baseUrl}/api/v1/robots/{_selectedRobotId}/move", payload);
                 Logger.LogInformation("Move result: {StatusCode}", (int)res.StatusCode);
 
@@ -336,7 +340,11 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             {
                 HttpClient client = new HttpClient();
                 string baseUrl = GetGatewayBaseUrl().TrimEnd('/');
-                var payload = new { FromLocationId = _selectedLocationId, ItemId = _loadItemId };
+                Nexus.Portal.Contracts.Robots.LoadRobotRequest payload = new Nexus.Portal.Contracts.Robots.LoadRobotRequest
+                {
+                    FromLocationId = _selectedLocationId,
+                    ItemId = _loadItemId
+                };
                 HttpResponseMessage res = await client.PostAsJsonAsync($"{baseUrl}/api/v1/robots/{_selectedRobotId}/load", payload);
                 Logger.LogInformation("Load result: {StatusCode}", (int)res.StatusCode);
                 try
@@ -364,7 +372,10 @@ namespace Nexus.Portal.Components.Pages.Monitoring
             {
                 HttpClient client = new HttpClient();
                 string baseUrl = GetGatewayBaseUrl().TrimEnd('/');
-                var payload = new { ToLocationId = _selectedLocationId };
+                Nexus.Portal.Contracts.Robots.UnloadRobotRequest payload = new Nexus.Portal.Contracts.Robots.UnloadRobotRequest
+                {
+                    ToLocationId = _selectedLocationId
+                };
                 HttpResponseMessage res = await client.PostAsJsonAsync($"{baseUrl}/api/v1/robots/{_selectedRobotId}/unload", payload);
                 Logger.LogInformation("Unload result: {StatusCode}", (int)res.StatusCode);
                 try
