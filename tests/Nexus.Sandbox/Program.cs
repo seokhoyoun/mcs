@@ -1,77 +1,36 @@
-using Nexus.Core.Domain.Models.Areas;
 using Nexus.Core.Domain.Models.Locations;
-using Nexus.Core.Domain.Models.Locations.Enums;
+using Nexus.Core.Domain.Models.Locations.Interfaces;
+using Nexus.Core.Domain.Models.Locations.ValueObjects;
+using Nexus.Core.Domain.Models.Transports.Enums;
 using Nexus.Infrastructure.Persistence.Redis;
-using Nexus.Sandbox.Seed;
-using Nexus.Sandbox.Seed.Interfaces;
 using StackExchange.Redis;
-using System.Data;
-using System.Net;
-using System.Text.Json;
 
-namespace Nexus.Sandbox
+internal class Program
 {
-    internal class Program
+    private static async Task Main(string[] args)
     {
-        static async Task Main(string[] args)
+        string connectionString = GetConnectionString();
+        IConnectionMultiplexer mux = ConnectionMultiplexer.Connect(connectionString);
+
+        ISpaceRepository spaceRepository = new RedisSpaceRepository(mux);
+
+        // 단일 Space와 CarrierLocation 샘플 데이터를 추가합니다.
+        CarrierLocation port = new CarrierLocation("SPC01.PORT01", "SamplePort01", "spec:default", ECargoKind.Unknown);
+        SpaceSpecification spec = new SpaceSpecification("spec:space", new List<string> { "spec:default" }, new List<ECargoKind> { ECargoKind.Unknown });
+        Space space = new Space("SPACE01", "Sample Space", spec, new List<CarrierLocation> { port }, new List<ISpace>());
+
+        await spaceRepository.AddAsync(space);
+
+        Console.WriteLine("Seeded Space and CarrierLocation to Redis.");
+    }
+
+    private static string GetConnectionString()
+    {
+        string? env = Environment.GetEnvironmentVariable("Redis__ConnectionString");
+        if (!string.IsNullOrWhiteSpace(env))
         {
-            string? itestPortEnv = Environment.GetEnvironmentVariable("ITEST_REDIS_PORT");
-            int port = 6379;
-            if (!string.IsNullOrEmpty(itestPortEnv))
-            {
-                if (!int.TryParse(itestPortEnv, out port))
-                {
-                    port = 6379;
-                }
-            }
-            string conn = "localhost:" + port.ToString() + ",allowAdmin=true";
-            ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(conn);
-
-            // Always FLUSHALL before running seeders
-            EndPoint[] endpoints = redis.GetEndPoints();
-            for (int i = 0; i < endpoints.Length; i++)
-            {
-                IServer server = redis.GetServer(endpoints[i]);
-                try
-                {
-                    server.FlushAllDatabases();
-                    Console.WriteLine($"Redis FLUSHALL executed on {server.EndPoint}.");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Redis FLUSHALL failed on {server.EndPoint}: {ex.Message}");
-                }
-            }
-            RedisLocationRepository locationRepo = new RedisLocationRepository(redis);
-            RedisTransportRepository transportRepo = new RedisTransportRepository(redis);
-            RedisAreaRepository areaRepo = new RedisAreaRepository(redis, locationRepo);
-            RedisStockerRepository stockerRepo = new RedisStockerRepository(redis, locationRepo);
-            RedisRobotRepository robotRepo = new RedisRobotRepository(redis, locationRepo);
-            RedisDimensionRepository dimesionRepo = new RedisDimensionRepository(redis);
-            RedisLotRepository lotRepo = new RedisLotRepository(redis, transportRepo);
-
-            List<IDataSeeder> seeders = new List<IDataSeeder>();
-            seeders.Add(new DimensionSeeder(dimesionRepo));
-            seeders.Add(new CassetteSeeder(transportRepo));
-            seeders.Add(new AreaSeeder(areaRepo, dimesionRepo));
-            seeders.Add(new StockerSeeder(stockerRepo, dimesionRepo));
-            seeders.Add(new MarkerSeeder(locationRepo, areaRepo, stockerRepo));
-            seeders.Add(new RobotSeeder(robotRepo, locationRepo, dimesionRepo));
-            seeders.Add(new LotSeeder(lotRepo));
-            
-
-            foreach (IDataSeeder seeder in seeders)
-            {
-                await seeder.SeedAsync();
-                Console.WriteLine($"{seeder.GetType()} Seeding completed.");
-            }
-
-
-            Console.WriteLine("Seeding completed.");
+            return env!;
         }
-
-      
-
-
+        return "localhost:6379";
     }
 }

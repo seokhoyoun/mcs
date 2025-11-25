@@ -18,7 +18,7 @@ namespace Nexus.Orchestrator.Application.Robots.Simulation
 
         public void Complete(string robotId)
         {
-            _motions.TryRemove(robotId, out RobotMotionState _);
+            _motions.TryRemove(robotId, out RobotMotionState? _);
         }
 
         public IReadOnlyList<RobotMotionState> Snapshot()

@@ -1,19 +1,9 @@
-using Nexus.Core.Domain.Models.Areas.Interfaces;
-using Nexus.Core.Domain.Models.Areas.Services;
-using Nexus.Core.Domain.Models.Locations.Interfaces;
-using Nexus.Core.Domain.Models.Locations.Services;
-using Nexus.Core.Domain.Models.Lots.Interfaces;
-using Nexus.Core.Domain.Models.Lots.Services;
-using Nexus.Core.Domain.Models.Stockers.Interfaces;
-using Nexus.Core.Domain.Models.Stockers.Services;
-using Nexus.Core.Domain.Models.Transports.Interfaces;
-using Nexus.Core.Domain.Models.Transports.Services;
-using Nexus.Gateway.Services;
-using Nexus.Gateway.Services.Interfaces;
 using Nexus.Infrastructure.Persistence.Redis;
 using StackExchange.Redis;
 using System.Text.Json;
 using Nexus.Core.Domain.Models.Robots.Interfaces;
+using Nexus.Core.Domain.Models.Locations.Interfaces;
+using Nexus.Core.Domain.Models.Locations.Services;
 using Prometheus;
 
 namespace Nexus.Gateway
@@ -64,31 +54,11 @@ namespace Nexus.Gateway
                 return ConnectionMultiplexer.Connect(connStr);
             });
 
-            // Repository 서비스 등록
-            builder.Services.AddSingleton<ILotRepository, RedisLotRepository>();
-
-    
-            builder.Services.AddSingleton<ILocationRepository, RedisLocationRepository>();
-            builder.Services.AddSingleton<ILocationService, LocationService>();
-
-            builder.Services.AddSingleton<ITransportRepository, RedisTransportRepository>();
-            builder.Services.AddSingleton<ITransportService, TransportService>();
-
-            builder.Services.AddSingleton<IAreaRepository, RedisAreaRepository>();
-            builder.Services.AddSingleton<IAreaService, AreaService>();
-
-            builder.Services.AddSingleton<IStockerRepository, RedisStockerRepository>();
-            builder.Services.AddSingleton<IStockerService, StockerService>();
-
-            // Robots
+            // Repository/Service 등록 (Space 기반 최소 구성)
+            builder.Services.AddSingleton<ISpaceRepository, RedisSpaceRepository>();
+            builder.Services.AddSingleton<ILocationGraphRepository, RedisLocationGraphRepository>();
+            builder.Services.AddSingleton<ILocationGraphService, LocationGraphService>();
             builder.Services.AddSingleton<IRobotRepository, RedisRobotRepository>();
-
-            builder.Services.AddScoped<LotService>();
-
-            // Application 서비스 등록
-            builder.Services.AddScoped<ILotCreationService, LotCreationService>();
-            builder.Services.AddScoped<ICassetteCreationService, CassetteCreationService>();
-            builder.Services.AddScoped<IAreaCreationService, AreaCreationService>();
 
             // Prometheus metrics server for Gateway (separate port 9092)
             builder.Services.AddMetricServer(options =>

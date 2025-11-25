@@ -1,49 +1,7 @@
 ﻿@using MudBlazor
 
 <MudNavMenu>
-
-    <MudNavGroup Title="Production" Icon="@Icons.Material.Filled.Factory" Expanded="true" >
-        <MudNavLink Href="/production/lots" Match="NavLinkMatch.Prefix">LOT Management</MudNavLink>
-        <MudNavLink Href="/production/schedules" Match="NavLinkMatch.Prefix">Production Schedules</MudNavLink>
-        <MudNavLink Href="/production/reports" Match="NavLinkMatch.Prefix">Production Reports</MudNavLink>
-        <MudNavLink Href="/production/cassettes" Match="NavLinkMatch.Prefix">Cassette Management</MudNavLink>
-    </MudNavGroup>
-
-    <MudNavGroup Title="Equipment" Icon="@Icons.Material.Filled.Domain" Expanded="true" >
-        <MudNavLink Href="/equipment/stocker" Match="NavLinkMatch.Prefix">Stocker</MudNavLink>
-        <MudNavLink Href="/equipment/areas" Match="NavLinkMatch.Prefix">Areas</MudNavLink>
-        <MudNavLink Href="/equipment/testsets" Match="NavLinkMatch.Prefix">Test Sets</MudNavLink>
-        <MudNavLink Href="/equipment/maintenance" Match="NavLinkMatch.Prefix">Maintenance</MudNavLink>
-    </MudNavGroup>
-
-    <MudNavGroup Title="Robots" Icon="@Icons.Material.Filled.SmartToy" Expanded="true" >
-        <MudNavLink Href="/robots/positions" Match="NavLinkMatch.Prefix">Position Monitoring</MudNavLink>
-        <MudNavLink Href="/robots/maintenance" Match="NavLinkMatch.Prefix">Robot Maintenance</MudNavLink>
-    </MudNavGroup>
-
-    <MudNavGroup Title="Plans" Icon="@Icons.Material.Filled.Assignment" Expanded="true" >
-        <MudNavLink Href="/plans/execution" Match="NavLinkMatch.Prefix">Execution Plans</MudNavLink>
-        <MudNavLink Href="/plans/monitoring" Match="NavLinkMatch.Prefix">Plan Monitoring</MudNavLink>
-        <MudNavLink Href="/plans/history" Match="NavLinkMatch.Prefix">Plan History</MudNavLink>
-        <MudNavLink Href="/plans/errors" Match="NavLinkMatch.Prefix">Error Management</MudNavLink>
-    </MudNavGroup>
-
-    <MudNavGroup Title="Communication" Icon="@Icons.Material.Filled.Cable" Expanded="true" >
-        <MudNavLink Href="/communication/acs" Match="NavLinkMatch.Prefix">ACS Status</MudNavLink>
-        <MudNavLink Href="/communication/messages" Match="NavLinkMatch.Prefix">Message Logs</MudNavLink>
-    </MudNavGroup>
-
-    <MudNavGroup Title="Monitoring" Icon="@Icons.Material.Filled.Monitor" Expanded="true" >
-        <MudNavLink Href="/monitoring/realtime" Match="NavLinkMatch.Prefix">Realtime Overview</MudNavLink>
-        <MudNavLink Href="/monitoring/alarms" Match="NavLinkMatch.Prefix">Alarm Management</MudNavLink>
-        <MudNavLink Href="/monitoring/performance" Match="NavLinkMatch.Prefix">Performance Metrics</MudNavLink>
-    </MudNavGroup>
-
-    <MudNavGroup Title="Settings" Icon="@Icons.Material.Filled.Settings" Expanded="true" >
-        <MudNavLink Href="/users" Match="NavLinkMatch.Prefix">User Management</MudNavLink>
-        <MudNavLink Href="/configuration" Match="NavLinkMatch.Prefix">System Configuration</MudNavLink>
-    </MudNavGroup>
-
     <MudNavLink Href="/" Match="NavLinkMatch.All">Dashboard</MudNavLink>
-
+    <MudNavLink Href="/users" Match="NavLinkMatch.Prefix">User Management</MudNavLink>
+    <MudNavLink Href="/configuration" Match="NavLinkMatch.Prefix">System Configuration</MudNavLink>
 </MudNavMenu>

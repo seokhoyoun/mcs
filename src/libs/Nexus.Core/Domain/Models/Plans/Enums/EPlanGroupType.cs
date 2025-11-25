@@ -2,9 +2,6 @@
 {
     public enum EPlanGroupType
     {
-        StockerToArea = 0,
-        AreaToSet = 1,
-        SetToArea = 2,
-        AreaToStocker = 3
+        SpaceToSpace = 0
     }
 }

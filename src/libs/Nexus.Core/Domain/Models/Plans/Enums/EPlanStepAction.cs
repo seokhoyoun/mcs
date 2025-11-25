@@ -3,13 +3,13 @@
     public enum EPlanStepAction
     {
         None = 0,
-        CassetteLoad,
-        CassetteUnload,
-        TrayLoad,
-        MemoryPickAndPlace,
+        CarrierLoad,
+        CarrierUnload,
+        CargoLoad,
+        CargoTransfer,
         OpenSetCover,
         CloseSetCover,
         Start,
-        TrayUnload,
+        CargoUnload,
     }
 }

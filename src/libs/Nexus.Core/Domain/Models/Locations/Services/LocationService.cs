@@ -1,26 +1,22 @@
-using Microsoft.Extensions.Logging;
-using Nexus.Core.Domain.Models.Areas.Services;
-using Nexus.Core.Domain.Models.Locations.Base;
-using Nexus.Core.Domain.Models.Locations.Enums;
-using Nexus.Core.Domain.Models.Locations.Interfaces;
-using Nexus.Core.Domain.Models.Transports.Interfaces;
-using Nexus.Core.Domain.Models.Transports.Services; // TransportService using 추가
-using Nexus.Core.Domain.Shared.Bases;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Locations.Base;
+using Nexus.Core.Domain.Models.Locations.Interfaces;
+using Nexus.Core.Domain.Shared.Bases;
 
 namespace Nexus.Core.Domain.Models.Locations.Services
 {
     public class LocationService : BaseDataService<Location, string>, ILocationService
     {
         private readonly ILocationRepository _locationRepository;
-        private readonly ITransportRepository _transportRepository; 
 
         private Dictionary<string, Location> _locations = new();
 
-        private List<CassetteLocation> _cassetteLocations = new();
-        private List<TrayLocation> _trayLocations = new();
-        private List<MemoryLocation> _memoryLocations = new();
+        private List<CarrierLocation> _carrierLocations = new();
         private List<MarkerLocation> _markerLocations = new();
 
         private bool _initialized = false;
@@ -29,11 +25,9 @@ namespace Nexus.Core.Domain.Models.Locations.Services
 
         public LocationService(
             ILogger<LocationService> logger,
-            ILocationRepository locationRepository,
-            ITransportRepository transportRepository) : base(logger, locationRepository)
+            ILocationRepository locationRepository) : base(logger, locationRepository)
         {
             _locationRepository = locationRepository;
-            _transportRepository = transportRepository;
         }
 
         private async Task EnsureInitializedAsync(CancellationToken cancellationToken = default)
@@ -77,9 +71,7 @@ namespace Nexus.Core.Domain.Models.Locations.Services
             IReadOnlyList<Location> locations = await _locationRepository.GetAllAsync(cancellationToken);
 
             _locations.Clear();
-            _cassetteLocations.Clear();
-            _trayLocations.Clear();
-            _memoryLocations.Clear();
+            _carrierLocations.Clear();
             _markerLocations.Clear();
 
             if (locations == null || locations.Count == 0)
@@ -92,27 +84,22 @@ namespace Nexus.Core.Domain.Models.Locations.Services
             {
                 _locations[location.Id] = location;
 
-                if (location.LocationType == ELocationType.Cassette)
+                CarrierLocation? carrierLocation = location as CarrierLocation;
+                if (carrierLocation != null)
                 {
-                    _cassetteLocations.Add((CassetteLocation)location);
+                    _carrierLocations.Add(carrierLocation);
+                    continue;
                 }
-                else if (location.LocationType == ELocationType.Tray)
+
+                MarkerLocation? markerLocation = location as MarkerLocation;
+                if (markerLocation != null)
                 {
-                    _trayLocations.Add((TrayLocation)location);
+                    _markerLocations.Add(markerLocation);
+                    continue;
                 }
-                else if (location.LocationType == ELocationType.Memory)
-                {
-                    _memoryLocations.Add((MemoryLocation)location);
-                }
-                else if (location.LocationType == ELocationType.Marker)
-                {
-                    _markerLocations.Add((MarkerLocation)location);
-                }
-                else
-                {
-                    Debug.Assert(false, "Unknown location type");
-                    _logger.LogError("Unknown location type: {Type}", location.LocationType);
-                }
+
+                Debug.Assert(false, "Unknown location type");
+                _logger.LogError("Unknown location instance: {Type}", location.GetType().Name);
             }
         }
 
@@ -127,57 +114,32 @@ namespace Nexus.Core.Domain.Models.Locations.Services
 
                 _locations[location.Id] = location;
 
-                switch (location.LocationType)
+                CarrierLocation? carrierLocation = location as CarrierLocation;
+                if (carrierLocation != null)
                 {
-                    case ELocationType.Cassette:
-                        _cassetteLocations.Add((CassetteLocation)location);
-                        break;
-                    case ELocationType.Tray:
-                        _trayLocations.Add((TrayLocation)location);
-                        break;
-                    case ELocationType.Memory:
-                        _memoryLocations.Add((MemoryLocation)location);
-                        break;
-                    case ELocationType.Marker:
-                        _markerLocations.Add((MarkerLocation)location);
-                        break;
-                    default:
-                        Debug.Assert(false, $"Unknown location type: {location.LocationType}");
-                        _logger.LogError($"Unknown location type: {location.LocationType}");
-                        break;
+                    _carrierLocations.Add(carrierLocation);
+                    continue;
                 }
+
+                MarkerLocation? markerLocation = location as MarkerLocation;
+                if (markerLocation != null)
+                {
+                    _markerLocations.Add(markerLocation);
+                    continue;
+                }
+
+                Debug.Assert(false, $"Unknown location instance: {location.GetType().Name}");
+                _logger.LogError($"Unknown location instance: {location.GetType().Name}");
             }
         }
 
  
-        public async Task<CassetteLocation?> GetCassetteLocationByIdAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<CarrierLocation?> GetCarrierLocationByIdAsync(string id, CancellationToken cancellationToken = default)
         {
             await EnsureInitializedAsync(cancellationToken);
             if (_locations.TryGetValue(id, out Location? location))
             {
-                return location as CassetteLocation;
-            }
-            return null;
-        }
-
-    
-        public async Task<TrayLocation?> GetTrayLocationByIdAsync(string id, CancellationToken cancellationToken = default)
-        {
-            await EnsureInitializedAsync(cancellationToken);
-            if (_locations.TryGetValue(id, out Location? location))
-            {
-                return location as TrayLocation;
-            }
-            return null;
-        }
-
-      
-        public async Task<MemoryLocation?> GetMemoryLocationByIdAsync(string id, CancellationToken cancellationToken = default)
-        {
-            await EnsureInitializedAsync(cancellationToken);
-            if (_locations.TryGetValue(id, out Location? location))
-            {
-                return location as MemoryLocation;
+                return location as CarrierLocation;
             }
             return null;
         }
@@ -193,10 +155,10 @@ namespace Nexus.Core.Domain.Models.Locations.Services
             return null;
         }
 
-        public async Task<CassetteLocation?> FindCassetteLocationByItemIdAsync(string itemId, CancellationToken cancellationToken = default)
+        public async Task<CarrierLocation?> FindCarrierLocationByItemIdAsync(string itemId, CancellationToken cancellationToken = default)
         {
             await EnsureInitializedAsync(cancellationToken);
-            foreach (CassetteLocation loc in _cassetteLocations)
+            foreach (CarrierLocation loc in _carrierLocations)
             {
                 string current;
                 if (loc.CurrentItemId != null)
@@ -217,7 +179,7 @@ namespace Nexus.Core.Domain.Models.Locations.Services
             }
             // 캐시에 없으면 리로드 후 한 번 더 검색 (시드 타이밍 차이 대비)
             await ReloadAsync(cancellationToken);
-            foreach (CassetteLocation loc in _cassetteLocations)
+            foreach (CarrierLocation loc in _carrierLocations)
             {
                 string current;
                 if (loc.CurrentItemId != null)

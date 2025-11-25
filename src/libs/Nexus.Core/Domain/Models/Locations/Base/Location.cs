@@ -9,7 +9,6 @@ namespace Nexus.Core.Domain.Models.Locations.Base
     {
         public string Id { get; protected set; }
         public string Name { get; protected set; }
-        public ELocationType LocationType { get; protected set; }
         public ELocationStatus Status { get; set; }
         public string CurrentItemId { get; set; } = string.Empty;
         public string ParentId { get; set; } = string.Empty;
@@ -22,11 +21,10 @@ namespace Nexus.Core.Domain.Models.Locations.Base
         public uint Height { get; set; } = 0;
         public uint Depth { get; set; } = 0;
 
-        protected Location(string id, string name, ELocationType locationType)
+        protected Location(string id, string name)
         {
             Id = id;
             Name = name;
-            LocationType = locationType;
         }
     }
 }

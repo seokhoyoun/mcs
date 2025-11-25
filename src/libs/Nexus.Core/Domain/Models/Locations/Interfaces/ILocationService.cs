@@ -1,3 +1,7 @@
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Shared.Bases;
 
@@ -15,25 +19,11 @@ namespace Nexus.Core.Domain.Models.Locations.Interfaces
         void AddLocations(IEnumerable<Location> locations);
 
         /// <summary>
-        /// ID로 카세트 위치를 조회합니다.
+        /// ID로 Carrier 위치를 조회합니다.
         /// </summary>
-        /// <param name="id">카세트 위치 ID</param>
-        /// <returns>해당 ID의 카세트 위치 또는 null</returns>
-        Task<CassetteLocation?> GetCassetteLocationByIdAsync(string id, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// ID로 트레이 위치를 조회합니다.
-        /// </summary>
-        /// <param name="id">트레이 위치 ID</param>
-        /// <returns>해당 ID의 트레이 위치 또는 null</returns>
-        Task<TrayLocation?> GetTrayLocationByIdAsync(string id, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// ID로 메모리 위치를 조회합니다.
-        /// </summary>
-        /// <param name="id">메모리 위치 ID</param>
-        /// <returns>해당 ID의 메모리 위치 또는 null</returns>
-        Task<MemoryLocation?> GetMemoryLocationByIdAsync(string id, CancellationToken cancellationToken = default);
+        /// <param name="id">Carrier 위치 ID</param>
+        /// <returns>해당 ID의 Carrier 위치 또는 null</returns>
+        Task<CarrierLocation?> GetCarrierLocationByIdAsync(string id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// ID로 마커 위치를 조회합니다. (포지션 전용)
@@ -43,12 +33,12 @@ namespace Nexus.Core.Domain.Models.Locations.Interfaces
         Task<MarkerLocation?> GetMarkerLocationByIdAsync(string id, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// 현재 아이템 ID로 카세트 위치를 조회합니다.
+        /// 현재 아이템 ID로 Carrier 위치를 조회합니다.
         /// </summary>
         /// <param name="itemId">위치에 적재된 아이템 ID</param>
         /// <param name="cancellationToken">취소 토큰</param>
-        /// <returns>해당 아이템을 보유한 카세트 위치 또는 null</returns>
-        Task<CassetteLocation?> FindCassetteLocationByItemIdAsync(string itemId, CancellationToken cancellationToken = default);
+        /// <returns>해당 아이템을 보유한 Carrier 위치 또는 null</returns>
+        Task<CarrierLocation?> FindCarrierLocationByItemIdAsync(string itemId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 위치에 아이템을 할당합니다. 이미 점유 중이면 false를 반환합니다.
