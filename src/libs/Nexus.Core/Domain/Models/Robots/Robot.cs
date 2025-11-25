@@ -11,20 +11,16 @@ namespace Nexus.Core.Domain.Models.Robots
         public string Name { get; }
         public ERobotType RobotType { get; }
         public Position Position { get; set; } = new Position(0, 0, 0);
-        public IReadOnlyList<Location> Locations => _locations.AsReadOnly();
-
-        private readonly List<Location> _locations = new();
+   
 
         public Robot(
             string id,
             string name,
-            ERobotType robotType,
-            IReadOnlyList<Location> locations)
+            ERobotType robotType)
         {
             Id = id;
             Name = name;
             RobotType = robotType;
-            _locations.AddRange(locations);
         }
     }
 }

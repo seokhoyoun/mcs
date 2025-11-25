@@ -13,17 +13,15 @@ namespace Nexus.Infrastructure.Persistence.Redis
     {
         private readonly IConnectionMultiplexer _redis;
         private readonly IDatabase _database;
-        private readonly ILocationRepository _locationRepository;
 
         private const string ROBOT_KEY_PREFIX = "robot:";
         private const string ROBOTS_ALL_KEY = "robots:all";
         private const string ID_SEPARATOR = ",";
 
-        public RedisRobotRepository(IConnectionMultiplexer connection, ILocationRepository locationRepository)
+        public RedisRobotRepository(IConnectionMultiplexer connection)
         {
             _redis = connection;
             _database = connection.GetDatabase();
-            _locationRepository = locationRepository;
         }
 
         public async Task<IReadOnlyList<Robot>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -64,23 +62,9 @@ namespace Nexus.Infrastructure.Persistence.Redis
             uint positionY = (uint)Helper.GetHashValueAsInt(hashEntries, "y");
             uint positionZ = (uint)Helper.GetHashValueAsInt(hashEntries, "z");
 
-            string locationIdsValue = Helper.GetHashValue(hashEntries, "location_ids");
-            List<Location> locations = new List<Location>();
+         
 
-            if (!string.IsNullOrEmpty(locationIdsValue))
-            {
-                string[] ids = locationIdsValue.Split(ID_SEPARATOR, StringSplitOptions.RemoveEmptyEntries);
-                foreach (string locId in ids)
-                {
-                    Location? location = await _locationRepository.GetByIdAsync(locId, cancellationToken);
-                    if (location != null)
-                    {
-                        locations.Add(location);
-                    }
-                }
-            }
-
-            Robot robot = new Robot(id, name, robotType, locations)
+            Robot robot = new Robot(id, name, robotType)
             {
                 Position = new Position(positionX, positionY, positionZ)
             };
@@ -90,8 +74,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
         public async Task<Robot> AddAsync(Robot entity, CancellationToken cancellationToken = default)
         {
-            string locationIds = string.Join(ID_SEPARATOR, entity.Locations.Select(l => l.Id));
-
+          
             HashEntry[] entries = new HashEntry[]
             {
                 new HashEntry("id", entity.Id),
@@ -99,8 +82,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
                 new HashEntry("robot_type", entity.RobotType.ToString()),
                 new HashEntry("x", entity.Position.X),
                 new HashEntry("y", entity.Position.Y),
-                new HashEntry("z", entity.Position.Z),
-                new HashEntry("location_ids", locationIds)
+                new HashEntry("z", entity.Position.Z)
             };
 
             await _database.HashSetAsync($"{ROBOT_KEY_PREFIX}{entity.Id}", entries);
