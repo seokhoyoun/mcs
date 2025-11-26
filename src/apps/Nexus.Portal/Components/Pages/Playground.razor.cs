@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 using Nexus.Core.Domain.Models.Locations;
+using Nexus.Core.Domain.Models.Locations.Base;
 using Nexus.Core.Domain.Models.Locations.Enums;
 using Nexus.Core.Domain.Models.Locations.Graphs;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Locations.ValueObjects;
 using Nexus.Core.Domain.Models.Robots;
-using Nexus.Core.Domain.Shared.Bases;
 using Nexus.Core.Domain.Models.Transports.Enums;
-using Nexus.Core.Domain.Models.Locations.Base;
+using Nexus.Core.Domain.Shared.Bases;
+using Nexus.Portal.Rendering;
 
 namespace Nexus.Portal.Components.Pages
 {
@@ -18,33 +18,38 @@ namespace Nexus.Portal.Components.Pages
         private ElementReference _canvasRef;
         private bool _initialized;
 
-        protected override async Task OnAfterRenderAsync(bool firstRender)
+        protected override Task OnAfterRenderAsync(bool firstRender)
         {
             if (!firstRender || _initialized)
             {
-                return;
+                return Task.CompletedTask;
             }
 
-            await InitializeSceneAsync();
+            ThreeInterop.InitScene(_canvasElementId);
+            RenderDemoMap();
             _initialized = true;
+
+            return Task.CompletedTask;
         }
 
-        private async Task InitializeSceneAsync()
+        private void RenderDemoMap()
         {
-            await JS.InvokeVoidAsync("nexus3d.init3D", _canvasElementId);
+            ThreeInterop.ResetMap();
 
             List<SpaceDisplay> spaces = BuildSpaces();
             foreach (SpaceDisplay space in spaces)
             {
-                object spacePayload = ToSpacePayload(space);
-                await JS.InvokeVoidAsync("nexus3d.addSpace3D", spacePayload);
+                SpacePayload payload = ToSpacePayload(space);
+                string json = Serialize(payload);
+                ThreeInterop.AddSpaceJson(json);
             }
 
             List<LocationDisplay> locations = BuildLocations(spaces);
             foreach (LocationDisplay location in locations)
             {
-                object locationPayload = ToLocationPayload(location);
-                await JS.InvokeVoidAsync("nexus3d.addLocation3D", locationPayload);
+                LocationPayload payload = ToLocationPayload(location);
+                string json = Serialize(payload);
+                ThreeInterop.AddLocationJson(json);
             }
 
             Dictionary<string, LocationGeometry> geometryLookup = BuildGeometryLookup(spaces, locations);
@@ -52,18 +57,20 @@ namespace Nexus.Portal.Components.Pages
             List<LocationEdge> edges = BuildEdges();
             foreach (LocationEdge edge in edges)
             {
-                object? edgePayload = ToEdgePayload(edge, geometryLookup);
-                if (edgePayload != null)
+                EdgePayload? payload = ToEdgePayload(edge, geometryLookup);
+                if (payload != null)
                 {
-                    await JS.InvokeVoidAsync("nexus3d.addEdge3D", edgePayload);
+                    string json = Serialize(payload);
+                    ThreeInterop.AddEdgeJson(json);
                 }
             }
 
             List<Robot> robots = BuildRobots();
             foreach (Robot robot in robots)
             {
-                object robotPayload = ToRobotPayload(robot);
-                await JS.InvokeVoidAsync("nexus3d.addRobot3D", robotPayload);
+                RobotPayload payload = ToRobotPayload(robot);
+                string json = Serialize(payload);
+                ThreeInterop.AddRobotJson(json);
             }
         }
 
@@ -182,59 +189,55 @@ namespace Nexus.Portal.Components.Pages
             return lookup;
         }
 
-        private object ToSpacePayload(SpaceDisplay display)
+        private SpacePayload ToSpacePayload(SpaceDisplay display)
         {
-            return new
-            {
-                id = display.Space.Id,
-                name = display.Space.Name,
-                locationType = "Space",
-                status = ELocationStatus.Available.ToString(),
-                parentId = string.Empty,
-                isVisible = true,
-                isRelativePosition = false,
-                rotateX = 0,
-                rotateY = 0,
-                rotateZ = 0,
-                x = display.X,
-                y = display.Y,
-                z = display.Z,
-                width = display.Width,
-                height = display.Height,
-                depth = display.Depth,
-                markerRole = display.MarkerRole,
-                currentItemId = string.Empty
-            };
+            SpacePayload payload = new SpacePayload();
+            payload.Id = display.Space.Id;
+            payload.Name = display.Space.Name;
+            payload.LocationType = "Space";
+            payload.Status = ELocationStatus.Available.ToString();
+            payload.ParentId = string.Empty;
+            payload.IsVisible = true;
+            payload.IsRelativePosition = false;
+            payload.RotateX = 0;
+            payload.RotateY = 0;
+            payload.RotateZ = 0;
+            payload.X = display.X;
+            payload.Y = display.Y;
+            payload.Z = display.Z;
+            payload.Width = display.Width;
+            payload.Height = display.Height;
+            payload.Depth = display.Depth;
+            payload.MarkerRole = display.MarkerRole;
+            payload.CurrentItemId = string.Empty;
+            return payload;
         }
 
-        private object ToLocationPayload(LocationDisplay display)
+        private LocationPayload ToLocationPayload(LocationDisplay display)
         {
-            string statusText = display.Location.Status.ToString();
-
-            return new
-            {
-                id = display.Location.Id,
-                name = display.Location.Name,
-                locationType = display.LocationType,
-                status = statusText,
-                parentId = display.Location.ParentId,
-                isVisible = display.Location.IsVisible,
-                isRelativePosition = display.Location.IsRelativePosition,
-                rotateX = display.Location.Rotation.X,
-                rotateY = display.Location.Rotation.Y,
-                rotateZ = display.Location.Rotation.Z,
-                x = display.Location.Position.X,
-                y = display.Location.Position.Y,
-                z = display.Location.Position.Z,
-                width = display.Location.Width,
-                height = display.Location.Height,
-                depth = display.Location.Depth,
-                markerRole = display.MarkerRole,
-                currentItemId = display.Location.CurrentItemId
-            };
+            LocationPayload payload = new LocationPayload();
+            payload.Id = display.Location.Id;
+            payload.Name = display.Location.Name;
+            payload.LocationType = display.LocationType;
+            payload.Status = display.Location.Status.ToString();
+            payload.ParentId = display.Location.ParentId;
+            payload.IsVisible = display.Location.IsVisible;
+            payload.IsRelativePosition = display.Location.IsRelativePosition;
+            payload.RotateX = display.Location.Rotation.X;
+            payload.RotateY = display.Location.Rotation.Y;
+            payload.RotateZ = display.Location.Rotation.Z;
+            payload.X = display.Location.Position.X;
+            payload.Y = display.Location.Position.Y;
+            payload.Z = display.Location.Position.Z;
+            payload.Width = display.Location.Width;
+            payload.Height = display.Location.Height;
+            payload.Depth = display.Location.Depth;
+            payload.MarkerRole = display.MarkerRole;
+            payload.CurrentItemId = display.Location.CurrentItemId;
+            return payload;
         }
 
-        private object? ToEdgePayload(LocationEdge edge, IReadOnlyDictionary<string, LocationGeometry> geometryLookup)
+        private EdgePayload? ToEdgePayload(LocationEdge edge, IReadOnlyDictionary<string, LocationGeometry> geometryLookup)
         {
             if (!geometryLookup.TryGetValue(edge.FromLocationId, out LocationGeometry from))
             {
@@ -254,39 +257,32 @@ namespace Nexus.Portal.Components.Pages
             double toY = to.Y + (to.Depth / 2.0);
             double toZ = to.Z + (to.Height / 2.0);
 
-            string edgeId = edge.FromLocationId + "->" + edge.ToLocationId;
-            string edgeColor;
-            if (edge.IsBidirectional)
-            {
-                edgeColor = "#22c55e";
-            }
-            else
-            {
-                edgeColor = "#64748b";
-            }
-
-            return new
-            {
-                id = edgeId,
-                fromX,
-                fromY,
-                fromZ,
-                toX,
-                toY,
-                toZ,
-                color = edgeColor
-            };
+            EdgePayload payload = new EdgePayload();
+            payload.Id = edge.FromLocationId + "->" + edge.ToLocationId;
+            payload.FromX = fromX;
+            payload.FromY = fromY;
+            payload.FromZ = fromZ;
+            payload.ToX = toX;
+            payload.ToY = toY;
+            payload.ToZ = toZ;
+            payload.Color = edge.IsBidirectional ? "#22c55e" : "#64748b";
+            return payload;
         }
 
-        private object ToRobotPayload(Robot robot)
+        private RobotPayload ToRobotPayload(Robot robot)
         {
-            return new
-            {
-                id = robot.Id,
-                x = robot.Position.X,
-                y = robot.Position.Y,
-                z = robot.Position.Z
-            };
+            RobotPayload payload = new RobotPayload();
+            payload.Id = robot.Id;
+            payload.RobotType = "Logistics";
+            payload.X = robot.Position.X;
+            payload.Y = robot.Position.Y;
+            payload.Z = robot.Position.Z;
+            return payload;
+        }
+
+        private string Serialize<T>(T payload)
+        {
+            return System.Text.Json.JsonSerializer.Serialize(payload);
         }
 
         private sealed class SpaceDisplay

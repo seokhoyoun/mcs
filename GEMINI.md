@@ -21,7 +21,7 @@
 - Tests: `dotnet test -c Debug` (coverage: `dotnet test --collect:"XPlat Code Coverage"`).
 
 ## Coding Style & Naming Conventions
-- C# 12, `net8.0`, nullable enabled; implicit usings on.
+- C# 13, `net9.0`, nullable enabled; implicit usings on.
 - Indentation: 4 spaces; UTF-8; one class per file.
 - Naming: PascalCase (types/methods), camelCase (locals/params), `I`-prefix for interfaces, `Async` suffix for async.
 - Projects/folders use PascalCase; namespaces mirror folder structure.

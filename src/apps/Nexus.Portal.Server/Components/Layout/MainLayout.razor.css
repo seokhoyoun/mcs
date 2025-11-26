@@ -1,0 +1,30 @@
+.nexus-content-shell {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 64px);
+}
+
+.nexus-scroll-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+.nexus-bottom-dock {
+    position: sticky;
+    bottom: 0;
+    background: var(--mud-palette-surface);
+    border-top: 1px solid var(--mud-palette-lines-default);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+    max-height: 360px;
+    overflow: auto;
+    padding: 8px 12px;
+    z-index: 5;
+}
+
+@media (max-width: 960px) {
+    .nexus-content-shell {
+        height: calc(100vh - 56px);
+    }
+}
+

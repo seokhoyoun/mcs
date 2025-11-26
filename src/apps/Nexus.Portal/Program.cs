@@ -1,5 +1,7 @@
 using MudBlazor.Services;
+using Microsoft.AspNetCore.Components.WebAssembly.Server;
 using StackExchange.Redis;
+using Nexus.Portal.Rendering;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Robots.Interfaces;
 using Nexus.Infrastructure.Persistence.Redis;
@@ -16,9 +18,12 @@ namespace Nexus.Portal
         {
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+            builder.WebHost.UseStaticWebAssets();
+
             // Add services to the container.
             builder.Services.AddRazorComponents()
-                .AddInteractiveServerComponents();
+                .AddInteractiveServerComponents()
+                .AddInteractiveWebAssemblyComponents();
 
             builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
             {
@@ -64,10 +69,12 @@ namespace Nexus.Portal
             app.UseHttpsRedirection();
 
             app.UseStaticFiles();
+            
             app.UseAntiforgery();
 
             app.MapRazorComponents<App>()
-                .AddInteractiveServerRenderMode();
+                .AddInteractiveServerRenderMode()
+                .AddInteractiveWebAssemblyRenderMode();
 
             app.Run();
         }

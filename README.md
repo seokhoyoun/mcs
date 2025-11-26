@@ -60,7 +60,7 @@ graph TD
 
 ### Prerequisites
 
-* [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+* [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
 * [Docker & Docker Compose](https://docs.docker.com/get-docker/)
 
 ### Run with Docker Compose

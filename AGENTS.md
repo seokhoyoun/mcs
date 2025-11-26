@@ -4,7 +4,7 @@
 - 모든 에이전트 응답은 한국어로 작성한다.
 
 ## Project Structure & Module Organization
-- `src/apps`: Executables — `Nexus.Gateway`, `Nexus.Orchestrator`, `Nexus.Portal`.
+- `src/apps`: Executables — `Nexus.Gateway`, `Nexus.Orchestrator`, `Nexus.Portal.Server`(UI 호스트), `Nexus.Portal.Client`(WASM 클라이언트), `Nexus.Portal.Shared`(공용 Razor/모델).
 - `src/libs`: Shared libraries — `Nexus.Core`, `Nexus.Infrastructure`, `Nexus.Shared`.
 - `src/data`: Seed/config data (e.g., `areas.json`, `locations.csv`).
 - `tests`: `Nexus.UnitTest`, `Nexus.IntegrationTest`, `Nexus.Sandbox`.
@@ -14,14 +14,15 @@
 ## Build, Test, and Development Commands
 - Restore/build: `dotnet restore` then `dotnet build Nexus.sln -c Debug`.
 - Run apps locally:
-  - `dotnet run --project src/apps/Nexus.Portal` (UI)
+  - `dotnet run --project src/apps/Nexus.Portal.Server` (UI 호스트; WASM 포함)
+  - (필요 시 WASM 단독 개발 서버) `dotnet run --project src/apps/Nexus.Portal.Client`
   - `dotnet run --project src/apps/Nexus.Gateway`
   - `dotnet run --project src/apps/Nexus.Orchestrator`
 - Compose stack: `docker compose up -d` (Redis, Prometheus, Loki, apps).
 - Tests: `dotnet test -c Debug` (coverage: `dotnet test --collect:"XPlat Code Coverage"`).
 
 ## Coding Style & Naming Conventions
-- C# 12, `net8.0`, nullable enabled; implicit usings on.
+- C# 13, `net9.0`, nullable enabled; implicit usings on.
 - Indentation: 4 spaces; UTF-8; one class per file.
 - Naming: PascalCase (types/methods), camelCase (locals/params), `I`-prefix for interfaces, `Async` suffix for async.
 - Projects/folders use PascalCase; namespaces mirror folder structure.
@@ -54,6 +55,7 @@
 - Product Requirements Document: docs/ProductRequirementsDocument.md
 
 ## Portal UI (MudBlazor 8.x) 주의사항
+- 포털은 Blazor WASM + Server 조합이며 `Nexus.Portal.Server`가 호스트 역할을 한다(`Nexus.Portal.Client`/`Nexus.Portal.Shared` 연동).
 - Nexus.Portal은 MudBlazor 8.x(현재 csproj 기준 8.12.0)를 사용한다.
 - 입력 컴포넌트 바인딩은 `@bind-Value`를 기본으로 사용한다.
   - 예) `MudSwitch`는 `@bind-Value`를 사용한다. `@bind-Checked`는 동작하지 않는다.

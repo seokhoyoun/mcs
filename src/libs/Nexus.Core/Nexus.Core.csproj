@@ -1,34 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
-	<ItemGroup>
-	  <Compile Remove="Domain\Models\Locations\Events\**" />
-	  <Compile Remove="Domain\Models\Lots\Events\**" />
-	  <Compile Remove="Domain\Models\Plans\Events\**" />
-	  <EmbeddedResource Remove="Domain\Models\Locations\Events\**" />
-	  <EmbeddedResource Remove="Domain\Models\Lots\Events\**" />
-	  <EmbeddedResource Remove="Domain\Models\Plans\Events\**" />
-	  <None Remove="Domain\Models\Locations\Events\**" />
-	  <None Remove="Domain\Models\Lots\Events\**" />
-	  <None Remove="Domain\Models\Plans\Events\**" />
-	</ItemGroup>
+
 
 	<ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
-		<PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
+    <!--<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.11" />-->
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.11" />
+		<!--<PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />-->
 
  
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="Domain\Models\Robots\Enums\" />
-	</ItemGroup>
 
 </Project>

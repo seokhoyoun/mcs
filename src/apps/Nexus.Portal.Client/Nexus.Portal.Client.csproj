@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.11" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.11" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.11" />
+    <PackageReference Include="MudBlazor" Version="8.15.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\libs\Nexus.Core\Nexus.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -37,7 +37,7 @@ Enable operations teams to orchestrate, monitor, and optimize automated material
 - Operators access the system primarily through the Blazor Server Portal.
 
 ## Constraints
-- C# 12 on .NET 8 is the standard for all services and libraries.
+- C# 13 on .NET 9 is the standard for all services and libraries.
 - All configuration secrets remain outside of source control and rely on environment variables or user secrets.
 - System must remain deployable via Docker Compose for parity between development and production-like environments.
 - Network latency between Redis, PostgreSQL, and service containers must stay below 50 ms round trip within the target deployment topology.
@@ -61,7 +61,7 @@ Enable operations teams to orchestrate, monitor, and optimize automated material
 ## Technical Requirements
 - Utilize Nexus.Infrastructure abstractions to avoid direct Redis or PostgreSQL coupling in higher-level modules.
 - Maintain consistent domain events and contracts across services via shared types in Nexus.Shared.
-- Ensure all projects target net8.0 with nullable reference types enabled and explicit local variable types (no var).
+- Ensure all projects target net9.0 with nullable reference types enabled and explicit local variable types (no var).
 - Include automated regression tests in tests/Nexus.UnitTest and integration pipelines in tests/Nexus.IntegrationTest for critical workflows.
 
 ## User Experience & Flows
