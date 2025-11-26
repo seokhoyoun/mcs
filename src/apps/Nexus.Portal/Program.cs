@@ -1,10 +1,10 @@
 using MudBlazor.Services;
+using StackExchange.Redis;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Robots.Interfaces;
 using Nexus.Infrastructure.Persistence.Redis;
 using Nexus.Portal.Components;
 using Nexus.Portal.Components.Layout;
-using StackExchange.Redis;
 using Nexus.Core.Domain.Standards.Interfaces;
 using Nexus.Core.Domain.Models.Locations.Services;
 

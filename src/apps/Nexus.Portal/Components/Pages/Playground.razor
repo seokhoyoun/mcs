@@ -1,0 +1,15 @@
+@page "/playground"
+@inject IJSRuntime JS
+
+<PageTitle>Playground</PageTitle>
+
+<MudStack Spacing="3">
+    <MudText Typo="Typo.h4" GutterBottom="true">Playground</MudText>
+    <MudText Typo="Typo.body1" Color="Color.Secondary">
+        로봇, 공간, 위치, 에지를 배치할 수 있는 실험용 뷰입니다. 지금은 3D 맵만 표시합니다.
+    </MudText>
+
+    <MudPaper Class="playground-canvas" Elevation="1" Outlined="true">
+        <div id="@_canvasElementId" @ref="_canvasRef" class="playground-canvas__viewport"></div>
+    </MudPaper>
+</MudStack>

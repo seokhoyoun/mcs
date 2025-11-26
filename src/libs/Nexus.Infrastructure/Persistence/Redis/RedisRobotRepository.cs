@@ -1,6 +1,5 @@
 using System.Linq.Expressions;
 using Nexus.Core.Domain.Models.Robots;
-using Nexus.Core.Domain.Models.Robots.Enums;
 using Nexus.Core.Domain.Models.Robots.Interfaces;
 using Nexus.Core.Domain.Shared.Bases;
 using StackExchange.Redis;
@@ -55,7 +54,6 @@ namespace Nexus.Infrastructure.Persistence.Redis
             }
 
             string name = Helper.GetHashValue(hashEntries, "name");
-            ERobotType robotType = Helper.GetHashValueAsEnum<ERobotType>(hashEntries, "robot_type");
 
             // Position 정보 조회
             uint positionX = (uint)Helper.GetHashValueAsInt(hashEntries, "x");
@@ -64,7 +62,7 @@ namespace Nexus.Infrastructure.Persistence.Redis
 
          
 
-            Robot robot = new Robot(id, name, robotType)
+            Robot robot = new Robot(id, name)
             {
                 Position = new Position(positionX, positionY, positionZ)
             };
@@ -79,7 +77,6 @@ namespace Nexus.Infrastructure.Persistence.Redis
             {
                 new HashEntry("id", entity.Id),
                 new HashEntry("name", entity.Name),
-                new HashEntry("robot_type", entity.RobotType.ToString()),
                 new HashEntry("x", entity.Position.X),
                 new HashEntry("y", entity.Position.Y),
                 new HashEntry("z", entity.Position.Z)
