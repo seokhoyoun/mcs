@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Components;
 using Nexus.Core.Domain.Models.Locations;
 using Nexus.Core.Domain.Models.Locations.Base;
@@ -17,10 +18,22 @@ namespace Nexus.Portal.Components.Pages
         private readonly string _canvasElementId = "nexus-playground-canvas";
         private ElementReference _canvasRef;
         private bool _initialized;
+        private bool _isBrowser;
+
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+            _isBrowser = OperatingSystem.IsBrowser();
+        }
 
         protected override Task OnAfterRenderAsync(bool firstRender)
         {
-            if (!firstRender || _initialized)
+            if (_initialized)
+            {
+                return Task.CompletedTask;
+            }
+
+            if (!_isBrowser)
             {
                 return Task.CompletedTask;
             }
@@ -28,7 +41,6 @@ namespace Nexus.Portal.Components.Pages
             ThreeInterop.InitScene(_canvasElementId);
             RenderDemoMap();
             _initialized = true;
-
             return Task.CompletedTask;
         }
 

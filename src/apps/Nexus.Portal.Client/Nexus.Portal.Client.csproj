@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\libs\Nexus.Core\Nexus.Core.csproj" />
+    <ProjectReference Include="..\Nexus.Portal.Shared\Nexus.Portal.Shared.csproj" />
   </ItemGroup>
 
 </Project>

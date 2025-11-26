@@ -4,7 +4,6 @@ using System.Text.Json;
 using Nexus.Core.Domain.Models.Robots.Interfaces;
 using Nexus.Core.Domain.Models.Locations.Interfaces;
 using Nexus.Core.Domain.Models.Locations.Services;
-using Prometheus;
 
 namespace Nexus.Gateway
 {
@@ -61,10 +60,10 @@ namespace Nexus.Gateway
             builder.Services.AddSingleton<IRobotRepository, RedisRobotRepository>();
 
             // Prometheus metrics server for Gateway (separate port 9092)
-            builder.Services.AddMetricServer(options =>
-            {
-                options.Port = 9092;
-            });
+            //builder.Services.AddMetricServer(options =>
+            //{
+            //    options.Port = 9092;
+            //});
 
             WebApplication app = builder.Build();
 
@@ -77,7 +76,7 @@ namespace Nexus.Gateway
 
             app.UseHttpsRedirection();
             // HTTP request metrics instrumentation
-            app.UseHttpMetrics();
+            //app.UseHttpMetrics();
             app.UseAuthorization();
             app.MapControllers();
 

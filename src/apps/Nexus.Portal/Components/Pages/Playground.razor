@@ -8,7 +8,19 @@
         로봇, 공간, 위치, 에지를 배치할 수 있는 실험용 뷰입니다. 지금은 3D 맵만 표시합니다.
     </MudText>
 
-    <MudPaper Class="playground-canvas" Elevation="1" Outlined="true">
-        <div id="@_canvasElementId" @ref="_canvasRef" class="playground-canvas__viewport"></div>
-    </MudPaper>
+    @if (_isBrowser)
+    {
+        <MudPaper Class="playground-canvas" Elevation="1" Outlined="true">
+            <div id="@_canvasElementId" @ref="_canvasRef" class="playground-canvas__viewport"></div>
+        </MudPaper>
+    }
+    else
+    {
+        <MudPaper Class="playground-canvas" Elevation="1" Outlined="true">
+            <MudStack AlignItems="AlignItems.Center" JustifyContent="Justify.Center" Spacing="2" Class="py-10">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+                <MudText Typo="Typo.subtitle1">클라이언트 로드 중입니다. 곧 3D 뷰가 표시됩니다.</MudText>
+            </MudStack>
+        </MudPaper>
+    }
 </MudStack>

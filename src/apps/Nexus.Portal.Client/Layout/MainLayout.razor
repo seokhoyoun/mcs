@@ -1,16 +1,237 @@
-﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
+@using MudBlazor
+@using System.Diagnostics
+@using Nexus.Portal.Rendering
+@inherits LayoutComponentBase
+@inject Nexus.Portal.Components.Layout.DockService _dockService
+
+<MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((MouseEventArgs e) => DrawerToggle())" />
+        <MudButton Href="./"
+                   Variant="Variant.Text"
+                   StartIcon="@Icons.Material.Filled.LocationSearching"
+                   Color="Color.Primary"
+                   Style="text-transform:none">
+            Nexus
+        </MudButton>
+        <MudSpacer />
+        <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+    </MudDrawer>
+    <MudMainContent>
+        <div class="nexus-content-shell">
+            <div class="nexus-scroll-body">
+                <MudContainer Class="mt-16 px-8" MaxWidth="MaxWidth.ExtraExtraLarge">
+                    @Body
+                </MudContainer>
+            </div>
+            @if (_dockService.BottomContent != null)
+            {
+                <div class="nexus-bottom-dock">
+                    @_dockService.BottomContent
+                </div>
+            }
         </div>
+    </MudMainContent>
+</MudLayout>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+@code{
+    private bool _isDarkMode = false;
+    private MudTheme? _theme = null;
+    private bool _drawerOpen = true;
+    private bool _themePushed;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        _theme = new MudTheme
+        {
+            PaletteLight = _lightPalette,
+            PaletteDark = _evergreenPalette,
+            LayoutProperties = new LayoutProperties()
+        };
+
+        _dockService.Changed += OnDockChanged;
+    }
+
+    private void OnDockChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private readonly PaletteLight _lightPalette = new()
+    {
+        // Base surfaces and backgrounds
+        Surface = "#FFFFFF",
+        Background = "#F8FAFC",      // slate-50
+        BackgroundGray = "#F1F5F9",   // slate-100
+
+        // Primary/Secondary and semantic colors
+        Primary = "#2DD4BF",         // teal-400
+        Secondary = "#8B5CF6",       // violet-500
+        Info = "#3B82F6",            // blue-500
+        Success = "#22C55E",         // emerald-500
+        Warning = "#F59E0B",         // amber-500
+        Error = "#EF4444",           // rose-500
+
+        // Text
+        TextPrimary = "#111827",      // gray-900
+        TextSecondary = "#4B5563",    // gray-600
+        TextDisabled = "#9CA3AF80",
+
+        // AppBar / Drawer
+        AppbarText = "#374151",
+        AppbarBackground = "rgba(255,255,255,0.80)",
+        DrawerBackground = "#FFFFFF",
+        DrawerIcon = "#6B7280",
+        DrawerText = "#374151",
+
+        // Lines / Dividers
+        LinesDefault = "#E5E7EB",
+        TableLines = "#E5E7EB",
+        Divider = "#E5E7EB",
+
+        // Grays / Overlay / Actions
+        GrayLight = "#E5E7EB",
+        GrayLighter = "#F3F4F6",
+        OverlayLight = "#00000014",
+        ActionDefault = "#374151",
+        ActionDisabled = "#9CA3AF4D",
+        ActionDisabledBackground = "#E5E7EB80",
+    };
+
+    private readonly PaletteDark _darkPalette = new()
+    {
+        Primary = "#7e6fff",
+        Surface = "#1e1e2d",
+        Background = "#1a1a27",
+        BackgroundGray = "#151521",
+        AppbarText = "#92929f",
+        AppbarBackground = "rgba(26,26,39,0.8)",
+        DrawerBackground = "#1a1a27",
+        ActionDefault = "#74718e",
+        ActionDisabled = "#9999994d",
+        ActionDisabledBackground = "#605f6d4d",
+        TextPrimary = "#b2b0bf",
+        TextSecondary = "#22229f",
+        TextDisabled = "#ffffff33",
+        DrawerIcon = "#92929f",
+        DrawerText = "#92929f",
+        GrayLight = "#2a2833",
+        GrayLighter = "#1e1e2d",
+        Info = "#4a86ff",
+        Success = "#3dcb6c",
+        Warning = "#ffb545",
+        Error = "#ff3f5f",
+        LinesDefault = "#33323e",
+        TableLines = "#33323e",
+        Divider = "#292838",
+        OverlayLight = "#1e1e2d80",
+    };
+
+    private readonly PaletteDark _evergreenPalette = new()
+    {
+        // Base surfaces and backgrounds
+        Surface = "#1F2937",          // gray-800
+        Background = "#0F172A",       // slate-900
+        BackgroundGray = "#111827",   // gray-900
+
+        // Primary/Secondary and semantic colors
+        Primary = "#26A69A",          // teal
+        Secondary = "#8B5CF6",        // violet-500
+        Info = "#60A5FA",             // blue-400
+        Success = "#34D399",          // emerald-400
+        Warning = "#FBBF24",          // amber-400
+        Error = "#F43F5E",            // rose-500
+
+        // Text
+        TextPrimary = "#E5E7EB",      // gray-200
+        TextSecondary = "#94A3B8",    // slate-400
+        TextDisabled = "#FFFFFF33",
+
+        // AppBar / Drawer
+        AppbarText = "#CBD5E1",
+        AppbarBackground = "rgba(15,23,42,0.80)",
+        DrawerBackground = "#0F172A",
+        DrawerIcon = "#CBD5E1",
+        DrawerText = "#CBD5E1",
+
+        // Lines / Dividers
+        LinesDefault = "#334155",
+        TableLines = "#334155",
+        Divider = "#334155",
+
+        // Grays / Overlay / Actions
+        GrayLight = "#1E293B",
+        GrayLighter = "#0F172A",
+        OverlayLight = "#0B122A80",
+        ActionDefault = "#CBD5E1",
+        ActionDisabled = "#94A3B84D",
+        ActionDisabledBackground = "#4755694D",
+    };
+
+    public string DarkLightModeButtonIcon => _isDarkMode
+        ? Icons.Material.Rounded.LightMode
+        : Icons.Material.Outlined.DarkMode;
+
+    private async Task DarkModeToggle()
+    {
+        _isDarkMode = !_isDarkMode;
+        await PushThemeToCanvasAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_themePushed)
+        {
+            await PushThemeToCanvasAsync();
+            _themePushed = true;
+        }
+    }
+
+    private Task PushThemeToCanvasAsync()
+    {
+        try
+        {
+            Debug.Assert(_theme != null, "_theme is null");
+
+            Palette palette;
+            if (_isDarkMode)
+            {
+                palette = (_theme.PaletteDark);
+            }
+            else
+            {
+                palette = (_theme.PaletteLight);
+            }
+
+            if (palette == null)
+            {
+                return Task.CompletedTask;
+            }
+
+            string hex = ThreeInterop.ToHexColor(palette);
+            ThreeInterop.SetBackground(hex);
+        }
+        catch
+        {
+            // Ignore if canvas is not present on current route
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}

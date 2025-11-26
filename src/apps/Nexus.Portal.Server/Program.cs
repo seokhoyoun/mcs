@@ -69,14 +69,14 @@ namespace Nexus.Portal
 
             app.UseHttpsRedirection();
 
-            app.MapStaticAssets();
+            app.UseStaticFiles();
             
             app.UseAntiforgery();
 
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode()
-                .AddInteractiveWebAssemblyRenderMode();
-
+                .AddInteractiveWebAssemblyRenderMode()
+                .AddAdditionalAssemblies(typeof(Nexus.Portal.Client.App).Assembly);
             app.Run();
         }
     }

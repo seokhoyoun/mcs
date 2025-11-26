@@ -1,6 +1,8 @@
 @page "/playground"
+
 @using MudBlazor
 @using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.WebAssembly.Hosting
 @using Nexus.Core.Domain.Models.Locations
 @using Nexus.Core.Domain.Models.Locations.Base
 @using Nexus.Core.Domain.Models.Locations.Enums
@@ -11,6 +13,7 @@
 @using Nexus.Core.Domain.Models.Transports.Enums
 @using Nexus.Core.Domain.Shared.Bases
 @using Nexus.Portal.Rendering
+@using System.Runtime.InteropServices
 
 <PageTitle>Playground</PageTitle>
 
@@ -32,6 +35,12 @@
 
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
+        if (!OperatingSystem.IsBrowser())
+        {
+            // 서버 렌더링(Prerendering) 중이거나 서버 모드인 경우
+            return Task.CompletedTask;
+        }
+
         if (!firstRender || _initialized)
         {
             return Task.CompletedTask;
